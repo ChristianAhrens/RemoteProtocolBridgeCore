@@ -50,6 +50,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ProtocolProcessor/OSCProtocolProcessor/OSCProtocolProcessor.h"
 #include "ProtocolProcessor/RTTrPMProtocolProcessor/RTTrPMProtocolProcessor.h"
 #include "ProtocolProcessor/MIDIProtocolProcessor/MIDIProtocolProcessor.h"
+#include "ProtocolProcessor/OSCProtocolProcessor/YmhOSCProtocolProcessor.h"
 
 // **************************************************************************************
 //    class ProcessingEngineNode
@@ -117,11 +118,21 @@ bool ProcessingEngineNode::Start()
 	bool successfullyStartedA = m_typeAProtocols.size() > 0;
 	bool successfullyStartedB = true;
 
-	for (std::map<ProtocolId, std::unique_ptr<ProtocolProcessorBase>>::iterator paiter = m_typeAProtocols.begin(); successfullyStartedA && paiter != m_typeAProtocols.end(); ++paiter)
-		successfullyStartedA = successfullyStartedA && paiter->second->Start();
+	for (auto const& protocolA : m_typeAProtocols)
+	{
+		successfullyStartedA = (protocolA.second && protocolA.second->Start());
 
-	for (std::map<ProtocolId, std::unique_ptr<ProtocolProcessorBase>>::iterator pbiter = m_typeBProtocols.begin(); successfullyStartedB && pbiter != m_typeBProtocols.end(); ++pbiter)
-		successfullyStartedB = successfullyStartedB && pbiter->second->Start();
+		if (!successfullyStartedA)
+			break;
+	}
+
+	for (auto const& protocolB : m_typeBProtocols)
+	{
+		successfullyStartedB = (protocolB.second && protocolB.second->Start());
+
+		if (!successfullyStartedB)
+			break;
+	}
 
 	// if one of the protocol processors did not start successfully,
 	// enshure the other is not running without purpose
@@ -154,6 +165,9 @@ bool ProcessingEngineNode::Stop()
 
 	// wait for thread termination
 	auto threadShutdownSuccess = stopThread(100);
+
+	// clear pending messages from queue
+	m_messageQueue.clear();
 
 	m_nodeRunning = !(!protocolsRunning && threadShutdownSuccess);
 
@@ -338,8 +352,10 @@ ProtocolProcessorBase *ProcessingEngineNode::CreateProtocolProcessor(ProtocolTyp
 			return new RTTrPMProtocolProcessor(m_nodeId, listenerPortNumber);
 		case PT_MidiProtocol:
 			return new MIDIProtocolProcessor(m_nodeId);
+		case PT_YamahaOSCProtocol:
+			return new YmhOSCProtocolProcessor(m_nodeId, listenerPortNumber);
 		default:
-			return 0;
+			return nullptr;
 	}
 }
 
@@ -428,14 +444,13 @@ void ProcessingEngineNode::handleMessage(const Message& msg)
  */
 void ProcessingEngineNode::run()
 {
+	InterProtocolMessage protocolMessage;
+
 	while (!threadShouldExit())
 	{
 		m_threadRunning.signal();
-		if (m_messageQueue.waitForMessage(10))
+		if (m_messageQueue.waitForMessage(25) && m_messageQueue.dequeueMessage(protocolMessage))
 		{
-			// get a message from queue
-			auto protocolMessage = m_messageQueue.dequeueMessage();
-
 			// send the message data to any listeners - asynchronous
 			postMessage(new NodeCallbackMessage(protocolMessage));
 

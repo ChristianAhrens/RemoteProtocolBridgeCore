@@ -39,6 +39,21 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // **************************************************************************************
 //    class ProcessingEngineConfig
 // **************************************************************************************
+
+/**
+ * The map of known object value ranges.
+ * This is predefined here, but not const, nor is the access getter return ref,
+ * to still be able to modify and update it during runtime, should this be required.
+ */
+std::map<RemoteObjectIdentifier, juce::Range<float>>	ProcessingEngineConfig::m_objectRanges = {
+	std::make_pair(ROI_RemoteProtocolBridge_SoundObjectSelect, juce::Range<float>(0.0f, 1.0f)),
+	std::make_pair(ROI_RemoteProtocolBridge_SoundObjectSelect, juce::Range<float>(0.0f, 1.0f)),
+	std::make_pair(ROI_Positioning_SourceDelayMode, juce::Range<float>(0.0f, 2.0f)),
+	std::make_pair(ROI_MatrixInput_ReverbSendGain, juce::Range<float>(-120.0f, 24.0f)),
+	std::make_pair(ROI_Positioning_SourceSpread, juce::Range<float>(0.0f, 1.0f)),
+	std::make_pair(ROI_CoordinateMapping_SourcePosition_X, juce::Range<float>(0.0f, 1.0f)),
+	std::make_pair(ROI_CoordinateMapping_SourcePosition_Y, juce::Range<float>(0.0f, 1.0f)) };
+
 /**
  * Constructs an object
  * and calls the InitConfiguration method
@@ -172,7 +187,7 @@ Array<NodeId> ProcessingEngineConfig::GetNodeIds()
  * @param RemoteObjects			The remote objects list to fill according config contents
  * @return	True if remote objects were inserted, false if empty list is returned
  */
-bool ProcessingEngineConfig::ReadActiveObjects(XmlElement* activeObjectsElement, Array<RemoteObject>& RemoteObjects)
+bool ProcessingEngineConfig::ReadActiveObjects(XmlElement* activeObjectsElement, std::vector<RemoteObject>& RemoteObjects)
 {
 	RemoteObjects.clear();
 
@@ -223,14 +238,14 @@ bool ProcessingEngineConfig::ReadActiveObjects(XmlElement* activeObjectsElement,
 						{
 							obj._Addr._first = static_cast<SourceId>(channels[j]);
 							obj._Addr._second = static_cast<MappingId>(records[k]);
-							RemoteObjects.add(obj);
+							RemoteObjects.push_back(obj);
 						}
 					}
 					else
 					{
 						obj._Addr._first = (int16)channels[j];
 						obj._Addr._second = -1;
-						RemoteObjects.add(obj);
+						RemoteObjects.push_back(obj);
 					}
 				}
 			}
@@ -239,7 +254,7 @@ bool ProcessingEngineConfig::ReadActiveObjects(XmlElement* activeObjectsElement,
 		objectChild = objectChild->getNextElement();
 	}
 
-	return !RemoteObjects.isEmpty();
+	return !RemoteObjects.empty();
 }
 
 /**
@@ -302,30 +317,24 @@ bool ProcessingEngineConfig::ReadPollingInterval(XmlElement* PollingIntervalElem
  * @param RemoteObjects			The remote objects to set active in config
  * @return	True on success, false on failure
  */
-bool ProcessingEngineConfig::WriteActiveObjects(XmlElement* ActiveObjectsElement, Array<RemoteObject> const& RemoteObjects)
+bool ProcessingEngineConfig::WriteActiveObjects(XmlElement* ActiveObjectsElement, const std::vector<RemoteObject>& RemoteObjects)
 {
 	if (!ActiveObjectsElement)
 		return false;
 
-	int RemoteObjectCount = RemoteObjects.size();
-
-	HashMap<int, Array<int>> channelsPerObj;
-	HashMap<int, Array<int>> recordsPerObj;
-	for (int j = 0; j < RemoteObjectCount; ++j)
+	std::map<int, std::vector<int>> channelsPerObj;
+	std::map<int, std::vector<int>> recordsPerObj;
+	for (auto const& ro : RemoteObjects)
 	{
-		Array<int> selChs = channelsPerObj[RemoteObjects[j]._Id];
-		if (!selChs.contains(RemoteObjects[j]._Addr._first))
-		{
-			selChs.add(RemoteObjects[j]._Addr._first);
-			channelsPerObj.set(RemoteObjects[j]._Id, selChs);
-		}
+		auto selChs = &channelsPerObj[ro._Id];
+		auto selChIter = std::find(selChs->begin(), selChs->end(), ro._Addr._first);
+		if (selChIter == selChs->end())
+			selChs->push_back(ro._Addr._first);
 
-		Array<int> selRecs = recordsPerObj[RemoteObjects[j]._Id];
-		if (!selRecs.contains(RemoteObjects[j]._Addr._second))
-		{
-			selRecs.add(RemoteObjects[j]._Addr._second);
-			recordsPerObj.set(RemoteObjects[j]._Id, selRecs);
-		}
+		auto selRecs = &recordsPerObj[ro._Id];
+		auto selRecIter = std::find(selRecs->begin(), selRecs->end(), ro._Addr._second);
+		if (selRecIter == selRecs->end())
+			selRecs->push_back(ro._Addr._second);
 	}
 
 	for (int k = ROI_Invalid + 1; k < ROI_BridgingMAX; ++k)
@@ -405,56 +414,50 @@ bool ProcessingEngineConfig::WriteMutedObjectChannels(XmlElement* mutedObjectCha
  * @param RemoteObjects			The remote objects to set active in config
  * @return	True on success, false on failure
  */
-bool ProcessingEngineConfig::ReplaceActiveObjects(XmlElement* ActiveObjectsElement, Array<RemoteObject> const& RemoteObjects)
+bool ProcessingEngineConfig::ReplaceActiveObjects(XmlElement* ActiveObjectsElement, const std::vector<RemoteObject>& RemoteObjects)
 {
 	if (!ActiveObjectsElement)
 		return false;
 
-	int RemoteObjectCount = RemoteObjects.size();
-
-	HashMap<int, Array<int>> channelsPerObj;
-	HashMap<int, Array<int>> recordsPerObj;
-	for (int j = 0; j < RemoteObjectCount; ++j)
+	// iterate through remote objects to be activated and create lists of active channels/records per roi
+	std::map<int, std::vector<int>> channelsPerObj;
+	std::map<int, std::vector<int>> recordsPerObj;
+	for (auto const& roi : RemoteObjects)
 	{
-		Array<int> selChs = channelsPerObj[RemoteObjects[j]._Id];
-		if (!selChs.contains(RemoteObjects[j]._Addr._first))
-		{
-			selChs.add(RemoteObjects[j]._Addr._first);
-			channelsPerObj.set(RemoteObjects[j]._Id, selChs);
-		}
+		auto chsToActivate = &channelsPerObj[roi._Id];
+		if (std::find(chsToActivate->begin(), chsToActivate->end(), roi._Addr._first) == chsToActivate->end())
+			chsToActivate->push_back(roi._Addr._first);
 
-		Array<int> selRecs = recordsPerObj[RemoteObjects[j]._Id];
-		if (!selRecs.contains(RemoteObjects[j]._Addr._second))
-		{
-			selRecs.add(RemoteObjects[j]._Addr._second);
-			recordsPerObj.set(RemoteObjects[j]._Id, selRecs);
-		}
+		auto recsToActivate = &recordsPerObj[roi._Id];
+		if (std::find(recsToActivate->begin(), recsToActivate->end(), roi._Addr._second) == recsToActivate->end())
+			recsToActivate->push_back(roi._Addr._second);
 	}
 
 	for (int k = ROI_Invalid + 1; k < ROI_BridgingMAX; ++k)
 	{
-		if (XmlElement* ObjectElement = ActiveObjectsElement->getChildByName(GetObjectDescription((RemoteObjectIdentifier)k).removeCharacters(" ")))
+		auto roi = static_cast<RemoteObjectIdentifier>(k);
+		if (XmlElement* ObjectElement = ActiveObjectsElement->getChildByName(GetObjectDescription(roi).removeCharacters(" ")))
 		{
 			String selChanTxt;
-			for (int j = 0; j < channelsPerObj[k].size(); ++j)
+			for (auto const& chToActivate : channelsPerObj[k])
 			{
-				if (channelsPerObj[k][j] > 0)
+				if (chToActivate > 0)
 				{
 					if (!selChanTxt.isEmpty())
 						selChanTxt << ", ";
-					selChanTxt << channelsPerObj[k][j];
+					selChanTxt << chToActivate;
 				}
 			}
 			ObjectElement->setAttribute("channels", selChanTxt);
 
 			String selRecTxt;
-			for (int j = 0; j < recordsPerObj[k].size(); ++j)
+			for (auto const& recToActivate : recordsPerObj[k])
 			{
-				if (recordsPerObj[k][j] > 0)
+				if (recToActivate > 0)
 				{
 					if (!selRecTxt.isEmpty())
 						selRecTxt << ", ";
-					selRecTxt << recordsPerObj[k][j];
+					selRecTxt << recToActivate;
 				}
 			}
 			ObjectElement->setAttribute("records", selRecTxt);
@@ -565,7 +568,7 @@ std::unique_ptr<XmlElement> ProcessingEngineConfig::GetDefaultProtocol(ProtocolR
 		hostPortXmlElement->setAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::PORT), 50011);
 
 	// Active objects preparation
-	Array<RemoteObject> activeObjects;
+	std::vector<RemoteObject> activeObjects;
 	RemoteObject objectX, objectY;
 
 	objectX._Id = ROI_CoordinateMapping_SourcePosition_X;
@@ -579,8 +582,8 @@ std::unique_ptr<XmlElement> ProcessingEngineConfig::GetDefaultProtocol(ProtocolR
 		objectX._Addr = addr;
 		objectY._Addr = addr;
 
-		activeObjects.add(objectX);
-		activeObjects.add(objectY);
+		activeObjects.push_back(objectX);
+		activeObjects.push_back(objectY);
 	}
 	auto activeObjsXmlElement = protocolXmlElement->createNewChildElement(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::ACTIVEOBJECTS));
 	if (activeObjsXmlElement)
@@ -970,6 +973,16 @@ bool ProcessingEngineConfig::IsRecordAddressingObject(RemoteObjectIdentifier obj
 }
 
 /**
+ * Helper method to get an internal defined value range for a given remote object.
+ * @param	id	The remote object id to get the value range for
+ * @return	The float value range as requested. Empty range for unknown object.
+ */
+juce::Range<float>& ProcessingEngineConfig::GetRemoteObjectRange(RemoteObjectIdentifier id)
+{
+	return m_objectRanges[id];
+}
+
+/**
 * Convenience function to resolve enum to sth. human readable (e.g. in config file)
 */
 String  ProcessingEngineConfig::ProtocolTypeToString(ProtocolType pt)
@@ -980,6 +993,8 @@ String  ProcessingEngineConfig::ProtocolTypeToString(ProtocolType pt)
 		return "OCA";
 	case PT_OSCProtocol:
 		return "OSC";
+	case PT_YamahaOSCProtocol:
+		return "YamahaOSC";
 	case PT_RTTrPMProtocol:
 		return "RTTrPM";
 	case PT_MidiProtocol:
@@ -996,14 +1011,16 @@ String  ProcessingEngineConfig::ProtocolTypeToString(ProtocolType pt)
 */
 ProtocolType  ProcessingEngineConfig::ProtocolTypeFromString(String type)
 {
-	if (type == "OCA")
+	if (type == ProtocolTypeToString(PT_OCAProtocol))
 		return PT_OCAProtocol;
-	if (type == "OSC")
+	if (type == ProtocolTypeToString(PT_OSCProtocol))
 		return PT_OSCProtocol;
-	if (type == "RTTrPM")
-		return PT_RTTrPMProtocol;
-	if (type == "MIDI")
+	if (type == ProtocolTypeToString(PT_MidiProtocol))
 		return PT_MidiProtocol;
+	if (type == ProtocolTypeToString(PT_RTTrPMProtocol))
+		return PT_RTTrPMProtocol;
+	if (type == ProtocolTypeToString(PT_YamahaOSCProtocol))
+		return PT_YamahaOSCProtocol;
 
 	return PT_Invalid;
 }

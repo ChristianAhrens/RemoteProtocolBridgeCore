@@ -37,6 +37,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../../../RemoteProtocolBridgeCommon.h"
 #include "../ProtocolProcessorBase.h"
 
+#include <MidiCommandRangeAssignment.h>
+
 #include <JuceHeader.h>
 
 
@@ -48,7 +50,7 @@ class MIDIProtocolProcessor :	public ProtocolProcessorBase,
 								private MidiInputCallback
 {
 public:
-	MIDIProtocolProcessor(const NodeId& parentNodeId);
+	MIDIProtocolProcessor(const NodeId& parentNodeId, bool useMainMessageQueue = false);
 	~MIDIProtocolProcessor();
 
 	//==============================================================================
@@ -66,11 +68,8 @@ public:
 
 	//==============================================================================
 	void SetRemoteObjectsActive(XmlElement* activeObjsXmlElement) override;
-	void SetRemoteObjectChannelsMuted(XmlElement* mutedObjChsXmlElement) override;
 
 	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData) override;
-
-	String GetMIDIRemoteObjectString(RemoteObjectIdentifier id);
 
 private:
 	// This is used to dispach an incoming midi message to the message thread
@@ -88,14 +87,34 @@ private:
 		juce::String source;
 	};
 
-	String getMidiMessageDescription(const juce::MidiMessage& m);
+	void processMidiMessage(const juce::MidiMessage& midiMessage, const String& sourceName);
+	bool activateMidiInput(const String& midiInputIdentifier);
+	bool activateMidiOutput(const String& midiOutputIdentifier);
+	void forwardAndDeafProofMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData);
 
-	std::unique_ptr<AudioDeviceManager>	m_deviceManager;		/** We use the AudioDeviceManager class to register midi callbacks and set midi devices to enabled. */
-	int									m_lastInputIndex{ -1 };
+	MappingAreaId								m_mappingAreaId{ MAI_Invalid };	/**< The DS100 mapping area to be used when converting incoming coords into relative messages. If this is MAI_Invalid, absolute messages will be generated. */
 
-	int									m_currentNoteNumber{ -1 };
-	float								m_currentX{ 0.0f };
-	float								m_currentY{ 0.0f };
+	bool										m_useMainMessageQueue{ false };
+
+	std::unique_ptr<MidiInput>					m_midiInput;
+	std::unique_ptr<MidiOutput>					m_midiOutput;
+
+	int											m_currentSelectedChannel{ INVALID_ADDRESS_VALUE };
+
+	const std::vector<RemoteObjectIdentifier>	m_supportedRemoteObjects{ 
+		ROI_MatrixInput_Select, 
+		ROI_CoordinateMapping_SourcePosition_X, 
+		ROI_CoordinateMapping_SourcePosition_Y, 
+		ROI_Positioning_SourceSpread, 
+		ROI_Positioning_SourceDelayMode, 
+		ROI_MatrixInput_ReverbSendGain };
+
+	std::map<RemoteObjectIdentifier, JUCEAppBasics::MidiCommandRangeAssignment>	m_midiAssiMap;
+	String																		m_midiInputIdentifier;
+	String																		m_midiOutputIdentifier;
+
+	std::map<RemoteObjectIdentifier, std::map<RemoteObjectAddressing, double>>	m_addressedObjectOutputDeafStampMap;
+	const double																m_outputDeafTimeMs{ 300 };
 
 	float m_floatValueBuffer[3] = { 0.0f, 0.0f, 0.0f };
 	int m_intValueBuffer[2] = { 0, 0 };

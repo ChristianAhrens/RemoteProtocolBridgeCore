@@ -36,6 +36,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../../../RemoteProtocolBridgeCommon.h"
 #include "../NetworkProtocolProcessorBase.h"
+#include "../../TimerThreadBase.h"
 
 #include "SenderAwareOSCReceiver.h"
 
@@ -46,9 +47,9 @@ using namespace SenderAwareOSC;
 /**
  * Class OSCProtocolProcessor is a derived class for OSC protocol interaction.
  */
-class OSCProtocolProcessor : public SenderAwareOSCReceiver::SAOListener<OSCReceiver::MessageLoopCallback>,
+class OSCProtocolProcessor : public SenderAwareOSCReceiver::SAOListener<OSCReceiver::RealtimeCallback>,
 	public NetworkProtocolProcessorBase,
-	private Timer
+	public TimerThreadBase
 {
 public:
 	OSCProtocolProcessor(const NodeId& parentNodeId, int listenerPortNumber);
@@ -63,30 +64,41 @@ public:
 
 	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData) override;
 
+	bool SendAddressedMessage(const String& addressString, const RemoteObjectMessageData& msgData);
+
 	static String GetRemoteObjectString(RemoteObjectIdentifier id);
 
 	virtual void oscBundleReceived(const OSCBundle &bundle, const String& senderIPAddress, const int& senderPort) override;
 	virtual void oscMessageReceived(const OSCMessage &message, const String& senderIPAddress, const int& senderPort) override;
 
+private:
+	void timerThreadCallback() override;
+
 protected:
-	void createIntMessageData(const OSCMessage& messageInput, RemoteObjectMessageData& newMessageData);
+	void createIntMessageData(const OSCMessage &messageInput, RemoteObjectMessageData &newMessageData);
 	void createFloatMessageData(const OSCMessage& messageInput, RemoteObjectMessageData& newMessageData);
 	void createStringMessageData(const OSCMessage& messageInput, RemoteObjectMessageData& newMessageData);
+    
+    bool connectSenderIfRequired();
 
-private:
-	void timerCallback() override;
-
-protected:
 	OSCSender				m_oscSender;					/**< An OSCSender object can connect to a network port. It then can send OSC
 															   * messages and bundles to a specified host over an UDP socket. */
+	bool					m_oscSenderConnected{ false };	/**< Bool indicator, if the connection of the sender object to a client is established. */
 	SenderAwareOSCReceiver	m_oscReceiver;					/**< An OSCReceiver object can connect to a network port, receive incoming OSC packets from the network
 															   * via UDP, parse them, and forward the included OSCMessage and OSCBundle objects to its listeners. */
-
-private:
-	int						m_oscMsgRate;					/**< Interval at which OSC messages are sent to the host, in ms. */
-	Array<RemoteObject>		m_activeRemoteObjects;			/**< List of remote objects to be activly handled. */
 
 	float m_floatValueBuffer[3] = { 0.0f, 0.0f, 0.0f };
 	int m_intValueBuffer[2] = { 0, 0 };
 	String m_stringValueBuffer;
+
+private:
+	int							m_oscMsgRate;					/**< Interval at which OSC messages are sent to the host, in ms. */
+	std::vector<RemoteObject>	m_activeRemoteObjects;			/**< List of remote objects to be activly handled. */
+	CriticalSection				m_activeRemoteObjectsLock;
+    
+    CriticalSection m_connectionParamsLock;
+    bool            m_autodetectClientConnection{ false };
+    bool            m_clientConnectionParamsChanged{ false };
+
+	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OSCProtocolProcessor)
 };

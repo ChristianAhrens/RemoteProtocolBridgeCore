@@ -558,7 +558,10 @@ void DS100_DeviceSimulation::UpdateDataValues()
 					if ((remoteValue._valCount == 1) && (remoteValue._payloadSize == sizeof(float)))
 					{
 						if (roi == ROI_MatrixInput_ReverbSendGain) // scale 0...1 value to gain specific -120...+24 dB range
-							static_cast<float*>(remoteValue._payload)[0] = (val1 * 144.0f) - 120.0f;
+						{
+							auto rsgR = ProcessingEngineConfig::GetRemoteObjectRange(roi);
+							static_cast<float*>(remoteValue._payload)[0] = (val1 * rsgR.getLength()) + rsgR.getStart();
+						}
 						else if (roi == ROI_CoordinateMapping_SourcePosition_Y) // use second value (cosinus) for y, to get a circle movement when visualizing single x and y values on a 2d surface ui
 							static_cast<float*>(remoteValue._payload)[0] = val2;
 						else

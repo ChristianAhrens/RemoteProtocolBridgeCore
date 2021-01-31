@@ -48,16 +48,6 @@ class RTTrPMProtocolProcessor : public RTTrPMReceiver::RealtimeDataListener,
 	public NetworkProtocolProcessorBase
 {
 public:
-	enum MappingAreaId
-	{
-		MAI_Invalid = -1,
-		MAI_First = 1,
-		MAI_Second,
-		MAI_Third,
-		MAI_Fourth,
-	};
-
-public:
 	RTTrPMProtocolProcessor(const NodeId& parentNodeId, int listenerPortNumber);
 	~RTTrPMProtocolProcessor();
 

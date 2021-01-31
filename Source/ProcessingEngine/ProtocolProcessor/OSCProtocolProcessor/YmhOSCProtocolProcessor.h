@@ -20,22 +20,12 @@
 class YmhOSCProtocolProcessor : public OSCProtocolProcessor
 {
 public:
-	enum MappingAreaId
-	{
-		MAI_Invalid = -1,
-		MAI_First = 1,
-		MAI_Second,
-		MAI_Third,
-		MAI_Fourth,
-	};
-
-public:
 	YmhOSCProtocolProcessor(const NodeId& parentNodeId, int listenerPortNumber);
 	virtual ~YmhOSCProtocolProcessor() override;
 
 	bool setStateXml(XmlElement* stateXml) override;
 
-	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, RemoteObjectMessageData& msgData) override;
+	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData) override;
 
 	static String GetRemoteObjectDomainString();
 	static String GetRemoteObjectParameterTypeString(RemoteObjectIdentifier id);
@@ -43,6 +33,8 @@ public:
 	virtual void oscMessageReceived(const OSCMessage &message, const String& senderIPAddress, const int& senderPort) override;
 
 private:
+	void createRangeMappedFloatMessageData(const OSCMessage& messageInput, RemoteObjectMessageData& newMessageData, float mappingRangeMin, float mappingRangeMax);
+
 	MappingAreaId	m_mappingAreaId{ MAI_Invalid };	/**< The DS100 mapping area to be used when converting incoming coords into relative messages. If this is MAI_Invalid, absolute messages will be generated. */
 
 };

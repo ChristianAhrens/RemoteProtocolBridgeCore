@@ -231,14 +231,15 @@ struct RemoteObjectAddressing
 	 */
 	bool operator<(const RemoteObjectAddressing& rhs) const
 	{
-		return (!(*this > rhs) && (*this != rhs));
+		return (_first < rhs._first) || ((_first == rhs._first) && (_second < rhs._second));
 	}
 	/**
 	 * Greater than comparison operator overload
 	 */
 	bool operator>(const RemoteObjectAddressing& rhs) const
 	{
-		return (_first > rhs._first) || ((_first == rhs._first) && (_second > rhs._second));
+		// not less and not equal is greater
+		return (!(*this < rhs) && (*this != rhs));
 	}
 	/**
 	 * Assignment operator
@@ -402,6 +403,8 @@ struct RemoteObjectMessageData
 			default:
 				break;
 			}
+			_payload = nullptr;
+			_payloadSize = 0;
 		}
 	};
 	/**
@@ -454,33 +457,41 @@ struct RemoteObjectMessageData
 	 */
 	RemoteObjectMessageData& payloadCopy(const RemoteObjectMessageData& rhs)
 	{
-		if (this != &rhs)
+		// if the allocated memory does not fit our new needs, resize it appropriately
+		if (_payloadSize != rhs._payloadSize)
 		{
-            switch (_valType)
-            {
-            case ROVT_INT:
-                delete[] static_cast<int*>(_payload);
-                break;
-            case ROVT_FLOAT:
-                delete[] static_cast<float*>(_payload);
-                break;
-            case ROVT_STRING:
-                delete[] static_cast<char*>(_payload);
-                break;
-            case ROVT_NONE:
-            default:
-                jassert(_payload == nullptr && _payloadSize == 0);
-                break;
-            }
-            
-			_addrVal = rhs._addrVal;
-			_valType = rhs._valType;
-			_valCount = rhs._valCount;
+			switch (_valType)
+			{
+			case ROVT_INT:
+				delete[] static_cast<int*>(_payload);
+				break;
+			case ROVT_FLOAT:
+				delete[] static_cast<float*>(_payload);
+				break;
+			case ROVT_STRING:
+				delete[] static_cast<char*>(_payload);
+				break;
+			case ROVT_NONE:
+			default:
+				jassert(_payload == nullptr && _payloadSize == 0);
+				break;
+			}
+
 			_payloadSize = rhs._payloadSize;
-			_payload = new unsigned char[rhs._payloadSize];
-			std::memcpy(_payload, rhs._payload, rhs._payloadSize);
-			_payloadOwned = true;
+			if (_payloadSize > 0)
+				_payload = new unsigned char[_payloadSize];
+			else
+				_payload = nullptr;
 		}
+
+		// now copy the new data
+		if (_payloadSize > 0 && _payload != nullptr)
+			std::memcpy(_payload, rhs._payload, _payloadSize);
+            
+		_addrVal = rhs._addrVal;
+		_valType = rhs._valType;
+		_valCount = rhs._valCount;
+		_payloadOwned = true;
 
 		return *this;
 	}
@@ -538,4 +549,19 @@ enum EngineTimings
 {
 	ET_DefaultPollingRate	= 100,	/** OSC polling interval in ms. */
 	ET_LoggingFlushRate		= 300	/** Flush interval for accumulated messages to be printed. */
+};
+
+/**
+ * Separate enum for mapping area identification.
+ * Allows distinguishing between valid and invalid values.
+ */
+enum MappingAreaId
+{
+	MAI_Invalid = -1,	/**> identification for an invalid mapping area id - used in protocolprocessors 
+						 *   to signal if absolute value handling shall be used 
+						 *   instead of relative to a mapping area. */
+	MAI_First = 1,		/**> first of four valid mapping areas. */
+	MAI_Second,			/**> second of four valid mapping areas. */
+	MAI_Third,			/**> third of four valid mapping areas. */
+	MAI_Fourth,			/**> last of four valid mapping areas. */
 };

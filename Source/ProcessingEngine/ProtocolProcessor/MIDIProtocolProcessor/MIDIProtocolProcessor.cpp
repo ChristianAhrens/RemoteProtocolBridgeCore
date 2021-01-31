@@ -43,12 +43,12 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /**
  * Derived MIDI remote protocol processing class
  */
-MIDIProtocolProcessor::MIDIProtocolProcessor(const NodeId& parentNodeId)
+MIDIProtocolProcessor::MIDIProtocolProcessor(const NodeId& parentNodeId, bool useMainMessageQueue)
 	: ProtocolProcessorBase(parentNodeId)
 {
 	m_type = ProtocolType::PT_MidiProtocol;
 
-	m_deviceManager = std::make_unique<AudioDeviceManager>();
+	m_useMainMessageQueue = useMainMessageQueue;
 }
 
 /**
@@ -56,16 +56,6 @@ MIDIProtocolProcessor::MIDIProtocolProcessor(const NodeId& parentNodeId)
  */
 MIDIProtocolProcessor::~MIDIProtocolProcessor()
 {
-	
-	auto list = juce::MidiInput::getAvailableDevices();
-	if (m_lastInputIndex >= 0 && list.size() > m_lastInputIndex)
-	{
-		auto oldInput = list[m_lastInputIndex];
-
-		DBG("Deactivating MIDI input " + oldInput.name + +" (" + oldInput.identifier + ")");
-
-		m_deviceManager->removeMidiInputDeviceCallback(oldInput.identifier, this);
-	}
 }
 
 /**
@@ -75,8 +65,16 @@ MIDIProtocolProcessor::~MIDIProtocolProcessor()
  */
 void MIDIProtocolProcessor::handleIncomingMidiMessage(juce::MidiInput* source, const juce::MidiMessage& message)
 {
-	// dispatch message to queue
-	postMessage(std::make_unique<CallbackMidiMessage>(message, (source == nullptr ? "UNKNOWN" : source->getName())).release());
+	if (m_useMainMessageQueue)
+	{
+		// dispatch message to queue
+		postMessage(std::make_unique<CallbackMidiMessage>(message, (source == nullptr ? "UNKNOWN" : source->getName())).release());
+	}
+	else
+	{
+		// directly call the midi message processing method. 
+		processMidiMessage(message, (source == nullptr ? "UNKNOWN" : source->getName()));
+	}
 }
 
 /**
@@ -86,166 +84,203 @@ void MIDIProtocolProcessor::handleIncomingMidiMessage(juce::MidiInput* source, c
 void MIDIProtocolProcessor::handleMessage(const Message& msg)
 {
 	if (auto* callbackMessage = dynamic_cast<const CallbackMidiMessage*> (&msg))
-	{
-		auto const& midiMessage = callbackMessage->message;
-
-		DBG("MIDI received: " + getMidiMessageDescription(midiMessage));
-
-		RemoteObjectIdentifier newObjectId = ROI_Invalid;
-		RemoteObjectMessageData newMsgData;
-		newMsgData._addrVal._first = INVALID_ADDRESS_VALUE;
-		newMsgData._addrVal._second = INVALID_ADDRESS_VALUE;
-		newMsgData._valType = ROVT_NONE;
-		newMsgData._valCount = 0;
-		newMsgData._payload = 0;
-		newMsgData._payloadSize = 0;
-
-		// NoteOn/Off is hardcoded as matrixinput select message trigger
-		if (midiMessage.isNoteOn() || midiMessage.isNoteOff())
-		{
-			m_currentNoteNumber = midiMessage.getNoteNumber() - 47;
-
-			if (midiMessage.isNoteOn())
-				m_intValueBuffer[0] = 1;
-			if (midiMessage.isNoteOff())
-				m_intValueBuffer[0] = 0;
-
-			newObjectId = ROI_MatrixInput_Select;
-
-			newMsgData._addrVal._first = m_currentNoteNumber;
-			newMsgData._addrVal._second = 0;
-			newMsgData._valType = ROVT_INT;
-			newMsgData._valCount = 1;
-			newMsgData._payload = &m_intValueBuffer;
-			newMsgData._payloadSize = sizeof(int);
-
-			if (m_currentNoteNumber > -1 && m_messageListener && !IsChannelMuted(m_currentNoteNumber))
-				m_messageListener->OnProtocolMessageReceived(this, newObjectId, newMsgData);
-
-			if (midiMessage.isNoteOff())
-				m_currentNoteNumber = -1;
-		}
-
-		// If the received channel (source) is set to muted, return without further processing
-		if (IsChannelMuted(m_currentNoteNumber))
-			return;
-
-		// Pitchwheel or controllervalue (controller 1) is hardcoded as xy message trigger
-		if (midiMessage.isPitchWheel() || (midiMessage.isController() && midiMessage.getControllerNumber() == 1))
-		{
-			if (midiMessage.isPitchWheel())
-				m_currentX = midiMessage.getPitchWheelValue() / 16383.0f;
-			if (midiMessage.isController())
-				m_currentY = midiMessage.getControllerValue() / 127.0f;
-
-			newObjectId = ROI_CoordinateMapping_SourcePosition_XY;
-
-			m_floatValueBuffer[0] = m_currentX;
-			m_floatValueBuffer[1] = m_currentY;
-
-			newMsgData._addrVal._first = m_currentNoteNumber;
-			newMsgData._addrVal._second = 1;
-			newMsgData._valType = ROVT_FLOAT;
-			newMsgData._valCount = 2;
-			newMsgData._payload = &m_floatValueBuffer;
-			newMsgData._payloadSize = 2 * sizeof(float);
-
-			if (m_currentNoteNumber > -1 && m_messageListener)
-				m_messageListener->OnProtocolMessageReceived(this, newObjectId, newMsgData);
-		}
-
-		// Controllervalue (controller 5) is hardcoded as reverbsendgain message trigger
-		if (midiMessage.isController() && midiMessage.getControllerNumber() == 5)
-		{
-			auto normValue = midiMessage.getControllerValue() / 127.0f;
-		
-			newObjectId = ROI_MatrixInput_ReverbSendGain;
-		
-			m_floatValueBuffer[0] = (normValue * 144.0f) - 120.0f; // -120 ... +24
-		
-			newMsgData._addrVal._first = m_currentNoteNumber;
-			newMsgData._addrVal._second = 1;
-			newMsgData._valType = ROVT_FLOAT;
-			newMsgData._valCount = 1;
-			newMsgData._payload = &m_floatValueBuffer;
-			newMsgData._payloadSize = sizeof(float);
-		
-			if (m_currentNoteNumber > -1 && m_messageListener)
-				m_messageListener->OnProtocolMessageReceived(this, newObjectId, newMsgData);
-		}
-
-		// Controllervalue (controller 6) is hardcoded as spread factor message trigger
-		if (midiMessage.isController() && midiMessage.getControllerNumber() == 6)
-		{
-			auto normValue = midiMessage.getControllerValue() / 127.0f;
-
-			newObjectId = ROI_Positioning_SourceSpread;
-
-			m_floatValueBuffer[0] = normValue;
-
-			newMsgData._addrVal._first = m_currentNoteNumber;
-			newMsgData._addrVal._second = 1;
-			newMsgData._valType = ROVT_FLOAT;
-			newMsgData._valCount = 1;
-			newMsgData._payload = &m_floatValueBuffer;
-			newMsgData._payloadSize = sizeof(float);
-
-			if (m_currentNoteNumber > -1 && m_messageListener)
-				m_messageListener->OnProtocolMessageReceived(this, newObjectId, newMsgData);
-		}
-
-		// Controllervalue (controller 7) is hardcoded as delaymode message trigger
-		if (midiMessage.isController() && midiMessage.getControllerNumber() == 7)
-		{
-			auto normValue = midiMessage.getControllerValue() / 127.0f;
-
-			newObjectId = ROI_Positioning_SourceDelayMode;
-
-			// values 0, 1, 2 are valid
-			auto numSteps = 3.0f;
-			auto maxVal = 2.0f;
-			auto stepVal = maxVal / numSteps;
-			m_intValueBuffer[0] = static_cast<int>(maxVal * normValue + stepVal);
-
-			newMsgData._addrVal._first = m_currentNoteNumber;
-			newMsgData._addrVal._second = 1;
-			newMsgData._valType = ROVT_INT;
-			newMsgData._valCount = 1;
-			newMsgData._payload = &m_intValueBuffer;
-			newMsgData._payloadSize = sizeof(int);
-
-			if (m_currentNoteNumber > -1 && m_messageListener)
-				m_messageListener->OnProtocolMessageReceived(this, newObjectId, newMsgData);
-		}
-	}
+		processMidiMessage(callbackMessage->message, callbackMessage->source);
 }
 
 /**
- * Debugging helper method taken from JUCE's "HandlingMidiEventsTutorial"
+ * Method to do the actual processing of incoming midi data to internal remote objects.
+ * @param midiMessage	The message to process.
+ * @param sourceName	The string representation of the midi message source device.
  */
-String MIDIProtocolProcessor::getMidiMessageDescription(const juce::MidiMessage& m)
+void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMessage, const String& sourceName)
 {
-	if (m.isNoteOn())           return "Note on " + juce::MidiMessage::getMidiNoteName(m.getNoteNumber(), true, true, 3);
-	if (m.isNoteOff())          return "Note off " + juce::MidiMessage::getMidiNoteName(m.getNoteNumber(), true, true, 3);
-	if (m.isProgramChange())    return "Program change " + juce::String(m.getProgramChangeNumber());
-	if (m.isPitchWheel())       return "Pitch wheel " + juce::String(m.getPitchWheelValue());
-	if (m.isAftertouch())       return "After touch " + juce::MidiMessage::getMidiNoteName(m.getNoteNumber(), true, true, 3) + ": " + juce::String(m.getAfterTouchValue());
-	if (m.isChannelPressure())  return "Channel pressure " + juce::String(m.getChannelPressureValue());
-	if (m.isAllNotesOff())      return "All notes off";
-	if (m.isAllSoundOff())      return "All sound off";
-	if (m.isMetaEvent())        return "Meta event";
+	ignoreUnused(sourceName);
 
-	if (m.isController())
+	DBG(String(__FUNCTION__) + " MIDI received: " + midiMessage.getDescription());
+
+	RemoteObjectIdentifier newObjectId = ROI_Invalid;
+	RemoteObjectMessageData newMsgData;
+	newMsgData._addrVal._first = INVALID_ADDRESS_VALUE;
+	newMsgData._addrVal._second = INVALID_ADDRESS_VALUE;
+	newMsgData._valType = ROVT_NONE;
+	newMsgData._valCount = 0;
+	newMsgData._payload = 0;
+	newMsgData._payloadSize = 0;
+
+	// iterate through the available assignments to find a match for the midimessage
+	for (auto const& assignmentMapping : m_midiAssiMap)
 	{
-		juce::String name(juce::MidiMessage::getControllerName(m.getControllerNumber()));
+		auto& assiCommandData = assignmentMapping.second;
+		auto midiMessageMatchesCommandAssignment = true;
+		if (!assiCommandData.isMatchingCommandType(midiMessage))
+			midiMessageMatchesCommandAssignment = false;
+		else if (assiCommandData.isCommandRangeAssignment() && !assiCommandData.isMatchingCommandRange(midiMessage))
+			midiMessageMatchesCommandAssignment = false;
+		else if (assiCommandData.isValueRangeAssignment() && !assiCommandData.isMatchingValueRange(midiMessage))
+			midiMessageMatchesCommandAssignment = false;
+		else if (assiCommandData.isValueRangeAssignment() && !assiCommandData.isCommandRangeAssignment() && !assiCommandData.isMatchingCommand(midiMessage))
+			midiMessageMatchesCommandAssignment = false;
 
-		if (name.isEmpty())
-			name = "[" + juce::String(m.getControllerNumber()) + "]";
+		if (midiMessageMatchesCommandAssignment)
+		{
+			newObjectId = assignmentMapping.first;
+			newMsgData._addrVal._second = static_cast<MappingId>(ProcessingEngineConfig::IsRecordAddressingObject(newObjectId) ? m_mappingAreaId : INVALID_ADDRESS_VALUE);
 
-		return "Controller " + name + ": " + juce::String(m.getControllerValue());
+			// get the command value from midi message
+			auto commandValue = JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(midiMessage); 
+			auto commandRangeMatch = assiCommandData.isMatchingCommandRange(midiMessage);
+
+			// get the new value from midi message. this depends on the message command type.
+			auto midiValue = -1;
+			if ((assiCommandData.isNoteOnCommand() || assiCommandData.isNoteOffCommand()) && midiMessage.isNoteOnOrOff())
+				midiValue = midiMessage.getNoteNumber();
+			else if (assiCommandData.isAftertouchCommand() && midiMessage.isAftertouch())
+				midiValue = midiMessage.getAfterTouchValue();
+			else if (assiCommandData.isChannelPressureCommand() && midiMessage.isChannelPressure())
+				midiValue = midiMessage.getChannelPressureValue();
+			else if (assiCommandData.isControllerCommand() && midiMessage.isController())
+				midiValue = midiMessage.getControllerValue();
+			else if (assiCommandData.isPitchCommand() && midiMessage.isPitchWheel())
+				midiValue = midiMessage.getPitchWheelValue();
+			else if (assiCommandData.isProgramChangeCommand() && midiMessage.isProgramChange())
+				midiValue = midiMessage.getProgramChangeNumber();
+			else if (assiCommandData.isChannelPressureCommand() && midiMessage.isChannelPressure())
+				midiValue = midiMessage.getChannelPressureValue();
+
+			// map the incoming value to the correct remote object range. this varies between the different objects.
+			switch (newObjectId)
+			{
+			case ROI_MatrixInput_Select:
+			case ROI_RemoteProtocolBridge_SoundObjectSelect:
+				{
+				// buffer current note number to be able to compare against incoming value
+				auto previousSelectedChannel = m_currentSelectedChannel;
+
+				// derive the current note number from message
+				if (assiCommandData.isCommandRangeAssignment())
+				{
+					auto commandValueRange = juce::Range<int>(
+						static_cast<int>(JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCommandData.getCommandRange().getStart())),
+						static_cast<int>(JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCommandData.getCommandRange().getEnd())));
+					m_currentSelectedChannel = commandRangeMatch ? 1 + commandValue - commandValueRange.getStart() : INVALID_ADDRESS_VALUE;
+				}
+				else
+					m_currentSelectedChannel = commandValue - assiCommandData.getCommandValue();
+
+				// prepare remote object
+				newMsgData._addrVal._first = m_currentSelectedChannel;
+				newMsgData._valType = ROVT_INT;
+				newMsgData._valCount = 1;
+				newMsgData._payloadSize = sizeof(int);
+
+				// if current note has change, send deselect for previous number first
+				if (previousSelectedChannel > INVALID_ADDRESS_VALUE)
+				{
+					int offValue = 0;
+					newMsgData._addrVal._first = previousSelectedChannel;
+					newMsgData._payload = &offValue;
+					forwardAndDeafProofMessage(newObjectId, newMsgData);
+				}
+
+				// send select for newly selected channel
+				if (previousSelectedChannel != m_currentSelectedChannel &&
+					m_currentSelectedChannel > INVALID_ADDRESS_VALUE)
+				{
+					int onValue = 1;
+					newMsgData._addrVal._first = m_currentSelectedChannel;
+					newMsgData._payload = &onValue;
+					forwardAndDeafProofMessage(newObjectId, newMsgData);
+				}
+				// or mark that currently none is selected (e.g. second press of a note to deselect current)
+				else
+				{
+					m_currentSelectedChannel = -1;
+				}
+
+				return; // intentionally, since source select handling is special case (skip channel mute check and final generic object listener callback)
+				}
+				break;
+			case ROI_Positioning_SourceDelayMode:
+				// delaymode can have values 0, 1, 2
+				m_intValueBuffer[0] = jmap(midiValue, 
+					assiCommandData.getValueRange().getStart(), assiCommandData.getValueRange().getEnd(), 
+					static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getStart()), static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getEnd()));
+
+				if (assiCommandData.isCommandRangeAssignment())
+				{
+					auto commandValueRange = juce::Range<int>(
+						static_cast<int>(JUCEAppBasics::MidiCommandRangeAssignment::getAsValue(assiCommandData.getCommandRange().getStart())),
+						static_cast<int>(JUCEAppBasics::MidiCommandRangeAssignment::getAsValue(assiCommandData.getCommandRange().getEnd())));
+					newMsgData._addrVal._first = commandRangeMatch ? 1 + commandValue - commandValueRange.getStart() : INVALID_ADDRESS_VALUE;
+				}
+				else
+					newMsgData._addrVal._first = m_currentSelectedChannel;
+
+				newMsgData._valType = ROVT_INT;
+				newMsgData._valCount = 1;
+				newMsgData._payload = &m_intValueBuffer;
+				newMsgData._payloadSize = sizeof(int);
+
+				break;
+			case ROI_MatrixInput_ReverbSendGain:
+				// gain has values -120 ... 24
+				m_floatValueBuffer[0] = jmap(static_cast<float>(midiValue), 
+					static_cast<float>(assiCommandData.getValueRange().getStart()), static_cast<float>(assiCommandData.getValueRange().getEnd()), 
+					ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getStart(), ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getEnd());
+
+				if (assiCommandData.isCommandRangeAssignment())
+				{
+					auto commandValueRange = juce::Range<int>(
+						static_cast<int>(JUCEAppBasics::MidiCommandRangeAssignment::getAsValue(assiCommandData.getCommandRange().getStart())),
+						static_cast<int>(JUCEAppBasics::MidiCommandRangeAssignment::getAsValue(assiCommandData.getCommandRange().getEnd())));
+					newMsgData._addrVal._first = commandRangeMatch ? 1 + commandValue - commandValueRange.getStart() : INVALID_ADDRESS_VALUE;
+				}
+				else
+					newMsgData._addrVal._first = m_currentSelectedChannel;
+
+				newMsgData._valType = ROVT_FLOAT;
+				newMsgData._valCount = 1;
+				newMsgData._payload = &m_floatValueBuffer;
+				newMsgData._payloadSize = sizeof(float);
+
+				break;
+			case ROI_Positioning_SourceSpread:
+			case ROI_CoordinateMapping_SourcePosition_X:
+			case ROI_CoordinateMapping_SourcePosition_Y:
+			default:
+				// all else is between 0 ... 1
+				m_floatValueBuffer[0] = jmap(static_cast<float>(midiValue), 
+					static_cast<float>(assiCommandData.getValueRange().getStart()), static_cast<float>(assiCommandData.getValueRange().getEnd()), 
+					ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getStart(), ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getEnd());
+
+				if (assiCommandData.isCommandRangeAssignment())
+				{
+					auto commandValueRange = juce::Range<int>(
+						static_cast<int>(JUCEAppBasics::MidiCommandRangeAssignment::getAsValue(assiCommandData.getCommandRange().getStart())),
+						static_cast<int>(JUCEAppBasics::MidiCommandRangeAssignment::getAsValue(assiCommandData.getCommandRange().getEnd())));
+					newMsgData._addrVal._first = commandRangeMatch ? 1 + commandValue - commandValueRange.getStart() : INVALID_ADDRESS_VALUE;
+				}
+				else
+					newMsgData._addrVal._first = m_currentSelectedChannel;
+
+				newMsgData._valType = ROVT_FLOAT;
+				newMsgData._valCount = 1;
+				newMsgData._payload = &m_floatValueBuffer;
+				newMsgData._payloadSize = sizeof(float);
+
+				break;
+			}
+
+			// If the received channel (source) is set to muted, return without further processing
+			if (IsChannelMuted(newMsgData._addrVal._first) || (newMsgData._addrVal._first <= INVALID_ADDRESS_VALUE))
+				return;
+
+			// finally send the collected data struct to parent node for further handling
+			forwardAndDeafProofMessage(newObjectId, newMsgData);
+
+			return;
+		}
 	}
-
-	return juce::String::toHexString(m.getRawData(), m.getRawDataSize());
 }
 
 /**
@@ -260,43 +295,169 @@ bool MIDIProtocolProcessor::setStateXml(XmlElement* stateXml)
 		return false;
 	else
 	{
-		auto MidiInputIndex = -1;
+		// read the device input index from xml
 		auto midiInputIndexXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::INPUTDEVICE));
 		if (midiInputIndexXmlElement)
-			MidiInputIndex = midiInputIndexXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::DEVICEINDEX));
-
-		auto list = juce::MidiInput::getAvailableDevices();
-		if (list.size() <= m_lastInputIndex)
-			return false;
-		if (list.size() <= MidiInputIndex)
-			return false;
-
-		auto oldInput = list[m_lastInputIndex];
-		auto newInput = list[MidiInputIndex];
-
-		if (MidiInputIndex < 0 && m_lastInputIndex >= 0)
-		{
-			DBG(String(__FUNCTION__) + " Deactivating MIDI input " + oldInput.name + +" (" + oldInput.identifier + ")");
-
-			m_deviceManager->removeMidiInputDeviceCallback(oldInput.identifier, this);
-			return false;
-		}
-		else if (m_lastInputIndex != MidiInputIndex)
-		{
-			m_deviceManager->removeMidiInputDeviceCallback(oldInput.identifier, this);
-
-			DBG(String(__FUNCTION__) + " Activating MIDI input " + newInput.name + +" (" + newInput.identifier + ")");
-
-			if (!m_deviceManager->isMidiInputDeviceEnabled(newInput.identifier))
-				m_deviceManager->setMidiInputDeviceEnabled(newInput.identifier, true);
-
-			m_deviceManager->addMidiInputDeviceCallback(newInput.identifier, this);
-			m_lastInputIndex = MidiInputIndex;
-			return true;
-		}
+			m_midiInputIdentifier = midiInputIndexXmlElement->getStringAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::DEVICEIDENTIFIER));
 		else
 			return false;
+
+		// read the device output index from xml
+		auto midiOutputIndexXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::OUTPUTDEVICE));
+		if (midiOutputIndexXmlElement)
+			m_midiOutputIdentifier = midiOutputIndexXmlElement->getStringAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::DEVICEIDENTIFIER));
+		else
+			return false;
+
+		// read the mapping area id from xml
+		auto mappingAreaXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::MAPPINGAREA));
+		if (mappingAreaXmlElement)
+			m_mappingAreaId = static_cast<MappingAreaId>(mappingAreaXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::ID)));
+		else
+			return false;
+
+		// read all available midi assignment mappings from xml
+		for (auto const& roi : m_supportedRemoteObjects)
+		{
+			auto assiMapXmlElement = stateXml->getChildByName(ProcessingEngineConfig::GetObjectDescription(roi).removeCharacters(" "));
+			if (assiMapXmlElement)
+			{
+				auto assiMapHexStringTextXmlElement = assiMapXmlElement->getFirstChildElement();
+				if (assiMapHexStringTextXmlElement && assiMapHexStringTextXmlElement->isTextElement())
+				{
+					m_midiAssiMap[roi].deserializeFromHexString(assiMapHexStringTextXmlElement->getText());
+				}
+			}
+		}
+
+		return true;
 	}
+}
+
+/**
+ * Helper method to activate a MIDI input based on a given input index.
+ * This also tries deactivating previously activate inputs.
+ * @param	midiInputIdentifier		The identifier of the input device to activate.
+ * @return	True if new device was activated and old deactivated or only old deactivated if requested by -1 index. False if this did not succeed.
+ */
+bool MIDIProtocolProcessor::activateMidiInput(const String& midiInputIdentifier)
+{
+	if (midiInputIdentifier.isNotEmpty())
+	{
+		// verfiy availability of device corresponding to new device identifier
+		auto midiDevicesInfos = juce::MidiInput::getAvailableDevices();
+		bool newMidiDeviceFound = false;
+		for (auto const& midiDeviceInfo : midiDevicesInfos)
+		{
+			if (midiDeviceInfo.identifier == midiInputIdentifier)
+				newMidiDeviceFound = true;
+		}
+		if (!newMidiDeviceFound)
+			return false;
+	}
+
+	// and deactivate old and activate new device for callback
+	if (m_midiInput && midiInputIdentifier.isEmpty())
+	{
+		DBG(String(__FUNCTION__) + " Deactivating MIDI input " + m_midiInput->getName() + +" (" + m_midiInput->getIdentifier() + ")");
+
+		m_midiInput->stop();
+		m_midiInput.reset();
+
+		return true;
+	}
+	else if (m_midiInput && m_midiInput->getIdentifier() != midiInputIdentifier)
+	{
+		m_midiInput->stop();
+		m_midiInput.reset();
+
+		m_midiInput = juce::MidiInput::openDevice(midiInputIdentifier, this);
+		m_midiInput->start();
+
+		DBG(String(__FUNCTION__) + " Activated MIDI input " + m_midiInput->getName() + +" (" + m_midiInput->getIdentifier() + ")");
+
+		return (m_midiInput != nullptr);
+	}
+	else if (!m_midiInput && midiInputIdentifier.isNotEmpty())
+	{
+		m_midiInput = juce::MidiInput::openDevice(midiInputIdentifier, this);
+		m_midiInput->start();
+
+		DBG(String(__FUNCTION__) + " Activated MIDI input " + m_midiInput->getName() + +" (" + m_midiInput->getIdentifier() + ")");
+
+		return (m_midiInput != nullptr);
+	}
+	else
+		return true; // nothing to do if neither valid new device identifier nor existing old device
+}
+
+/**
+ * Helper method to activate a MIDI output based on a given input index.
+ * This also tries deactivating previously activate outputs.
+ * @param	midiOutputIdentifier	The identifier of the output device to activate.
+ * @return	True if new device was activated and old deactivated or only old deactivated if requested by -1 index. False if this did not succeed.
+ */
+bool MIDIProtocolProcessor::activateMidiOutput(const String& midiOutputIdentifier)
+{
+	if (midiOutputIdentifier.isNotEmpty())
+	{
+		// verfiy availability of device corresponding to new device identifier
+		auto midiDevicesInfos = juce::MidiOutput::getAvailableDevices();
+		bool newMidiDeviceFound = false;
+		for (auto const& midiDeviceInfo : midiDevicesInfos)
+		{
+			if (midiDeviceInfo.identifier == midiOutputIdentifier)
+				newMidiDeviceFound = true;
+		}
+		if (!newMidiDeviceFound)
+			return false;
+	}
+
+	// and deactivate old and activate new device for callback
+	if (midiOutputIdentifier.isEmpty() && m_midiOutput)
+	{
+		DBG(String(__FUNCTION__) + " Deactivating MIDI output " + m_midiOutput->getName() + +" (" + m_midiOutput->getIdentifier() + ")");
+
+		m_midiOutput.reset();
+
+		return true;
+	}
+	else if (m_midiOutput && m_midiOutput->getIdentifier() != midiOutputIdentifier)
+	{
+		m_midiOutput.reset();
+
+		m_midiOutput = juce::MidiOutput::openDevice(midiOutputIdentifier);
+
+		DBG(String(__FUNCTION__) + " Activated MIDI output " + m_midiOutput->getName() + +" (" + m_midiOutput->getIdentifier() + ")");
+
+		return (m_midiOutput != nullptr);
+	}
+	else if (!m_midiOutput && midiOutputIdentifier.isNotEmpty())
+	{
+		m_midiOutput = juce::MidiOutput::openDevice(midiOutputIdentifier);
+
+		DBG(String(__FUNCTION__) + " Activated MIDI output " + m_midiOutput->getName() + +" (" + m_midiOutput->getIdentifier() + ")");
+
+		return (m_midiOutput != nullptr);
+	}
+	else
+		return true; // nothing to do if neither valid new device identifier nor existing old device
+}
+
+/**
+ * Private method to forward an incoming and already processed (midi to internal struct) message
+ * and at the same time submit it to internal hashing with timestamp to ensure deafness regarding
+ * sending next midi output for this object. (avoids race conditions on motorfaders of hw console surfaces...)
+ *
+ * @param id		The message object id that corresponds to the received message
+ * @param msgData	The actual message data that was received
+ */
+void MIDIProtocolProcessor::forwardAndDeafProofMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData)
+{
+	m_addressedObjectOutputDeafStampMap[id][msgData._addrVal] = juce::Time::getMillisecondCounterHiRes();
+
+	if (m_messageListener)
+		m_messageListener->OnProtocolMessageReceived(this, id, msgData);
 }
 
 /**
@@ -305,7 +466,14 @@ bool MIDIProtocolProcessor::setStateXml(XmlElement* stateXml)
  */
 bool MIDIProtocolProcessor::Start()
 {
-	return true;
+	bool retVal = true;
+
+	if (m_midiInputIdentifier.isNotEmpty() && !activateMidiInput(m_midiInputIdentifier))
+		retVal = false;
+	if (m_midiOutputIdentifier.isNotEmpty() && !activateMidiOutput(m_midiOutputIdentifier))
+		retVal = false;
+
+	return retVal;
 }
 
 /**
@@ -313,7 +481,16 @@ bool MIDIProtocolProcessor::Start()
  */
 bool MIDIProtocolProcessor::Stop()
 {
-	return true;
+	bool retVal = true;
+
+	m_midiInputIdentifier.clear();
+	if (!activateMidiInput(String()))
+		retVal = false;
+	m_midiOutputIdentifier.clear();
+	if (!activateMidiOutput(String()))
+		retVal = false;
+
+	return retVal;
 }
 
 /**
@@ -328,52 +505,137 @@ void MIDIProtocolProcessor::SetRemoteObjectsActive(XmlElement* activeObjsXmlElem
 }
 
 /**
- * Setter for remote objects to not forward for further processing.
- * NOT YET IMPLEMENTED
- *
- * @param mutedObjChsXmlElement	The xml element that has to be parsed to get the object data
- */
-void MIDIProtocolProcessor::SetRemoteObjectChannelsMuted(XmlElement* mutedObjChsXmlElement)
-{
-	ignoreUnused(mutedObjChsXmlElement);
-}
-
-/**
  * Method to trigger sending of a message
- * NOT YET IMPLEMENTED
  *
  * @param Id		The id of the object to send a message for
  * @param msgData	The message payload and metadata
  */
 bool MIDIProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
 {
-	ignoreUnused(Id);
-	ignoreUnused(msgData);
+	// without valid output, we cannot send anything
+	if (!m_midiOutput)
+		return false;
 
-	return false;
-}
+	// if we do not have a valid mapping for the remote object to be sent, we cannot send anything either
+	if (m_midiAssiMap.count(Id) <= 0)
+		return false;
 
-/**
- * Private method to get MIDI object specific ObjectName string
- * 
- * @param id	The object id to get the MIDI specific object name
- * @return		The MIDI specific object name
- */
-String MIDIProtocolProcessor::GetMIDIRemoteObjectString(RemoteObjectIdentifier id)
-{
-	switch (id)
+	// Verify that we have not received any input for the given addressing in the last deaf time period.
+	// This avoids race conditions with external MIDI hw, e.g. hardware motorfaders, that otherwise might end up in a freezing state.
+	if ((Time::getMillisecondCounterHiRes() - m_addressedObjectOutputDeafStampMap[Id][msgData._addrVal]) < m_outputDeafTimeMs)
+		return false;
+
+	auto channel = static_cast<int>(msgData._addrVal._first);
+	auto record = static_cast<int>(msgData._addrVal._second);
+
+	// if the remote object to be sent uses mappings/records, but the protocol processor is configured to handle a differend recordId, we do not want to send midi for the object
+	if (ProcessingEngineConfig::IsRecordAddressingObject(Id) && (m_mappingAreaId != record))
+		return false;
+
+	// depending on remote object message data, derive the contained data values
+	auto intValues = std::vector<int>();
+	if (msgData._valType == ROVT_INT && (msgData._payloadSize == msgData._valCount * sizeof(int)))
 	{
-	case ROI_CoordinateMapping_SourcePosition_X:
-		return "Positioning_Source_Position_X";
-	case ROI_CoordinateMapping_SourcePosition_Y:
-		return "Positioning_Source_Position_Y";
-	case ROI_Positioning_SourceSpread:
-		return "Positioning_Source_Spread";
-	case ROI_Positioning_SourceDelayMode:
-		return "Positioning_Source_DelayMode";
-	case ROI_MatrixInput_ReverbSendGain:
-		return "MatrixInput_ReverbSendGain";
-	default:
-		return "";
+		intValues.reserve(msgData._valCount);
+		for (int i = 0; i < msgData._valCount; i++)
+			intValues.push_back(static_cast<int*>(msgData._payload)[i]);
 	}
+	auto floatValues = std::vector<float>();
+	if (msgData._valType == ROVT_FLOAT && (msgData._payloadSize == msgData._valCount * sizeof(float)))
+	{
+		floatValues.reserve(msgData._valCount);
+		for (int i = 0; i < msgData._valCount; i++)
+			floatValues.push_back(static_cast<float*>(msgData._payload)[i]);
+	}
+	auto stringValue = String();
+	if (msgData._valType == ROVT_STRING && (msgData._payloadSize == msgData._valCount * sizeof(char)))
+	{
+		for (int i = 0; i < msgData._valCount; i++)
+			stringValue += static_cast<char*>(msgData._payload)[i];
+	}
+
+	auto midiAssi = m_midiAssiMap.at(Id);
+
+	auto assiCmdValue		= midiAssi.getCommandValue();
+	auto assiCmdRange		= midiAssi.getCommandRange();
+	auto assiValRange		= midiAssi.getValueRange();
+	auto assiMidiChannel	= midiAssi.getCommandChannel();
+
+	auto newMidiValue = 0;
+	if (floatValues.size() > 0)
+		newMidiValue = static_cast<int>(jmap(floatValues.at(0), 
+			ProcessingEngineConfig::GetRemoteObjectRange(Id).getStart(), ProcessingEngineConfig::GetRemoteObjectRange(Id).getEnd(), 
+			static_cast<float>(assiValRange.getStart()), static_cast<float>(assiValRange.getEnd())));
+	else if (intValues.size() > 0)
+		newMidiValue = jmap(intValues.at(0), 
+			static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(Id).getStart()), static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(Id).getEnd()), 
+			assiValRange.getStart(), assiValRange.getEnd());
+
+	auto newMidiMessage = juce::MidiMessage();
+
+	switch (midiAssi.getCommandType())
+	{
+	case JUCEAppBasics::MidiCommandRangeAssignment::CT_NoteOn:
+		{
+		auto noteNumber = channel;
+		if (midiAssi.isCommandRangeAssignment())
+			noteNumber += JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCmdRange.getStart());
+		else
+			noteNumber += midiAssi.getCommandValue();
+		
+		newMidiMessage = juce::MidiMessage::noteOn(assiMidiChannel, noteNumber, static_cast<juce::uint8>(127));
+		}
+		break;
+	case JUCEAppBasics::MidiCommandRangeAssignment::CT_NoteOff:
+		{
+		auto noteNumber = channel;
+		if (midiAssi.isCommandRangeAssignment())
+			noteNumber += JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCmdRange.getStart());
+		else
+			noteNumber += midiAssi.getCommandValue();
+
+		newMidiMessage = juce::MidiMessage::noteOff(assiMidiChannel, noteNumber);
+		}
+		break;
+	case JUCEAppBasics::MidiCommandRangeAssignment::CT_Pitch:
+		newMidiMessage = juce::MidiMessage::pitchWheel(assiMidiChannel, newMidiValue);
+		break;
+	case JUCEAppBasics::MidiCommandRangeAssignment::CT_ProgramChange:
+		newMidiMessage = juce::MidiMessage::programChange(assiMidiChannel, newMidiValue);
+		break;
+	case JUCEAppBasics::MidiCommandRangeAssignment::CT_Aftertouch:
+		{
+		auto noteNumber = channel;
+		if (midiAssi.isCommandRangeAssignment())
+			noteNumber += JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCmdRange.getStart());
+		else
+			noteNumber += midiAssi.getCommandValue();
+
+		newMidiMessage = juce::MidiMessage::aftertouchChange(assiMidiChannel, noteNumber, 127);
+		}
+		break;
+	case JUCEAppBasics::MidiCommandRangeAssignment::CT_Controller:
+		{
+		auto controllerNumber = channel - 1;
+		if (midiAssi.isCommandRangeAssignment())
+			controllerNumber += JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCmdRange.getStart());
+		else
+			controllerNumber += assiCmdValue;
+
+		newMidiMessage = juce::MidiMessage::controllerEvent(assiMidiChannel, controllerNumber, newMidiValue);
+		}
+		break;
+	case JUCEAppBasics::MidiCommandRangeAssignment::CT_ChannelPressure:
+		newMidiMessage = juce::MidiMessage::channelPressureChange(assiMidiChannel, newMidiValue);
+		break;
+	case JUCEAppBasics::MidiCommandRangeAssignment::CT_Invalid:
+	default:
+		return false;
+	}
+
+	DBG(String(__FUNCTION__) + " sending MIDI: " + newMidiMessage.getDescription());
+
+	m_midiOutput->sendMessageNow(newMidiMessage);
+
+	return true;
 }

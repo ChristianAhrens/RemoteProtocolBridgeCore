@@ -84,9 +84,9 @@ public:
 			_nodeId(nodeId),
 			_senderProtocolId(senderProtocolId),
 			_senderProtocolType(senderProtocolType),
-			_Id(Id)
+			_Id(Id),
+			_msgData(msgData)
 		{
-			_msgData.payloadCopy(msgData);
 		}
 
 		/**
@@ -102,6 +102,11 @@ public:
 		{
 			_msgData.payloadCopy(msgData);
 		}
+
+		/**
+		 * Destructor.
+		 */
+		~InterProtocolMessage() {};
 
 		/**
 		 * Assignment operator
@@ -136,8 +141,13 @@ public:
 		 * Constructor with default initialization.
 		 * @param protocolMessage	The message data to encapsulate in this callback message
 		 */
-		NodeCallbackMessage(InterProtocolMessage protocolMessage) : 
-			_protocolMessage(protocolMessage) {}
+		NodeCallbackMessage(const InterProtocolMessage& protocolMessage) :
+			_protocolMessage(protocolMessage) {};
+
+		/**
+		 * Destructor.
+		 */
+		~NodeCallbackMessage() override {};
 
 		InterProtocolMessage	_protocolMessage;
 	};
@@ -187,35 +197,95 @@ public:
 
 protected:
 	/**
-	 * Embedded class to safely handle message en-/dequeueing between protocol callbacks,
-	 * node thread and JUCE message queue.
+	 * Embedded class to safely handle message en-/dequeueing 
+	 * between protocol callbacks and node thread.
 	 */
 	class InterProtocolMessageQueue
 	{
 	public:
-		InterProtocolMessageQueue() {};
-		~InterProtocolMessageQueue() {};
+		InterProtocolMessageQueue()
+			: m_protocolMessagesInQueue(true), m_queueManager(1)
+		{
+			clear();
+		};
+		~InterProtocolMessageQueue()
+		{};
 
 		//==============================================================================
+		/**
+		 * Adds the given message ref contents to the queue.
+		 * @param message	The message ref to take contents from and add to queue.
+		 */
 		void enqueueMessage(const InterProtocolMessage& message) 
 		{
-			ScopedLock(m_messageQueue.getLock());
+			const ScopedLock l(m_messageQueue.getLock());
 
-			m_messageQueue.add(message);
+			// check how full our queue is
+			if (m_queueManager.getFreeSpace() == 0)
+			{
+				m_queueSize += 1024;
+				m_messageQueue.resize(m_queueSize);
+				m_queueManager.setTotalSize(m_queueSize);
+			}
+
+			// prepare enqueueing by determining where in the queue to put our message
+			auto dataCountToWrite = 1;
+			int writeIndex1, possibleItems1, writeIndex2, possibleItems2;
+			m_queueManager.prepareToWrite(dataCountToWrite, writeIndex1, possibleItems1, writeIndex2, possibleItems2);
+			// set the message into queue
+			m_messageQueue.set(writeIndex1, message);
+			// finish enqueueing
+			m_queueManager.finishedWrite(dataCountToWrite);
+
+			// signal to outside world, that data is available
 			m_protocolMessagesInQueue.signal();
 		};
-		const InterProtocolMessage dequeueMessage()
+		/**
+		 * Gets a message from queue and fills it into the given msg struct.
+		 * @param message	The message ref to be filled with next message content from queue
+		 * @return True if a message was ready and filled into the ref, otherwise false.
+		 */
+		bool dequeueMessage(InterProtocolMessage& message)
 		{
-			ScopedLock(m_messageQueue.getLock());
+			const ScopedLock l(m_messageQueue.getLock());
 
-			InterProtocolMessage message;
-			if (!m_messageQueue.isEmpty())
-				message = m_messageQueue.removeAndReturn(0);
-			if (m_messageQueue.isEmpty())
-				m_protocolMessagesInQueue.reset();
+			// check if queuemanager has items readready
+			if (m_queueManager.getNumReady() > 0)
+			{
+				// prepare dequeueing by detemining where in the queue our item can be read
+				auto requiredDataCount = 1;
+				int readIndex1, availableItems1, readIndex2, availableItems2;
+				m_queueManager.prepareToRead(requiredDataCount, readIndex1, availableItems1, readIndex2, availableItems2);
+				// if availableitemcount matches what we requre, proceed with reading
+				if ((availableItems1 + availableItems2) >= requiredDataCount)
+				{
+					// get the data item reference and copy into our local var
+					message = m_messageQueue.getReference(readIndex1);
+					// finish dequeueing
+					m_queueManager.finishedRead(requiredDataCount);
+				}
 
-			return message;
+				// If manager has no more items readready, signal to outside world, that no more data is available
+				if (m_queueManager.getNumReady() == 0)
+					m_protocolMessagesInQueue.reset();
+
+				return true;
+			}
+			else
+				return false;
 		};
+		//==============================================================================
+		void clear()
+		{
+			const ScopedLock l(m_messageQueue.getLock());
+
+			m_queueManager.reset();
+			m_protocolMessagesInQueue.reset();
+
+			m_queueSize = 1024;
+			m_messageQueue.resize(m_queueSize);
+			m_queueManager.setTotalSize(m_queueSize);
+		}
 
 		//==============================================================================
 		bool waitForMessage(int timeoutMilliseconds = -1) { return m_protocolMessagesInQueue.wait(timeoutMilliseconds); };
@@ -224,7 +294,10 @@ protected:
 		//==============================================================================
 		WaitableEvent									m_protocolMessagesInQueue;
 		Array<InterProtocolMessage, CriticalSection>	m_messageQueue;
+		AbstractFifo									m_queueManager;
+		int												m_queueSize{ 1024 };
 
+		JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(InterProtocolMessageQueue)
 	};
 
 private:
@@ -247,4 +320,6 @@ private:
 	WaitableEvent													m_threadRunning;
 
 	InterProtocolMessageQueue										m_messageQueue;
+
+	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ProcessingEngineNode)
 };

@@ -49,7 +49,7 @@ OSCProtocolProcessor::OSCProtocolProcessor(const NodeId& parentNodeId, int liste
 	m_type = ProtocolType::PT_OSCProtocol;
 	m_oscMsgRate = ET_DefaultPollingRate;
 
-	// OSCProtocolProcessor derives from OSCReceiver::Listener
+	// OSCProtocolProcessor derives from OSCReceiver::RealtimeCallback
 	m_oscReceiver.addListener(this);
 }
 
@@ -73,11 +73,13 @@ bool OSCProtocolProcessor::Start()
 	bool successR = false;
 
 	// Connect both sender and receiver  
-	successS = m_oscSender.connect(m_ipAddress, m_clientPort);
-	jassert(successS);
+    successS = connectSenderIfRequired();
 
 	successR = m_oscReceiver.connect();
 	jassert(successR);
+
+	// start the send timer thread
+	startTimerThread(m_oscMsgRate, 100);
 
 	m_IsRunning = (successS && successR);
 
@@ -91,17 +93,17 @@ bool OSCProtocolProcessor::Stop()
 {
 	m_IsRunning = false;
 
-	bool successS = false;
-	bool successR = false;
+	// stop the send timer thread
+	stopTimerThread();
 
 	// Connect both sender and receiver  
-	successS = m_oscSender.disconnect();
-	jassert(successS);
+	m_oscSenderConnected = !m_oscSender.disconnect();
+	jassert(!m_oscSenderConnected);
 
-	successR = m_oscReceiver.disconnect();
-	jassert(successR);
+	auto oscReceiverConnected = !m_oscReceiver.disconnect();
+	jassert(!oscReceiverConnected);
 
-	return (successS && successR);
+	return (!m_oscSenderConnected && !oscReceiverConnected);
 }
 
 /**
@@ -116,6 +118,9 @@ bool OSCProtocolProcessor::setStateXml(XmlElement *stateXml)
 		return false;
 	else
 	{
+        if (m_ipAddress.isEmpty())
+            m_autodetectClientConnection = true;
+        
 		if (stateXml->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::USESACTIVEOBJ)) == 1)
 		{
 			auto activeObjsXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::ACTIVEOBJECTS));
@@ -147,17 +152,54 @@ bool OSCProtocolProcessor::setStateXml(XmlElement *stateXml)
  */
 void OSCProtocolProcessor::SetRemoteObjectsActive(XmlElement* activeObjsXmlElement)
 {
+	ScopedLock l(m_activeRemoteObjectsLock);
 	ProcessingEngineConfig::ReadActiveObjects(activeObjsXmlElement, m_activeRemoteObjects);
 
 	// Start timer callback if objects are to be polled
-	if (m_activeRemoteObjects.size() > 0)
+	if (m_IsRunning)
 	{
-		startTimer(m_oscMsgRate);
+		if (m_activeRemoteObjects.size() > 0)
+		{
+			startTimerThread(m_oscMsgRate);
+		}
+		else
+		{
+			stopTimerThread();
+		}
 	}
-	else
-	{
-		stopTimer();
-	}
+}
+
+/**
+ * Method to attemt to connect the sender object if required.
+ * This is done once on configuration update, if an ip address is specified
+ * or every time the received data hints at a new sender origin.
+ *
+ * @return  True on success, false on failure
+ */
+bool OSCProtocolProcessor::connectSenderIfRequired()
+{
+	auto reconnectionRequired = false;
+
+	if (m_autodetectClientConnection && m_clientConnectionParamsChanged)
+		reconnectionRequired = true;
+	if (!m_autodetectClientConnection && !m_oscSenderConnected)
+		reconnectionRequired = true;
+    
+    if (reconnectionRequired)
+    {
+        ScopedLock l(m_connectionParamsLock);
+
+		jassert(m_ipAddress.isNotEmpty());
+        
+		m_oscSenderConnected = m_oscSender.connect(m_ipAddress, m_clientPort);
+        jassert(m_oscSenderConnected);
+        
+        m_clientConnectionParamsChanged = false;
+
+		return m_oscSenderConnected;
+    }
+
+	return true;
 }
 
 /**
@@ -168,10 +210,6 @@ void OSCProtocolProcessor::SetRemoteObjectsActive(XmlElement* activeObjsXmlEleme
  */
 bool OSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
 {
-	if (!m_IsRunning)
-		return false;
-
-	bool sendSuccess = false;
 
 	String addressString = GetRemoteObjectString(Id);
 
@@ -181,7 +219,28 @@ bool OSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, co
 	if (msgData._addrVal._first != INVALID_ADDRESS_VALUE)
 		addressString += String::formatted("/%d", msgData._addrVal._first);
 
-	uint16 valSize;
+	return SendAddressedMessage(addressString, msgData);
+}
+
+/**
+ * Method to create and send a message with a given address string and data value(s) based on the
+ * contents of given msg data struct.
+ * @param addressString		The pre-assembled addressing string
+ * @param msgData			The message data struct to derive the value(s) to be sent from
+ * @return	True on success, false on failure
+ */
+bool OSCProtocolProcessor::SendAddressedMessage(const String& addressString, const RemoteObjectMessageData& msgData)
+{
+	// if the protocol is not running, we cannot send anything
+	if (!m_IsRunning)
+		return false;
+
+	if (!connectSenderIfRequired())
+		return false;
+
+	bool sendSuccess = false;
+
+	std::uint16_t valSize;
 	switch (msgData._valType)
 	{
 	case ROVT_INT:
@@ -191,8 +250,7 @@ bool OSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, co
 		valSize = sizeof(float);
 		break;
 	case ROVT_STRING:
-		jassertfalse; // String not (yet?) supported
-		valSize = 0;
+		valSize = sizeof(char);
 		break;
 	case ROVT_NONE:
 	default:
@@ -240,10 +298,12 @@ bool OSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, co
 			sendSuccess = m_oscSender.send(OSCMessage(addressString));
 		}
 		break;
+	case ROVT_STRING:
+		sendSuccess = m_oscSender.send(OSCMessage(addressString, String(static_cast<char*>(msgData._payload), msgData._payloadSize)));
+		break;
 	case ROVT_NONE:
 		sendSuccess = m_oscSender.send(OSCMessage(addressString));
 		break;
-	case ROVT_STRING:
 	default:
 		break;
 	}
@@ -264,7 +324,7 @@ void OSCProtocolProcessor::oscBundleReceived(const OSCBundle &bundle, const Stri
 {
 	if (senderIPAddress != m_ipAddress)
 	{
-#ifdef DEBUG
+#ifdef LOG_IGNORED_OSC_MESSAGES
 		DBG("NId"+String(m_parentNodeId) 
 			+ " PId"+String(m_protocolProcessorId) + ": ignore unexpected OSC bundle from " 
 			+ senderIPAddress + " (" + m_ipAddress + " expected)");
@@ -292,9 +352,22 @@ void OSCProtocolProcessor::oscBundleReceived(const OSCBundle &bundle, const Stri
 void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const String& senderIPAddress, const int& senderPort)
 {
 	ignoreUnused(senderPort);
+
+    // If the protocolprocessor is configured for autodection of client connection,
+    // do some special handling regarding potentially changed connection parameters first
+    if (m_autodetectClientConnection)
+    {
+        if (senderIPAddress != m_ipAddress)
+        {
+            ScopedLock l(m_connectionParamsLock);
+            m_ipAddress = senderIPAddress;
+            m_clientConnectionParamsChanged = true;
+        }
+    }
+    
 	if (senderIPAddress != m_ipAddress)
 	{
-#ifdef DEBUG
+#ifdef LOG_IGNORED_OSC_MESSAGES
 		DBG("NId" + String(m_parentNodeId)
 			+ " PId" + String(m_protocolProcessorId) + ": ignore unexpected OSC message from " 
 			+ senderIPAddress + " (" + m_ipAddress + " expected)");
@@ -675,25 +748,21 @@ String OSCProtocolProcessor::GetRemoteObjectString(RemoteObjectIdentifier id)
  * Timer callback function, which will be called at regular intervals to
  * send out OSC poll messages.
  */
-void OSCProtocolProcessor::timerCallback()
+void OSCProtocolProcessor::timerThreadCallback()
 {
-	int objectCount = m_activeRemoteObjects.size();
-	for (int i = 0; i < objectCount; i++)
+	RemoteObjectMessageData msgData;
+
+	ScopedLock l(m_activeRemoteObjectsLock);
+	for (auto const& obj : m_activeRemoteObjects)
 	{
-		RemoteObjectMessageData msgData;
-		msgData._addrVal = m_activeRemoteObjects[i]._Addr;
-		msgData._valCount = 0;
-		msgData._valType = ROVT_NONE;
-		msgData._payload = 0;
-		msgData._payloadSize = 0;
-		
-		SendRemoteObjectMessage(m_activeRemoteObjects[i]._Id, msgData);
+		msgData._addrVal = obj._Addr;
+		SendRemoteObjectMessage(obj._Id, msgData);
 	}
 }
 
 /**
  * Helper method to fill a new remote object message data struct with data from an osc message.
- * This method reads a single float from osc message and fills it into the message data struct.
+ * This method reads floats from osc message and fills it into the message data struct.
  * @param messageInput	The osc input message to read from.
  * @param newMessageData	The message data struct to fill data into.
  */
