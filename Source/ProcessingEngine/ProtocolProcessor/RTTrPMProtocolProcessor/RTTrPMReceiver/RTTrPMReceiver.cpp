@@ -113,16 +113,17 @@ int RTTrPMReceiver::HandleBuffer(unsigned char* dataBuffer, size_t bytesRead, RT
 	if(readPos == 0)
 		return 0;
 
-	for(int i = 0; i < header.GetNumberOfModules(); i++)	
+	auto packetModuleCount = header.GetNumberOfModules();
+	for (int i = 0; i < packetModuleCount; i++)
 	{
-		PacketModuleTrackable trackableModule(data, readPos);
-		packetModules.push_back(std::make_unique<PacketModuleTrackable>(trackableModule));
+		packetModules.push_back(std::make_unique<PacketModuleTrackable>(data, readPos));
 
-		for(int j = 0; j < trackableModule.GetNumberOfSubModules(); j++)
+		auto trackableSubModuleCount = dynamic_cast<PacketModuleTrackable*>(packetModules.back().get())->GetNumberOfSubModules();
+		for (int j = 0; j < trackableSubModuleCount; j++)
 		{
 			auto metaInfoReadPos = readPos;
 			PacketModule packetModuleMetaInfo(data, metaInfoReadPos);
-
+			
 			switch(packetModuleMetaInfo.GetModuleType())				
 			{
 				case PacketModule::CentroidPosition:
@@ -188,7 +189,7 @@ void RTTrPMReceiver::run()
 			{
 				if (!m_realtimeListeners.isEmpty())
 					callRealtimeListeners(receivedMessage, senderIPAddress, senderPortNumber);
-
+				
 				if (!m_listeners.isEmpty())
 					postMessage(std::make_unique<CallbackMessage>(receivedMessage, senderIPAddress, senderPortNumber).release());
 			}
