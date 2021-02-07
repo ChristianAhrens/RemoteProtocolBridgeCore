@@ -348,7 +348,7 @@ struct RemoteObjectMessageData
 	std::uint16_t			_valCount;		/**< Value count used by the remote object. */
 
 	void*					_payload;		/**< Pointer to the actual payload data. */
-	std::uint64_t			_payloadSize;	/**< Size of the payload data. */
+	std::uint32_t			_payloadSize;	/**< Size of the payload data. */
 	bool					_payloadOwned;	/**< Indicator if the payload is owned by this object. */
 
 	/**
@@ -373,7 +373,7 @@ struct RemoteObjectMessageData
 	/**
 	 * Constructor to initialize with parameter values
 	 */
-	RemoteObjectMessageData(RemoteObjectAddressing addrVal, RemoteObjectValueType valType, std::uint16_t valCount, void* payload, std::uint64_t payloadSize)
+	RemoteObjectMessageData(RemoteObjectAddressing addrVal, RemoteObjectValueType valType, std::uint16_t valCount, void* payload, std::uint32_t payloadSize)
 	{
 		_addrVal = addrVal;
 		_valType = valType;
