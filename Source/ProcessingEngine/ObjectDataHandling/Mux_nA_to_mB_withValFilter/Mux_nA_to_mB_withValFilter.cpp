@@ -106,42 +106,41 @@ bool Mux_nA_to_mB_withValFilter::setStateXml(XmlElement* stateXml)
  */
 bool Mux_nA_to_mB_withValFilter::OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier Id, RemoteObjectMessageData& msgData)
 {
-	const ProcessingEngineNode* parentNode = ObjectDataHandling_Abstract::GetParentNode();
-	if (parentNode && m_protoChCntA > 0 && m_protoChCntB > 0)
+	// a valid parent node is required to be able to do anything with the received message
+	auto parentNode = ObjectDataHandling_Abstract::GetParentNode();
+	if (!parentNode)
+		return false;
+
+	// do some sanity checks on this instances configuration parameters and the given message data origin id
+	auto muxConfigValid = (m_protoChCntA > 0) && (m_protoChCntB > 0);
+	auto protocolIdValid = (std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) != GetProtocolAIds().end()) || (std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) != GetProtocolBIds().end());
+
+	if (!muxConfigValid || !protocolIdValid)
+		return false;
+
+	// check for changed value based on mapped addressing and target protocol id before forwarding data
+	auto targetProtoSrc = GetTargetProtocolAndSource(PId, msgData);
+	auto mappedOrigAddr = GetMappedOriginAddressing(PId, msgData);
+	auto targetProtoValid = targetProtoSrc.first != INVALID_ADDRESS_VALUE;
+
+	if (targetProtoValid && IsChangedDataValue(Id, mappedOrigAddr, msgData))
 	{
-		if (std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) != GetProtocolAIds().end())
-		{
-			auto protocolBId = MapObjectAddressing(PId, msgData);
-
-			if (protocolBId != INVALID_ADDRESS_VALUE && IsChangedDataValue(Id, msgData))
-				return parentNode->SendMessageTo(protocolBId, Id, msgData);
-			else
-				return false;
-		}
-		else if (std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) != GetProtocolBIds().end())
-		{
-			auto protocolAId = MapObjectAddressing(PId, msgData);
-
-			if (protocolAId != INVALID_ADDRESS_VALUE && IsChangedDataValue(Id, msgData))
-				return parentNode->SendMessageTo(protocolAId, Id, msgData);
-			else
-				return false;
-		}
-		else
-			return false;
+		// finally before forwarding data, the target channel has to be adjusted according to what we determined beforehand to be the correct mapped channel for target protocol
+		msgData._addrVal._first = targetProtoSrc.second;
+		return parentNode->SendMessageTo(targetProtoSrc.first, Id, msgData);
 	}
 	else
 		return false;
 }
 
 /**
- * Method to do the mapping of addressing value depending on configured multiplexing settings.
+ * Method to derive the protocol and source id the incoming data has to be sent to, in respect to the given multiplexing configuration values.
  *
  * @param PId		The id of the protocol that received the data
  * @param msgData	The actual message value/content data
  * @return	The protocol index the mapped value shall be sent to
  */
-ProtocolId Mux_nA_to_mB_withValFilter::MapObjectAddressing(ProtocolId PId, RemoteObjectMessageData &msgData)
+std::pair<ProtocolId, SourceId> Mux_nA_to_mB_withValFilter::GetTargetProtocolAndSource(ProtocolId PId, const RemoteObjectMessageData &msgData)
 {
 	auto PIdAIter = std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId);
 	auto PIdBIter = std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId);
@@ -155,12 +154,10 @@ ProtocolId Mux_nA_to_mB_withValFilter::MapObjectAddressing(ProtocolId PId, Remot
 		if(chForB == 0)
 			chForB = static_cast<std::int32_t>(m_protoChCntB);
 
-		msgData._addrVal._first = chForB;
-
 		if(GetProtocolBIds().size() >= protocolBIndex + 1)
-			return GetProtocolBIds()[protocolBIndex];
+			return std::make_pair(GetProtocolBIds()[protocolBIndex], chForB);
 		else
-			return static_cast<ProtocolId>(INVALID_ADDRESS_VALUE);
+			return std::make_pair(static_cast<ProtocolId>(INVALID_ADDRESS_VALUE), chForB);
 	}
 	else if (PIdBIter != GetProtocolBIds().end())
 	{
@@ -172,13 +169,47 @@ ProtocolId Mux_nA_to_mB_withValFilter::MapObjectAddressing(ProtocolId PId, Remot
 		if(chForA == 0)
 			chForA = static_cast<std::int32_t>(m_protoChCntA);
 
-		msgData._addrVal._first = chForA;
-
 		if(GetProtocolAIds().size() >= protocolAIndex + 1)
-			return GetProtocolAIds()[protocolAIndex];
+			return std::make_pair(GetProtocolAIds()[protocolAIndex], chForA);
 		else
-			return static_cast<ProtocolId>(INVALID_ADDRESS_VALUE);
+			return std::make_pair(static_cast<ProtocolId>(INVALID_ADDRESS_VALUE), chForA);
 	}
 
-	return static_cast<ProtocolId>(INVALID_ADDRESS_VALUE);
+	return std::make_pair(static_cast<ProtocolId>(INVALID_ADDRESS_VALUE), static_cast<SourceId>(INVALID_ADDRESS_VALUE));
+}
+
+/**
+ * Method to get a mapped object addressing that represents the actual absolute object addressing without (de-)multiplexing offsets.
+ *
+ * @param PId		The id of the protocol that received the data
+ * @param msgData	The actual message value/content data
+ * @return	The protocol index the mapped value shall be sent to
+ */
+RemoteObjectAddressing Mux_nA_to_mB_withValFilter::GetMappedOriginAddressing(ProtocolId PId, const RemoteObjectMessageData& msgData)
+{
+	auto PIdAIter = std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId);
+	auto PIdBIter = std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId);
+	// if the protocol id is found to belong to a protocol of type A, handle it accordingly
+	if (PIdAIter != GetProtocolAIds().end())
+	{
+		jassert(msgData._addrVal._first <= m_protoChCntA);
+		auto protocolAIndex = PIdAIter - GetProtocolAIds().begin();
+		auto absChNr = static_cast<int>(protocolAIndex * m_protoChCntA) + msgData._addrVal._first;
+
+		return RemoteObjectAddressing(absChNr, msgData._addrVal._second);
+	}
+	// otherwise if the protocol id is found to belong to a protocol of type B, handle it accordingly as well
+	else if (PIdBIter != GetProtocolBIds().end())
+	{
+		jassert(msgData._addrVal._first <= m_protoChCntB);
+		auto protocolBIndex = PIdBIter - GetProtocolBIds().begin();
+		auto absChNr = static_cast<int>(protocolBIndex * m_protoChCntB) + msgData._addrVal._first;
+
+		return RemoteObjectAddressing(absChNr, msgData._addrVal._second);
+	}
+	// invalid return if the given protocol id is neither known as type a nor b
+	else
+	{
+		return RemoteObjectAddressing();
+	}
 }
