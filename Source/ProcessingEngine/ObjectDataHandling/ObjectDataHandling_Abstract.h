@@ -54,8 +54,8 @@ public:
 
 	ObjectHandlingMode GetMode();
 
-	void AddProtocolAId(ProtocolId PAId);
-	void AddProtocolBId(ProtocolId PBId);
+	virtual void AddProtocolAId(ProtocolId PAId);
+	virtual void AddProtocolBId(ProtocolId PBId);
 	void ClearProtocolIds();
 
 	//==============================================================================

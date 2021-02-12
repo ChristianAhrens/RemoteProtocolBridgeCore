@@ -73,6 +73,7 @@ public:
 		INPUTDEVICE,
 		OUTPUTDEVICE,
 		DATAPRECISION,
+		FAILOVERTIME,
 	};
 	static String getTagName(TagID Id)
 	{
@@ -122,6 +123,8 @@ public:
 			return "OutputDevice";
 		case DATAPRECISION:
 			return "DataPrecision";
+		case FAILOVERTIME:
+			return "FailoverTime";
 		default:
 			return "INVALID";
 		}

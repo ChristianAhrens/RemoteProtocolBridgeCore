@@ -96,6 +96,7 @@ enum ObjectHandlingMode
     OHM_Forward_A_to_B_only,        /**< Data filtering mode to only pass on values from Role A to B protocols. */
     OHM_Reverse_B_to_A_only,        /**< Data filtering mode to only pass on values from Role B to A protocols. */
 	OHM_Mux_nA_to_mB_withValFilter,	/**< Data multiplexing mode from n channel typeA protocols to m channel typeB protocols, combined with filtering to only forward value changes. */
+	OHM_Mirror_dualA_withValFilter,	/**< Data mirroring mode inbetween two typeA protocols and forwarding value changes to typeB protocols. */
 	OHM_UserMAX						/**< Value to mark enum max; For iteration purpose. */
 };
 

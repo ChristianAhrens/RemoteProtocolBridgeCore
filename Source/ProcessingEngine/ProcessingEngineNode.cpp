@@ -45,6 +45,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ObjectDataHandling/Forward_A_to_B_only/Forward_A_to_B_only.h"
 #include "ObjectDataHandling/Reverse_B_to_A_only/Reverse_B_to_A_only.h"
 #include "ObjectDataHandling/Mux_nA_to_mB_withValFilter/Mux_nA_to_mB_withValFilter.h"
+#include "ObjectDataHandling/Mirror_dualA_withValFilter/Mirror_dualA_withValFilter.h"
 
 #include "ProtocolProcessor/OCAProtocolProcessor/OCAProtocolProcessor.h"
 #include "ProtocolProcessor/OSCProtocolProcessor/OSCProtocolProcessor.h"
@@ -404,6 +405,8 @@ ObjectDataHandling_Abstract* ProcessingEngineNode::CreateObjectDataHandling(Obje
 		return new DS100_DeviceSimulation(this);
 	case OHM_Mux_nA_to_mB_withValFilter:
 		return new Mux_nA_to_mB_withValFilter(this);
+	case OHM_Mirror_dualA_withValFilter:
+		return new Mirror_dualA_withValFilter(this);
 	case OHM_Invalid:
 	default:
 		return nullptr;
