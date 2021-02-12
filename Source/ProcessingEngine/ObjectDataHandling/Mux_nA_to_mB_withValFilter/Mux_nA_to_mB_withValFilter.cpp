@@ -119,15 +119,18 @@ bool Mux_nA_to_mB_withValFilter::OnReceivedMessageFromProtocol(ProtocolId PId, R
 		return false;
 
 	// check for changed value based on mapped addressing and target protocol id before forwarding data
-	auto targetProtoSrc = GetTargetProtocolAndSource(PId, msgData);
+	auto targetProtoSrc = GetTargetProtocolsAndSource(PId, msgData);
 	auto mappedOrigAddr = GetMappedOriginAddressing(PId, msgData);
-	auto targetProtoValid = targetProtoSrc.first != INVALID_ADDRESS_VALUE;
+	auto targetProtoValid = !targetProtoSrc.first.empty();
 
 	if (targetProtoValid && IsChangedDataValue(Id, mappedOrigAddr, msgData))
 	{
 		// finally before forwarding data, the target channel has to be adjusted according to what we determined beforehand to be the correct mapped channel for target protocol
 		msgData._addrVal._first = targetProtoSrc.second;
-		return parentNode->SendMessageTo(targetProtoSrc.first, Id, msgData);
+		auto sendSuccess = true;
+		for (auto const& targetPId : targetProtoSrc.first)
+			sendSuccess &= parentNode->SendMessageTo(targetPId, Id, msgData);
+		return sendSuccess;
 	}
 	else
 		return false;
@@ -138,9 +141,9 @@ bool Mux_nA_to_mB_withValFilter::OnReceivedMessageFromProtocol(ProtocolId PId, R
  *
  * @param PId		The id of the protocol that received the data
  * @param msgData	The actual message value/content data
- * @return	The protocol index the mapped value shall be sent to
+ * @return			The protocol indexes the mapped value shall be sent to and the mapped source id to use when sending the data to the protocols
  */
-std::pair<ProtocolId, SourceId> Mux_nA_to_mB_withValFilter::GetTargetProtocolAndSource(ProtocolId PId, const RemoteObjectMessageData &msgData)
+std::pair<std::vector<ProtocolId>, SourceId> Mux_nA_to_mB_withValFilter::GetTargetProtocolsAndSource(ProtocolId PId, const RemoteObjectMessageData &msgData)
 {
 	auto PIdAIter = std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId);
 	auto PIdBIter = std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId);
@@ -149,15 +152,12 @@ std::pair<ProtocolId, SourceId> Mux_nA_to_mB_withValFilter::GetTargetProtocolAnd
 		jassert(msgData._addrVal._first <= m_protoChCntA);
 		auto protocolAIndex = PIdAIter - GetProtocolAIds().begin();
 		auto absChNr		= static_cast<int>(protocolAIndex * m_protoChCntA) + msgData._addrVal._first;
-		auto protocolBIndex = absChNr / (m_protoChCntB + 1);
 		auto chForB	   = static_cast<std::int32_t>(absChNr % m_protoChCntB);
 		if(chForB == 0)
 			chForB = static_cast<std::int32_t>(m_protoChCntB);
 
-		if(GetProtocolBIds().size() >= protocolBIndex + 1)
-			return std::make_pair(GetProtocolBIds()[protocolBIndex], chForB);
-		else
-			return std::make_pair(static_cast<ProtocolId>(INVALID_ADDRESS_VALUE), chForB);
+		// return all typeB protocols
+		return std::make_pair(GetProtocolBIds(), chForB);
 	}
 	else if (PIdBIter != GetProtocolBIds().end())
 	{
@@ -169,13 +169,14 @@ std::pair<ProtocolId, SourceId> Mux_nA_to_mB_withValFilter::GetTargetProtocolAnd
 		if(chForA == 0)
 			chForA = static_cast<std::int32_t>(m_protoChCntA);
 
+		// return the single typeA protocol the message from typeB can be demultiplexed to combined with the determined channel for the typeA protocol
 		if(GetProtocolAIds().size() >= protocolAIndex + 1)
-			return std::make_pair(GetProtocolAIds()[protocolAIndex], chForA);
+			return std::make_pair(std::vector<ProtocolId>{ GetProtocolAIds()[protocolAIndex] }, chForA);
 		else
-			return std::make_pair(static_cast<ProtocolId>(INVALID_ADDRESS_VALUE), chForA);
+			return std::make_pair(std::vector<ProtocolId>(), chForA);
 	}
 
-	return std::make_pair(static_cast<ProtocolId>(INVALID_ADDRESS_VALUE), static_cast<SourceId>(INVALID_ADDRESS_VALUE));
+	return std::make_pair(std::vector<ProtocolId>(), static_cast<SourceId>(INVALID_ADDRESS_VALUE));
 }
 
 /**
