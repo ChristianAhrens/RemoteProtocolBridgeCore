@@ -411,6 +411,18 @@ ObjectDataHandling_Abstract* ProcessingEngineNode::CreateObjectDataHandling(Obje
 }
 
 /**
+ * Convenience method to externally access object data handling.
+ * This is meant to be used to be able to access custom data handling objects that allow
+ * specialized interaction, e.g. visualization data interfacing.
+ * 
+ * @return	The object data hadnling object pointer or nullptr if none exists.
+ */
+ObjectDataHandling_Abstract* ProcessingEngineNode::GetObjectDataHandling()
+{
+	return m_dataHandling.get();
+}
+
+/**
  * Method to handle incoming message data from the processing protocol objects (they are members of the node object).
  * This is achieved by the member processing protocol objects accessing their parent with this handling method.
  *
