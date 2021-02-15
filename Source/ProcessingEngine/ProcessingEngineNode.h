@@ -195,6 +195,9 @@ public:
 	//==============================================================================
 	void run() override;
 
+	//==============================================================================
+	ObjectDataHandling_Abstract* GetObjectDataHandling();
+
 protected:
 	/**
 	 * Embedded class to safely handle message en-/dequeueing 

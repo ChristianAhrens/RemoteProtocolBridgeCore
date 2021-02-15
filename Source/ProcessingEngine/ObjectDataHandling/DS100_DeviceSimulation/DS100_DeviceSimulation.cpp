@@ -502,6 +502,9 @@ void DS100_DeviceSimulation::SetDataValue(const ProtocolId PId, const RemoteObje
 		m_currentValues.at(Id).insert(std::make_pair(msgData._addrVal, newMsgData));
 		m_currentValues.at(Id).at(msgData._addrVal).payloadCopy(newMsgData);
 	}
+
+	// notify all registered listeners
+	notifyListeners();
 }
 
 /**
@@ -599,6 +602,9 @@ void DS100_DeviceSimulation::UpdateDataValues()
 			}
 		}
 	}
+
+	// notify all registered listeners
+	notifyListeners();
 }
 
 /**
@@ -607,4 +613,25 @@ void DS100_DeviceSimulation::UpdateDataValues()
 void DS100_DeviceSimulation::timerThreadCallback()
 {
 	UpdateDataValues();
+}
+
+void DS100_DeviceSimulation::addListener(DS100_DeviceSimulation_Listener* listener)
+{
+	m_simulationListeners.push_back(listener);
+}
+
+void DS100_DeviceSimulation::removeListener(DS100_DeviceSimulation_Listener* listener)
+{
+	auto listenerIter = std::find(m_simulationListeners.begin(), m_simulationListeners.end(), listener);
+	if (listenerIter != m_simulationListeners.end())
+		m_simulationListeners.erase(listenerIter);
+}
+
+void DS100_DeviceSimulation::notifyListeners()
+{
+	for (auto const& listener : m_simulationListeners)
+	{
+		ScopedLock l(m_currentValLock);
+		listener->addSimulationUpdate(m_currentValues);
+	}
 }
