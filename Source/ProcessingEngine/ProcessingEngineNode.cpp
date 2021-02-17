@@ -223,6 +223,7 @@ bool ProcessingEngineNode::setStateXml(XmlElement* stateXml)
 	}
 
 	std::vector<int> protocolIdsInNewConfig;
+	// this relies on the first protocol xml element being of type A - if the first is of typeB, it will be lost...
 	XmlElement* protocolXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::PROTOCOLA));
 	while (protocolXmlElement != nullptr)
 	{
@@ -305,10 +306,28 @@ bool ProcessingEngineNode::setStateXml(XmlElement* stateXml)
 				retVal = false;
 		}
 
-		auto nextProtocolXmlElement = protocolXmlElement->getNextElementWithTagName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::PROTOCOLA));
-		if(nextProtocolXmlElement == nullptr)
-			nextProtocolXmlElement = protocolXmlElement->getNextElementWithTagName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::PROTOCOLB));
-		protocolXmlElement = nextProtocolXmlElement;
+		// now search the next type A or B protocol xml element for next loop
+		auto nextProtocolXmlElement = protocolXmlElement->getNextElement();
+		protocolXmlElement = nullptr;
+		while (nextProtocolXmlElement)
+		{
+			if (nextProtocolXmlElement == nullptr)
+			{
+				break;
+			}
+			if (nextProtocolXmlElement->getTagName() == ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::PROTOCOLA))
+			{
+				protocolXmlElement = nextProtocolXmlElement;
+				break;
+			}
+			else if (nextProtocolXmlElement->getTagName() == ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::PROTOCOLB))
+			{
+				protocolXmlElement = nextProtocolXmlElement;
+				break;
+			}
+
+			nextProtocolXmlElement = nextProtocolXmlElement->getNextElement();
+		}
 	}
 
 	// cleanup no longer used protocols
@@ -389,6 +408,18 @@ ObjectDataHandling_Abstract* ProcessingEngineNode::CreateObjectDataHandling(Obje
 	default:
 		return nullptr;
 	}
+}
+
+/**
+ * Convenience method to externally access object data handling.
+ * This is meant to be used to be able to access custom data handling objects that allow
+ * specialized interaction, e.g. visualization data interfacing.
+ * 
+ * @return	The object data hadnling object pointer or nullptr if none exists.
+ */
+ObjectDataHandling_Abstract* ProcessingEngineNode::GetObjectDataHandling()
+{
+	return m_dataHandling.get();
 }
 
 /**

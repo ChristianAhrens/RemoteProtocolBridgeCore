@@ -57,8 +57,8 @@ public:
 	bool OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier Id, RemoteObjectMessageData& msgData) override;
 
 protected:
-	bool IsChangedDataValue(const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData);
-	void SetCurrentDataValue(const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData);
+	bool IsChangedDataValue(const RemoteObjectIdentifier Id, const RemoteObjectAddressing& roAddr, const RemoteObjectMessageData& msgData, bool setAsNewCurrentData = true);
+	void SetCurrentDataValue(const RemoteObjectIdentifier Id, const RemoteObjectAddressing& roAddr, const RemoteObjectMessageData& msgData);
 
 	float GetPrecision();
 	void SetPrecision(float precision);
