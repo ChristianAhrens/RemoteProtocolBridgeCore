@@ -46,8 +46,76 @@ class ProcessingEngineNode;
 /**
  * Class ObjectDataHandling_Abstract is an abstract interfacing base class for .
  */
-class ObjectDataHandling_Abstract : ProcessingEngineConfig::XmlConfigurableElement
+class ObjectDataHandling_Abstract : public ProcessingEngineConfig::XmlConfigurableElement
 {
+public:
+	/**
+	 * Enum that describes the different
+	 * status a ObjectHandling instance can
+	 * notify registered listners of.
+	 */
+	enum ObjectHandlingStatus
+	{
+		OHS_Invalid,
+		OHS_Protocol_Up,
+		OHS_Protocol_Down,
+		OHS_Protocol_Fail,
+		OHS_Protocol_PromotedPrimary,
+		OHS_Protocol_DegradedSecondary,
+	};
+
+	class StatusListener : private MessageListener
+	{
+	public:
+		/**
+		 * Implementation of a protocol status message to use with JUCE's message queue.
+		 */
+		struct StatusCallbackMessage : public Message
+		{
+			/**
+			 * Constructor with default initialization.
+			 * @param id		The protocol id this status message refers to
+			 * @param status	The status enum value that this message transports
+			 */
+			StatusCallbackMessage(ProtocolId id, ObjectHandlingStatus status) :
+				_protocolId(id), _status(status) {};
+
+			/**
+			 * Destructor.
+			 */
+			virtual ~StatusCallbackMessage() override {};
+
+			ProtocolId				_protocolId;
+			ObjectHandlingStatus	_status;
+		};
+
+	public:
+		/**
+		 * Convenience method to be used by derived classes to publish
+		 * status updates through std::function callback, if it is valid
+		 * @param	id		The protocol id of the protocol that had changes
+		 * @param	status	The new status for the protocol that changed
+		 * @return	True if change was published successfully, false if not
+		 */
+		void SetChangedProtocolStatus(ProtocolId id, ObjectHandlingStatus status)
+		{
+			postMessage(std::make_unique<StatusCallbackMessage>(id, status).release());
+		}
+
+		/**
+		 * Reimplmented from MessageListener.
+		 * @param msg	The message data to handle.
+		 */
+		void handleMessage(const Message& msg)
+		{
+			if (auto* statusMessage = dynamic_cast<const StatusCallbackMessage*> (&msg))
+				protocolStatusChanged(statusMessage->_protocolId, statusMessage->_status);
+		}
+
+		//==============================================================================
+		virtual void protocolStatusChanged(ProtocolId id, ObjectHandlingStatus status) = 0;
+	};
+
 public:
 	ObjectDataHandling_Abstract(ProcessingEngineNode* parentNode);
 	virtual ~ObjectDataHandling_Abstract();
@@ -57,6 +125,10 @@ public:
 	virtual void AddProtocolAId(ProtocolId PAId);
 	virtual void AddProtocolBId(ProtocolId PBId);
 	void ClearProtocolIds();
+
+	//==============================================================================
+	void AddStatusListener(StatusListener* listener);
+	void RemoveStatusListener(StatusListener* listener);
 
 	//==============================================================================
 	virtual bool OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier Id, RemoteObjectMessageData& msgData) = 0;
@@ -71,12 +143,15 @@ protected:
 	NodeId							GetParentNodeId();
 	const std::vector<ProtocolId>&	GetProtocolAIds();
 	const std::vector<ProtocolId>&	GetProtocolBIds();
+	void							SetChangedProtocolStatus(ProtocolId id, ObjectHandlingStatus status);
 
 private:
-	ProcessingEngineNode*		m_parentNode;			/**< The parent node object. Needed for e.g. triggering receive notifications. */
-	ObjectHandlingMode			m_mode;					/**< Mode identifier enabling resolving derived instance type. */
-	NodeId						m_parentNodeId;			/**< The id of the objects' parent node. */
-	std::vector<ProtocolId>		m_protocolAIds;			/**< Id list of protocols of type A that is active for the node and this handling module therefor. */
-	std::vector<ProtocolId>		m_protocolBIds;			/**< Id list of protocols of type B that is active for the node and this handling module therefor. */
+	ProcessingEngineNode*			m_parentNode;		/**< The parent node object. Needed for e.g. triggering receive notifications. */
+	ObjectHandlingMode				m_mode;				/**< Mode identifier enabling resolving derived instance type. */
+	NodeId							m_parentNodeId;		/**< The id of the objects' parent node. */
+	std::vector<ProtocolId>			m_protocolAIds;		/**< Id list of protocols of type A that is active for the node and this handling module therefor. */
+	std::vector<ProtocolId>			m_protocolBIds;		/**< Id list of protocols of type B that is active for the node and this handling module therefor. */
+
+	std::vector<StatusListener*>	m_statusListeners;	/**< The list of objects that are registered to be notified on internal status changes. */
 
 };

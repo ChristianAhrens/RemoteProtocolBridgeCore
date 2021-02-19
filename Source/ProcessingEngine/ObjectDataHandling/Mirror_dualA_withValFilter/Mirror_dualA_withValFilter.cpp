@@ -126,7 +126,7 @@ bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(ProtocolId PId, R
 	// check the incoming data regarding value change to then forward and if required mirror it to other protocols
 	if (IsChangedDataValue(Id, msgData._addrVal, msgData))
 	{
-		// data mirroring is only done for typeA protocols
+		// data mirroring is only done inbetween typeA protocols
 		if (isProtocolTypeA)
 			MirrorDataIfRequired(PId, Id, msgData);
 
@@ -166,7 +166,13 @@ bool Mirror_dualA_withValFilter::MirrorDataIfRequired(ProtocolId PId, RemoteObje
 	{
 		auto masterStaleTime = Time::getMillisecondCounterHiRes() - m_lastProtocolAReactionTSMap.at(m_currentMaster);
 		if (masterStaleTime > m_failoverTime)
+		{
+			SetChangedProtocolStatus(m_currentMaster, OHS_Protocol_Down);
+			SetChangedProtocolStatus(m_currentMaster, OHS_Protocol_DegradedSecondary);
+			SetChangedProtocolStatus(m_currentSlave, OHS_Protocol_Up);
+			SetChangedProtocolStatus(m_currentSlave, OHS_Protocol_PromotedPrimary);
 			std::swap(m_currentMaster, m_currentSlave);
+		}
 	}
 	
 	// send values received from master to slave

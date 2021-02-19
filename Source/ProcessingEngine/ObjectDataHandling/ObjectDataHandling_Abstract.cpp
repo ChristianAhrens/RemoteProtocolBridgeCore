@@ -117,6 +117,7 @@ void ObjectDataHandling_Abstract::ClearProtocolIds()
 {
 	m_protocolAIds.clear();
 }
+
 /**
  * Getter for the parentNode member.
  * @return The parentNode pointer, can be nullptr.
@@ -170,3 +171,37 @@ const std::vector<ProtocolId>& ObjectDataHandling_Abstract::GetProtocolBIds()
 {
 	return m_protocolBIds;
 }
+
+/**
+ * Method to distribute a changed protocol status to all registered listeners.
+ * @param	id		The id of the protocol the status change refers to.
+ * @param	status	The changed status enum value.
+ */
+void ObjectDataHandling_Abstract::SetChangedProtocolStatus(ProtocolId id, ObjectHandlingStatus status)
+{
+	for (auto const& listener : m_statusListeners)
+		listener->SetChangedProtocolStatus(id, status);
+}
+
+/**
+ * Adds an object derived from embedded statuslistener class
+ * to internal list of listener objects.
+ * @param	listener	The listener object to add.
+ */
+void ObjectDataHandling_Abstract::AddStatusListener(StatusListener* listener)
+{
+	m_statusListeners.push_back(listener);
+}
+
+/**
+ * Removes an object derived from embedded statuslistener class
+ * from internal list of listener objects.
+ * @param	listener	The listener object to add.
+ */
+void ObjectDataHandling_Abstract::RemoveStatusListener(StatusListener* listener)
+{
+	auto listenerIter = std::find(m_statusListeners.begin(), m_statusListeners.end(), listener);
+	if (listenerIter != m_statusListeners.end())
+		m_statusListeners.erase(listenerIter);
+}
+
