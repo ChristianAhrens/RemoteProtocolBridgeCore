@@ -120,12 +120,19 @@ public:
 			else
 				return m_currentStatusMap.at(id);
 		}
+		/**
+		 * Method to clear all hashed status entries.
+		 */
+		void ClearProtocolStatus()
+		{
+			m_currentStatusMap.clear();
+		}
 
 		/**
 		 * Reimplmented from MessageListener.
 		 * @param msg	The message data to handle.
 		 */
-		void handleMessage(const Message& msg)
+		void handleMessage(const Message& msg) override
 		{
 			if (auto* statusMessage = dynamic_cast<const StatusCallbackMessage*> (&msg))
 				protocolStatusChanged(statusMessage->_protocolId, statusMessage->_status);

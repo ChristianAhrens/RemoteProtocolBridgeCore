@@ -67,6 +67,10 @@ ObjectDataHandling_Abstract::ObjectDataHandling_Abstract(ProcessingEngineNode* p
  */
 ObjectDataHandling_Abstract::~ObjectDataHandling_Abstract()
 {
+	for (auto const& listener : m_statusListeners)
+	{
+		listener->ClearProtocolStatus();
+	}
 }
 
 /**
