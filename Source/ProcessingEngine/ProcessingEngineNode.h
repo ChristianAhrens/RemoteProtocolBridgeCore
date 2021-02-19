@@ -176,6 +176,7 @@ public:
 	void AddListener(ProcessingEngineNode::NodeListener* listener);
 
 	NodeId GetId();
+	Thread::ThreadID GetNodeThreadId();
 
 	bool SendMessageTo(ProtocolId PId, RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData) const;
 

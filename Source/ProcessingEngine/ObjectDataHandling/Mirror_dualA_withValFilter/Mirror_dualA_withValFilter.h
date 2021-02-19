@@ -50,6 +50,5 @@ private:
 
 	ProtocolId						m_currentMaster;				/**< Protocol Id of the protocol currently handled as master. */
 	ProtocolId						m_currentSlave;					/**< Protocol Id of the protocol currently handled as slave. */
-	double							m_failoverTime;					/**< Time in ms that is interpreded as threshold to failover to other protocol. */
 
 };

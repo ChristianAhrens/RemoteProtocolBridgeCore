@@ -106,6 +106,16 @@ NodeId ProcessingEngineNode::GetId()
 }
 
 /**
+ * Getter for the id of the thread this node object instance is using.
+ * 
+ * @return	The thread id of this node object instance.
+ */
+Thread::ThreadID ProcessingEngineNode::GetNodeThreadId()
+{
+	return getThreadId();
+}
+
+/**
  * Starts the node object and therefor the internal protocol processing objects as well.
  *
  * @return	True if both internal processing objects have been started successfully. False if not.
@@ -216,7 +226,8 @@ bool ProcessingEngineNode::setStateXml(XmlElement* stateXml)
 	auto objectHandlingStateXml = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::OBJECTHANDLING));
 	if (objectHandlingStateXml)
 	{
-		m_dataHandling = std::unique_ptr<ObjectDataHandling_Abstract>(CreateObjectDataHandling(ProcessingEngineConfig::ObjectHandlingModeFromString(objectHandlingStateXml->getStringAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::MODE)))));
+		auto &ohmName = objectHandlingStateXml->getStringAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::MODE));
+		m_dataHandling = std::unique_ptr<ObjectDataHandling_Abstract>(CreateObjectDataHandling(ProcessingEngineConfig::ObjectHandlingModeFromString(ohmName)));
 		if (m_dataHandling)
 			m_dataHandling->setStateXml(objectHandlingStateXml);
 		else

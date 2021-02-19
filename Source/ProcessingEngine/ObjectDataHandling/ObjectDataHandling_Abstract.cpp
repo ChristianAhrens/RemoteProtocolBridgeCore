@@ -59,6 +59,7 @@ ObjectDataHandling_Abstract::ObjectDataHandling_Abstract(ProcessingEngineNode* p
 {
 	m_parentNode = parentNode;
 	m_mode = ObjectHandlingMode::OHM_Invalid;
+	m_protocolReactionTimeout = 1000;
 }
 
 /**
@@ -86,8 +87,10 @@ bool ObjectDataHandling_Abstract::setStateXml(XmlElement* stateXml)
 {
 	if (!stateXml || stateXml->getTagName() != ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::OBJECTHANDLING))
 		return false;
-	else
-		return true;
+	
+	startTimer(static_cast<int>(m_protocolReactionTimeout));
+
+	return true;
 }
 
 /**
@@ -98,6 +101,7 @@ bool ObjectDataHandling_Abstract::setStateXml(XmlElement* stateXml)
 void ObjectDataHandling_Abstract::AddProtocolAId(ProtocolId PAId)
 {
 	m_protocolAIds.push_back(PAId);
+	SetChangedProtocolStatus(PAId, ObjectHandlingStatus::OHS_Protocol_Down);
 }
 
 /**
@@ -108,14 +112,38 @@ void ObjectDataHandling_Abstract::AddProtocolAId(ProtocolId PAId)
 void ObjectDataHandling_Abstract::AddProtocolBId(ProtocolId PBId)
 {
 	m_protocolBIds.push_back(PBId);
+	SetChangedProtocolStatus(PBId, ObjectHandlingStatus::OHS_Protocol_Down);
 }
 
 /**
- * Method to clear internal lists of both typeA and typeB protocolIds
+ * Method to clear internal lists of both typeA and typeB protocolIds.
+ * Also clears the map of last-seen-active timestamps per protocol.
  */
 void ObjectDataHandling_Abstract::ClearProtocolIds()
 {
 	m_protocolAIds.clear();
+	m_protocolBIds.clear();
+
+	ScopedLock	tsAccessLock(m_protocolReactionTSLock);
+	m_protocolReactionTSMap.clear();
+}
+
+/**
+ * Setter for the protocol reaction timeout value member.
+ * @param	timeout		The new value to set as reaction timeout (ms)
+ */
+void ObjectDataHandling_Abstract::SetProtocolReactionTimeout(double timeout)
+{
+	m_protocolReactionTimeout = timeout;
+}
+
+/**
+ * Getter for the protocol reaction timeout value member.
+ * @return	The current value for reaction timeout (ms)
+ */
+double ObjectDataHandling_Abstract::GetProtocolReactionTimeout()
+{
+	return m_protocolReactionTimeout;
 }
 
 /**
@@ -180,7 +208,9 @@ const std::vector<ProtocolId>& ObjectDataHandling_Abstract::GetProtocolBIds()
 void ObjectDataHandling_Abstract::SetChangedProtocolStatus(ProtocolId id, ObjectHandlingStatus status)
 {
 	for (auto const& listener : m_statusListeners)
+	{
 		listener->SetChangedProtocolStatus(id, status);
+	}
 }
 
 /**
@@ -188,7 +218,7 @@ void ObjectDataHandling_Abstract::SetChangedProtocolStatus(ProtocolId id, Object
  * to internal list of listener objects.
  * @param	listener	The listener object to add.
  */
-void ObjectDataHandling_Abstract::AddStatusListener(StatusListener* listener)
+void ObjectDataHandling_Abstract::AddStatusListener(ObjectDataHandling_Abstract::StatusListener* listener)
 {
 	m_statusListeners.push_back(listener);
 }
@@ -198,11 +228,39 @@ void ObjectDataHandling_Abstract::AddStatusListener(StatusListener* listener)
  * from internal list of listener objects.
  * @param	listener	The listener object to add.
  */
-void ObjectDataHandling_Abstract::RemoveStatusListener(StatusListener* listener)
+void ObjectDataHandling_Abstract::RemoveStatusListener(ObjectDataHandling_Abstract::StatusListener* listener)
 {
 	auto listenerIter = std::find(m_statusListeners.begin(), m_statusListeners.end(), listener);
 	if (listenerIter != m_statusListeners.end())
 		m_statusListeners.erase(listenerIter);
+}
+
+/**
+ * Reimplemented from Timer to update the status of all active protocols.
+ * Currently this implementation only takes care of online status based on TS map.
+ */
+void ObjectDataHandling_Abstract::timerCallback()
+{
+	for (auto const& id : GetProtocolAIds())
+	{
+		ScopedLock	tsAccessLock(m_protocolReactionTSLock);
+		// if the protocol is not present in map, continue
+		if (m_protocolReactionTSMap.count(id) <= 0)
+			continue;
+		// if the protocol has not received data in more than what is specified in timeouttime, set it to down
+		else if (Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(id) > m_protocolReactionTimeout)
+			SetChangedProtocolStatus(id, OHS_Protocol_Down);
+	}
+	for (auto const& id : GetProtocolBIds())
+	{
+		ScopedLock	tsAccessLock(m_protocolReactionTSLock);
+		// if the protocol is not present in map, continue
+		if (m_protocolReactionTSMap.count(id) <= 0)
+			continue;
+		// if the protocol has not received data in more than what is specified in timeouttime, set it to down
+		else if (Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(id) > m_protocolReactionTimeout)
+			SetChangedProtocolStatus(id, OHS_Protocol_Down);
+	}
 }
 
 /**
@@ -212,14 +270,16 @@ void ObjectDataHandling_Abstract::RemoveStatusListener(StatusListener* listener)
  */
 void ObjectDataHandling_Abstract::UpdateOnlineState(ProtocolId id)
 {
+	ScopedLock	tsAccessLock(m_protocolReactionTSLock);
+
 	// if the protocol is not present in map and therefor seems to have initially received data, set its status to UP
-	if (m_lastProtocolReactionTSMap.count(id) <= 0)
+	if (m_protocolReactionTSMap.count(id) <= 0)
 		SetChangedProtocolStatus(id, OHS_Protocol_Up);
 	// if the protocol is receiving data the first time after 1s of silence, set its status to UP
-	else if (Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(id) > 1000)
+	else if (Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(id) > m_protocolReactionTimeout)
 		SetChangedProtocolStatus(id, OHS_Protocol_Up);
 
-	m_lastProtocolReactionTSMap[id] = Time::getMillisecondCounterHiRes();
+	m_protocolReactionTSMap[id] = Time::getMillisecondCounterHiRes();
 }
 
 /**
@@ -228,6 +288,8 @@ void ObjectDataHandling_Abstract::UpdateOnlineState(ProtocolId id)
  */
 const std::map<ProtocolId, double>& ObjectDataHandling_Abstract::GetLastProtocolReactionTSMap()
 {
-	return m_lastProtocolReactionTSMap;
+	// no locking of m_lastProtocolReactionTSLock here, since this supposed to only be called from the node processing thread
+
+	return m_protocolReactionTSMap;
 }
 

@@ -46,7 +46,8 @@ class ProcessingEngineNode;
 /**
  * Class ObjectDataHandling_Abstract is an abstract interfacing base class for .
  */
-class ObjectDataHandling_Abstract : public ProcessingEngineConfig::XmlConfigurableElement
+class ObjectDataHandling_Abstract : public ProcessingEngineConfig::XmlConfigurableElement,
+	public Timer
 {
 public:
 	/**
@@ -126,6 +127,9 @@ public:
 	virtual void AddProtocolBId(ProtocolId PBId);
 	void ClearProtocolIds();
 
+	void SetProtocolReactionTimeout(double timeout);
+	double GetProtocolReactionTimeout();
+
 	//==============================================================================
 	void AddStatusListener(StatusListener* listener);
 	void RemoveStatusListener(StatusListener* listener);
@@ -137,24 +141,30 @@ public:
 	virtual std::unique_ptr<XmlElement> createStateXml() override;
 	virtual bool setStateXml(XmlElement* stateXml) override;
 
+	//==============================================================================
+	void timerCallback() override;
+
 protected:
-	const ProcessingEngineNode*		GetParentNode();
-	void							SetMode(ObjectHandlingMode mode);
-	NodeId							GetParentNodeId();
-	const std::vector<ProtocolId>&	GetProtocolAIds();
-	const std::vector<ProtocolId>&	GetProtocolBIds();
-	void							SetChangedProtocolStatus(ProtocolId id, ObjectHandlingStatus status);
-	void							UpdateOnlineState(ProtocolId id);
+	const ProcessingEngineNode*			GetParentNode();
+	void								SetMode(ObjectHandlingMode mode);
+	NodeId								GetParentNodeId();
+	const std::vector<ProtocolId>&		GetProtocolAIds();
+	const std::vector<ProtocolId>&		GetProtocolBIds();
+	void								SetChangedProtocolStatus(ProtocolId id, ObjectHandlingStatus status);
+	void								UpdateOnlineState(ProtocolId id);
 	const std::map<ProtocolId, double>&	GetLastProtocolReactionTSMap();
 
 private:
-	ProcessingEngineNode*			m_parentNode;		/**< The parent node object. Needed for e.g. triggering receive notifications. */
-	ObjectHandlingMode				m_mode;				/**< Mode identifier enabling resolving derived instance type. */
-	NodeId							m_parentNodeId;		/**< The id of the objects' parent node. */
-	std::vector<ProtocolId>			m_protocolAIds;		/**< Id list of protocols of type A that is active for the node and this handling module therefor. */
-	std::vector<ProtocolId>			m_protocolBIds;		/**< Id list of protocols of type B that is active for the node and this handling module therefor. */
+	ProcessingEngineNode*				m_parentNode;		/**< The parent node object. Needed for e.g. triggering receive notifications. */
+	ObjectHandlingMode					m_mode;				/**< Mode identifier enabling resolving derived instance type. */
+	NodeId								m_parentNodeId;		/**< The id of the objects' parent node. */
+	std::vector<ProtocolId>				m_protocolAIds;		/**< Id list of protocols of type A that is active for the node and this handling module therefor. */
+	std::vector<ProtocolId>				m_protocolBIds;		/**< Id list of protocols of type B that is active for the node and this handling module therefor. */
 
-	std::map<ProtocolId, double>	m_lastProtocolReactionTSMap;	/**< Map of protocols and their last-seen-active TimeStamps. */
-	std::vector<StatusListener*>	m_statusListeners;				/**< The list of objects that are registered to be notified on internal status changes. */
+	CriticalSection						m_protocolReactionTSLock;	/**< Threadsafety measure, since timestamps are written from node processing thread while others might access them from event loop. */
+	std::map<ProtocolId, double>		m_protocolReactionTSMap;	/**< Map of protocols and their last-seen-active TimeStamps. */
+	double								m_protocolReactionTimeout;	/**< Timeout in ms when a protocol is regarded as down. */
+
+	std::vector<StatusListener*>		m_statusListeners;			/**< The list of objects that are registered to be notified on internal status changes. */
 
 };

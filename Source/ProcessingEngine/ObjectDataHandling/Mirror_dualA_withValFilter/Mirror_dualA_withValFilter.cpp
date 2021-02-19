@@ -38,7 +38,7 @@ Mirror_dualA_withValFilter::Mirror_dualA_withValFilter(ProcessingEngineNode* par
 	m_currentMaster = static_cast<ProtocolId>(INVALID_ADDRESS_VALUE);
 	m_currentSlave = static_cast<ProtocolId>(INVALID_ADDRESS_VALUE);
 	
-	m_failoverTime = 1000;
+	SetProtocolReactionTimeout(1000.0f);
 }
 
 /**
@@ -88,7 +88,7 @@ bool Mirror_dualA_withValFilter::setStateXml(XmlElement* stateXml)
 
 	auto protoFailoverTimeElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::FAILOVERTIME));
 	if (protoFailoverTimeElement)
-		m_failoverTime = protoFailoverTimeElement->getAllSubText().getDoubleValue();
+		SetProtocolReactionTimeout(protoFailoverTimeElement->getAllSubText().getDoubleValue());
 	else
 		return false;
 
@@ -163,7 +163,7 @@ bool Mirror_dualA_withValFilter::MirrorDataIfRequired(ProtocolId PId, RemoteObje
 	if (PId == m_currentSlave && GetLastProtocolReactionTSMap().count(m_currentMaster) > 0)
 	{
 		auto masterStaleTime = Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(m_currentMaster);
-		if (masterStaleTime > m_failoverTime)
+		if (masterStaleTime > GetProtocolReactionTimeout())
 		{
 			SetChangedProtocolStatus(m_currentMaster, OHS_Protocol_Down);
 			SetChangedProtocolStatus(m_currentMaster, OHS_Protocol_DegradedSecondary);
