@@ -144,6 +144,8 @@ protected:
 	const std::vector<ProtocolId>&	GetProtocolAIds();
 	const std::vector<ProtocolId>&	GetProtocolBIds();
 	void							SetChangedProtocolStatus(ProtocolId id, ObjectHandlingStatus status);
+	void							UpdateOnlineState(ProtocolId id);
+	const std::map<ProtocolId, double>&	GetLastProtocolReactionTSMap();
 
 private:
 	ProcessingEngineNode*			m_parentNode;		/**< The parent node object. Needed for e.g. triggering receive notifications. */
@@ -152,6 +154,7 @@ private:
 	std::vector<ProtocolId>			m_protocolAIds;		/**< Id list of protocols of type A that is active for the node and this handling module therefor. */
 	std::vector<ProtocolId>			m_protocolBIds;		/**< Id list of protocols of type B that is active for the node and this handling module therefor. */
 
-	std::vector<StatusListener*>	m_statusListeners;	/**< The list of objects that are registered to be notified on internal status changes. */
+	std::map<ProtocolId, double>	m_lastProtocolReactionTSMap;	/**< Map of protocols and their last-seen-active TimeStamps. */
+	std::vector<StatusListener*>	m_statusListeners;				/**< The list of objects that are registered to be notified on internal status changes. */
 
 };

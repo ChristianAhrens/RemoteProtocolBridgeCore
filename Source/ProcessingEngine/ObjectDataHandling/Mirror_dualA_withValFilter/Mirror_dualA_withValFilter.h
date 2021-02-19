@@ -48,7 +48,6 @@ protected:
 private:
 	bool MirrorDataIfRequired(ProtocolId PId, RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData);
 
-	std::map<ProtocolId, double>	m_lastProtocolAReactionTSMap;	/**< Map of protocols and their last-seen-active TimeStamps. */
 	ProtocolId						m_currentMaster;				/**< Protocol Id of the protocol currently handled as master. */
 	ProtocolId						m_currentSlave;					/**< Protocol Id of the protocol currently handled as slave. */
 	double							m_failoverTime;					/**< Time in ms that is interpreded as threshold to failover to other protocol. */

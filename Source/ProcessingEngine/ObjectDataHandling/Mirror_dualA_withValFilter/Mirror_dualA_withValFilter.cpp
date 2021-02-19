@@ -114,9 +114,7 @@ bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(ProtocolId PId, R
 	if (!mirrorConfigValid || !protocolIdValid)
 		return false;
 
-	// refresh the receive timestamp if a typeA protocol has received the data
-	if (isProtocolTypeA)
-		m_lastProtocolAReactionTSMap[PId] = Time::getMillisecondCounterHiRes();
+	UpdateOnlineState(PId);
 
 	// a valid parent node is required to be able to do anything with the received message
 	auto parentNode = ObjectDataHandling_Abstract::GetParentNode();
@@ -162,9 +160,9 @@ bool Mirror_dualA_withValFilter::MirrorDataIfRequired(ProtocolId PId, RemoteObje
 	}
 
 	// swap master and slave if the master has failed to react in the configured failover time
-	if (PId == m_currentSlave && m_lastProtocolAReactionTSMap.count(m_currentMaster) > 0)
+	if (PId == m_currentSlave && GetLastProtocolReactionTSMap().count(m_currentMaster) > 0)
 	{
-		auto masterStaleTime = Time::getMillisecondCounterHiRes() - m_lastProtocolAReactionTSMap.at(m_currentMaster);
+		auto masterStaleTime = Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(m_currentMaster);
 		if (masterStaleTime > m_failoverTime)
 		{
 			SetChangedProtocolStatus(m_currentMaster, OHS_Protocol_Down);

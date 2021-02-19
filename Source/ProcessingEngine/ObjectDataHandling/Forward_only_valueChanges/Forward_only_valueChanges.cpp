@@ -94,32 +94,34 @@ bool Forward_only_valueChanges::setStateXml(XmlElement* stateXml)
 bool Forward_only_valueChanges::OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier Id, RemoteObjectMessageData& msgData)
 {
 	const ProcessingEngineNode* parentNode = ObjectDataHandling_Abstract::GetParentNode();
-	if (parentNode)
+	if (!parentNode)
+		return false;
+	
+	UpdateOnlineState(PId);
+
+	if (!IsChangedDataValue(Id, msgData._addrVal, msgData))
+		return false;
+
+	if (std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) != GetProtocolAIds().end())
 	{
-		if (!IsChangedDataValue(Id, msgData._addrVal, msgData))
-			return false;
+		// Send to all typeB protocols
+		auto sendSuccess = true;
+		for (auto const& protocolB : GetProtocolBIds())
+			sendSuccess = sendSuccess && parentNode->SendMessageTo(protocolB, Id, msgData);
 
-		if (std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) != GetProtocolAIds().end())
-		{
-			// Send to all typeB protocols
-			auto sendSuccess = true;
-			for (auto const& protocolB : GetProtocolBIds())
-				sendSuccess = sendSuccess && parentNode->SendMessageTo(protocolB, Id, msgData);
-
-			return sendSuccess;
-		}
-		else if (std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) != GetProtocolBIds().end())
-		{
-			// Send to all typeA protocols
-			auto sendSuccess = true;
-			for (auto const& protocolA : GetProtocolAIds())
-				sendSuccess = sendSuccess && parentNode->SendMessageTo(protocolA, Id, msgData);
-
-			return sendSuccess;
-		}
+		return sendSuccess;
 	}
+	else if (std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) != GetProtocolBIds().end())
+	{
+		// Send to all typeA protocols
+		auto sendSuccess = true;
+		for (auto const& protocolA : GetProtocolAIds())
+			sendSuccess = sendSuccess && parentNode->SendMessageTo(protocolA, Id, msgData);
 
-	return false;
+		return sendSuccess;
+	}
+	else
+		return false;
 }
 
 /**

@@ -205,3 +205,29 @@ void ObjectDataHandling_Abstract::RemoveStatusListener(StatusListener* listener)
 		m_statusListeners.erase(listenerIter);
 }
 
+/**
+ * Method to update internal 'last seen' timestamp map for a given protocol.
+ * This also updates protocol status according to timestamping info.
+ * @param	id	The protocol to update the online state for
+ */
+void ObjectDataHandling_Abstract::UpdateOnlineState(ProtocolId id)
+{
+	// if the protocol is not present in map and therefor seems to have initially received data, set its status to UP
+	if (m_lastProtocolReactionTSMap.count(id) <= 0)
+		SetChangedProtocolStatus(id, OHS_Protocol_Up);
+	// if the protocol is receiving data the first time after 1s of silence, set its status to UP
+	else if (Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(id) > 1000)
+		SetChangedProtocolStatus(id, OHS_Protocol_Up);
+
+	m_lastProtocolReactionTSMap[id] = Time::getMillisecondCounterHiRes();
+}
+
+/**
+ * Getter for the internal hash of last-seen timestamps per protocol
+ * @return	The requested map reference
+ */
+const std::map<ProtocolId, double>& ObjectDataHandling_Abstract::GetLastProtocolReactionTSMap()
+{
+	return m_lastProtocolReactionTSMap;
+}
+
