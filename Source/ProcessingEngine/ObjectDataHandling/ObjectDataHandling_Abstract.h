@@ -92,15 +92,33 @@ public:
 
 	public:
 		/**
-		 * Convenience method to be used by derived classes to publish
-		 * status updates through std::function callback, if it is valid
+		 * Convenience method to be used by ObjectHandling classes to publish
+		 * status updates to listeners. This method internally stores the changed status
+		 * in a map and uses message queue to asynchronously notify the derived object
+		 * of changes.
 		 * @param	id		The protocol id of the protocol that had changes
 		 * @param	status	The new status for the protocol that changed
 		 * @return	True if change was published successfully, false if not
 		 */
 		void SetChangedProtocolStatus(ProtocolId id, ObjectHandlingStatus status)
 		{
-			postMessage(std::make_unique<StatusCallbackMessage>(id, status).release());
+			if (m_currentStatusMap.count(id) <= 0 || m_currentStatusMap.at(id) != status)
+			{
+				postMessage(std::make_unique<StatusCallbackMessage>(id, status).release());
+				m_currentStatusMap[id] = status;
+			}
+		}
+		/**
+		 * Getter for the internal status for a given protocol from the private member map.
+		 * @param	id	The protocol id to get the status for.
+		 * @return	The status for the given protocol id or Invalid of unknown.
+		 */
+		ObjectHandlingStatus GetProtocolStatus(ProtocolId id)
+		{
+			if (m_currentStatusMap.count(id) <= 0)
+				return OHS_Invalid;
+			else
+				return m_currentStatusMap.at(id);
 		}
 
 		/**
@@ -115,6 +133,9 @@ public:
 
 		//==============================================================================
 		virtual void protocolStatusChanged(ProtocolId id, ObjectHandlingStatus status) = 0;
+
+	private:
+		std::map<ProtocolId, ObjectHandlingStatus> m_currentStatusMap;
 	};
 
 public:
