@@ -227,8 +227,6 @@ void ObjectDataHandling_Abstract::SetChangedProtocolState(ProtocolId id, ObjectH
 
 		m_currentStateMap[id] |= state;
 
-		DBG(String(__FUNCTION__) + " new state (" + String(id) + "):" + String::toHexString(m_currentStateMap.at(id)));
-
 		for (auto const& listener : m_stateListeners)
 		{
 			listener->SetChangedProtocolState(id, m_currentStateMap.at(id));
