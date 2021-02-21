@@ -67,10 +67,6 @@ ObjectDataHandling_Abstract::ObjectDataHandling_Abstract(ProcessingEngineNode* p
  */
 ObjectDataHandling_Abstract::~ObjectDataHandling_Abstract()
 {
-	for (auto const& listener : m_statusListeners)
-	{
-		listener->ClearProtocolStatus();
-	}
 }
 
 /**
@@ -105,7 +101,7 @@ bool ObjectDataHandling_Abstract::setStateXml(XmlElement* stateXml)
 void ObjectDataHandling_Abstract::AddProtocolAId(ProtocolId PAId)
 {
 	m_protocolAIds.push_back(PAId);
-	SetChangedProtocolStatus(PAId, ObjectHandlingStatus::OHS_Protocol_Down);
+	SetChangedProtocolState(PAId, OHS_Protocol_Down);
 }
 
 /**
@@ -116,7 +112,7 @@ void ObjectDataHandling_Abstract::AddProtocolAId(ProtocolId PAId)
 void ObjectDataHandling_Abstract::AddProtocolBId(ProtocolId PBId)
 {
 	m_protocolBIds.push_back(PBId);
-	SetChangedProtocolStatus(PBId, ObjectHandlingStatus::OHS_Protocol_Down);
+	SetChangedProtocolState(PBId, OHS_Protocol_Down);
 }
 
 /**
@@ -127,6 +123,8 @@ void ObjectDataHandling_Abstract::ClearProtocolIds()
 {
 	m_protocolAIds.clear();
 	m_protocolBIds.clear();
+
+	m_currentStateMap.clear();
 
 	ScopedLock	tsAccessLock(m_protocolReactionTSLock);
 	m_protocolReactionTSMap.clear();
@@ -206,25 +204,46 @@ const std::vector<ProtocolId>& ObjectDataHandling_Abstract::GetProtocolBIds()
 
 /**
  * Method to distribute a changed protocol status to all registered listeners.
- * @param	id		The id of the protocol the status change refers to.
- * @param	status	The changed status enum value.
+ * @param	id		The id of the protocol the state change refers to.
+ * @param	state	The changed state value.
  */
-void ObjectDataHandling_Abstract::SetChangedProtocolStatus(ProtocolId id, ObjectHandlingStatus status)
+void ObjectDataHandling_Abstract::SetChangedProtocolState(ProtocolId id, ObjectHandlingState state)
 {
-	for (auto const& listener : m_statusListeners)
+	if (m_currentStateMap.count(id) <= 0 || m_currentStateMap.at(id) != state)
 	{
-		listener->SetChangedProtocolStatus(id, status);
+		// if new state includes down, remove up from hashed states
+		if ((state & OHS_Protocol_Down) == OHS_Protocol_Down)
+			m_currentStateMap[id] &= ~OHS_Protocol_Up;
+		// if new state includes up, remove down from hashed states
+		if ((state & OHS_Protocol_Up) == OHS_Protocol_Up)
+			m_currentStateMap[id] &= ~OHS_Protocol_Down;
+
+		// if new state includes master, remove slave from hashed states
+		if ((state & OHS_Protocol_Master) == OHS_Protocol_Master)
+			m_currentStateMap[id] &= ~OHS_Protocol_Slave;
+		// if new state includes slave, remove master from hashed states
+		if ((state & OHS_Protocol_Slave) == OHS_Protocol_Slave)
+			m_currentStateMap[id] &= ~OHS_Protocol_Master;
+
+		m_currentStateMap[id] |= state;
+
+		DBG(String(__FUNCTION__) + " new state (" + String(id) + "):" + String::toHexString(m_currentStateMap.at(id)));
+
+		for (auto const& listener : m_stateListeners)
+		{
+			listener->SetChangedProtocolState(id, m_currentStateMap.at(id));
+		}
 	}
 }
 
 /**
- * Adds an object derived from embedded statuslistener class
+ * Adds an object derived from embedded statelistener class
  * to internal list of listener objects.
  * @param	listener	The listener object to add.
  */
-void ObjectDataHandling_Abstract::AddStatusListener(ObjectDataHandling_Abstract::StatusListener* listener)
+void ObjectDataHandling_Abstract::AddStateListener(ObjectDataHandling_Abstract::StateListener* listener)
 {
-	m_statusListeners.push_back(listener);
+	m_stateListeners.push_back(listener);
 }
 
 /**
@@ -232,11 +251,24 @@ void ObjectDataHandling_Abstract::AddStatusListener(ObjectDataHandling_Abstract:
  * from internal list of listener objects.
  * @param	listener	The listener object to add.
  */
-void ObjectDataHandling_Abstract::RemoveStatusListener(ObjectDataHandling_Abstract::StatusListener* listener)
+void ObjectDataHandling_Abstract::RemoveStateListener(ObjectDataHandling_Abstract::StateListener* listener)
 {
-	auto listenerIter = std::find(m_statusListeners.begin(), m_statusListeners.end(), listener);
-	if (listenerIter != m_statusListeners.end())
-		m_statusListeners.erase(listenerIter);
+	auto listenerIter = std::find(m_stateListeners.begin(), m_stateListeners.end(), listener);
+	if (listenerIter != m_stateListeners.end())
+		m_stateListeners.erase(listenerIter);
+}
+
+/**
+ * Getter for the internal state for a given protocol from the private member map.
+ * @param	id	The protocol id to get the state for.
+ * @return	The state for the given protocol id or Invalid of unknown.
+ */
+ObjectHandlingState ObjectDataHandling_Abstract::GetProtocolState(ProtocolId id)
+{
+	if (m_currentStateMap.count(id) <= 0)
+		return OHS_Invalid;
+	else
+		return m_currentStateMap.at(id);
 }
 
 /**
@@ -253,7 +285,7 @@ void ObjectDataHandling_Abstract::timerCallback()
 			continue;
 		// if the protocol has not received data in more than what is specified in timeouttime, set it to down
 		else if (Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(id) > m_protocolReactionTimeout)
-			SetChangedProtocolStatus(id, OHS_Protocol_Down);
+			SetChangedProtocolState(id, OHS_Protocol_Down);
 	}
 	for (auto const& id : GetProtocolBIds())
 	{
@@ -263,7 +295,7 @@ void ObjectDataHandling_Abstract::timerCallback()
 			continue;
 		// if the protocol has not received data in more than what is specified in timeouttime, set it to down
 		else if (Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(id) > m_protocolReactionTimeout)
-			SetChangedProtocolStatus(id, OHS_Protocol_Down);
+			SetChangedProtocolState(id, OHS_Protocol_Down);
 	}
 }
 
@@ -278,10 +310,10 @@ void ObjectDataHandling_Abstract::UpdateOnlineState(ProtocolId id)
 
 	// if the protocol is not present in map and therefor seems to have initially received data, set its status to UP
 	if (m_protocolReactionTSMap.count(id) <= 0)
-		SetChangedProtocolStatus(id, OHS_Protocol_Up);
+		SetChangedProtocolState(id, OHS_Protocol_Up);
 	// if the protocol is receiving data the first time after 1s of silence, set its status to UP
 	else if (Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(id) > m_protocolReactionTimeout)
-		SetChangedProtocolStatus(id, OHS_Protocol_Up);
+		SetChangedProtocolState(id, OHS_Protocol_Up);
 
 	m_protocolReactionTSMap[id] = Time::getMillisecondCounterHiRes();
 }

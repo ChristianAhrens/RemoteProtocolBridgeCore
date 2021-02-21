@@ -59,9 +59,15 @@ void Mirror_dualA_withValFilter::AddProtocolAId(ProtocolId PAId)
 	ObjectDataHandling_Abstract::AddProtocolAId(PAId);
 
 	if (GetProtocolAIds().size() == 1)
+	{
 		m_currentMaster = PAId;
+		SetChangedProtocolState(m_currentMaster, OHS_Protocol_Master);
+	}
 	else if (GetProtocolAIds().size() == 2)
+	{
 		m_currentSlave = PAId;
+		SetChangedProtocolState(m_currentSlave, OHS_Protocol_Slave);
+	}
 	else
 		jassertfalse; // only two typeA protocols are supported by this OHM!
 }
@@ -124,19 +130,53 @@ bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(ProtocolId PId, R
 	// check the incoming data regarding value change to then forward and if required mirror it to other protocols
 	if (IsChangedDataValue(Id, msgData._addrVal, msgData))
 	{
-		// data mirroring is only done inbetween typeA protocols
+		// mirror and forward to all B if data comes from A
 		if (isProtocolTypeA)
+		{
+			// data mirroring is only done inbetween typeA protocols
 			MirrorDataIfRequired(PId, Id, msgData);
 
-		// now do the basic A to B forwarding
-		auto const& protocolIdsToFwdTo = isProtocolTypeA ? GetProtocolAIds() : GetProtocolBIds();
-		auto sendSuccess = true;
-		for (auto const pId : protocolIdsToFwdTo)
-			sendSuccess &= parentNode->SendMessageTo(pId, Id, msgData);
-		return sendSuccess;
+			// now do the basic A to B forwarding
+			auto sendSuccess = true;
+			for (auto const& pId : GetProtocolBIds())
+				sendSuccess &= parentNode->SendMessageTo(pId, Id, msgData);
+			return sendSuccess;
+		}
+		// forward to A current master if data comes from B
+		else if (isProtocolTypeB)
+		{
+			return parentNode->SendMessageTo(m_currentMaster, Id, msgData);
+		}
+		else
+			return false;
 	}
 	else
 		return false;
+}
+
+
+/**
+ * Reimplemented from ObjectDataHandling.
+ * This implementation first forwards the call to base implementation and
+ * afterwards takes care of master/slave switching if required.
+ * 
+ * @param	id	The protocol to update the online state for
+ */
+void Mirror_dualA_withValFilter::UpdateOnlineState(ProtocolId id)
+{
+	ObjectDataHandling_Abstract::UpdateOnlineState(id);
+
+	// swap master and slave if the master has failed to react in the configured failover time
+	if (id == m_currentSlave && GetLastProtocolReactionTSMap().count(m_currentMaster) > 0)
+	{
+		auto masterStaleTime = Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(m_currentMaster);
+		if (masterStaleTime > GetProtocolReactionTimeout())
+		{
+			SetChangedProtocolState(m_currentMaster, OHS_Protocol_Slave);
+			SetChangedProtocolState(m_currentSlave, OHS_Protocol_Master);
+			std::swap(m_currentMaster, m_currentSlave);
+		}
+	}
 }
 
 /**
@@ -157,20 +197,6 @@ bool Mirror_dualA_withValFilter::MirrorDataIfRequired(ProtocolId PId, RemoteObje
 	{
 		jassertfalse;
 		return false;
-	}
-
-	// swap master and slave if the master has failed to react in the configured failover time
-	if (PId == m_currentSlave && GetLastProtocolReactionTSMap().count(m_currentMaster) > 0)
-	{
-		auto masterStaleTime = Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(m_currentMaster);
-		if (masterStaleTime > GetProtocolReactionTimeout())
-		{
-			SetChangedProtocolStatus(m_currentMaster, OHS_Protocol_Down);
-			SetChangedProtocolStatus(m_currentMaster, OHS_Protocol_DegradedSecondary);
-			SetChangedProtocolStatus(m_currentSlave, OHS_Protocol_Up);
-			SetChangedProtocolStatus(m_currentSlave, OHS_Protocol_PromotedPrimary);
-			std::swap(m_currentMaster, m_currentSlave);
-		}
 	}
 	
 	// send values received from master to slave
