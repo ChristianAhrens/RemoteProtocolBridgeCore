@@ -100,16 +100,15 @@ enum ObjectHandlingMode
 	OHM_UserMAX						/**< Value to mark enum max; For iteration purpose. */
 };
 
-typedef std::uint16_t	ObjectHandlingState;										/** Type that describes the different
-																					 *  status a ObjectHandling instance can
-																					 *  notify registered listners of.
-																					 */
-static constexpr ObjectHandlingState OHS_Invalid					= 0x00000000;	/**< . */
-static constexpr ObjectHandlingState OHS_Protocol_Up				= 0x00000001;	/**< . */
-static constexpr ObjectHandlingState OHS_Protocol_Down				= 0x00000002;	/**< . */
-static constexpr ObjectHandlingState OHS_Protocol_Fail				= 0x00000004;	/**< . */
-static constexpr ObjectHandlingState OHS_Protocol_PromotedPrimary	= 0x00000010;	/**< . */
-static constexpr ObjectHandlingState OHS_Protocol_DegradedSecondary = 0x00000020;	/**< . */
+typedef std::uint16_t	ObjectHandlingState;								/** Type that describes the different
+																			 *  status a ObjectHandling instance can
+																			 *  notify registered listners of.
+																			 */
+static constexpr ObjectHandlingState OHS_Invalid			= 0x00000000;	/**< . */
+static constexpr ObjectHandlingState OHS_Protocol_Up		= 0x00000001;	/**< . */
+static constexpr ObjectHandlingState OHS_Protocol_Down		= 0x00000002;	/**< . */
+static constexpr ObjectHandlingState OHS_Protocol_Master	= 0x00000010;	/**< . */
+static constexpr ObjectHandlingState OHS_Protocol_Slave		= 0x00000020;	/**< . */
 
 /**
  * Remote Object Identification

@@ -59,9 +59,15 @@ void Mirror_dualA_withValFilter::AddProtocolAId(ProtocolId PAId)
 	ObjectDataHandling_Abstract::AddProtocolAId(PAId);
 
 	if (GetProtocolAIds().size() == 1)
+	{
 		m_currentMaster = PAId;
+		SetChangedProtocolState(m_currentMaster, OHS_Protocol_Master);
+	}
 	else if (GetProtocolAIds().size() == 2)
+	{
 		m_currentSlave = PAId;
+		SetChangedProtocolState(m_currentSlave, OHS_Protocol_Slave);
+	}
 	else
 		jassertfalse; // only two typeA protocols are supported by this OHM!
 }
@@ -165,8 +171,8 @@ bool Mirror_dualA_withValFilter::MirrorDataIfRequired(ProtocolId PId, RemoteObje
 		auto masterStaleTime = Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(m_currentMaster);
 		if (masterStaleTime > GetProtocolReactionTimeout())
 		{
-			SetChangedProtocolState(m_currentMaster, OHS_Protocol_Down | OHS_Protocol_DegradedSecondary);
-			SetChangedProtocolState(m_currentSlave, OHS_Protocol_Up | OHS_Protocol_PromotedPrimary);
+			SetChangedProtocolState(m_currentMaster, OHS_Protocol_Slave);
+			SetChangedProtocolState(m_currentSlave, OHS_Protocol_Master);
 			std::swap(m_currentMaster, m_currentSlave);
 		}
 	}

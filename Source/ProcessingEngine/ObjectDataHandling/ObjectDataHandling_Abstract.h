@@ -78,39 +78,14 @@ public:
 	public:
 		/**
 		 * Convenience method to be used by ObjectHandling classes to publish
-		 * state updates to listeners. This method internally stores the changed state
-		 * in a map and uses message queue to asynchronously notify the derived object
-		 * of changes.
+		 * state updates to listeners.
 		 * @param	id		The protocol id of the protocol that had changes
 		 * @param	state	The new state for the protocol that changed
 		 * @return	True if change was published successfully, false if not
 		 */
 		void SetChangedProtocolState(ProtocolId id, ObjectHandlingState state)
 		{
-			if (m_currentStateMap.count(id) <= 0 || m_currentStateMap.at(id) != state)
-			{
-				postMessage(std::make_unique<StateCallbackMessage>(id, state).release());
-				m_currentStateMap[id] = state;
-			}
-		}
-		/**
-		 * Getter for the internal state for a given protocol from the private member map.
-		 * @param	id	The protocol id to get the state for.
-		 * @return	The state for the given protocol id or Invalid of unknown.
-		 */
-		ObjectHandlingState GetProtocolState(ProtocolId id)
-		{
-			if (m_currentStateMap.count(id) <= 0)
-				return OHS_Invalid;
-			else
-				return m_currentStateMap.at(id);
-		}
-		/**
-		 * Method to clear all hashed state entries.
-		 */
-		void ClearProtocolState()
-		{
-			m_currentStateMap.clear();
+			postMessage(std::make_unique<StateCallbackMessage>(id, state).release());
 		}
 
 		/**
@@ -126,8 +101,6 @@ public:
 		//==============================================================================
 		virtual void protocolStateChanged(ProtocolId id, ObjectHandlingState state) = 0;
 
-	private:
-		std::map<ProtocolId, ObjectHandlingState> m_currentStateMap;
 	};
 
 public:
@@ -146,6 +119,8 @@ public:
 	//==============================================================================
 	void AddStateListener(StateListener* listener);
 	void RemoveStateListener(StateListener* listener);
+
+	ObjectHandlingState GetProtocolState(ProtocolId id);
 
 	//==============================================================================
 	virtual bool OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier Id, RemoteObjectMessageData& msgData) = 0;
@@ -178,6 +153,7 @@ private:
 	std::map<ProtocolId, double>		m_protocolReactionTSMap;	/**< Map of protocols and their last-seen-active TimeStamps. */
 	double								m_protocolReactionTimeout;	/**< Timeout in ms when a protocol is regarded as down. */
 
-	std::vector<StateListener*>			m_stateListeners;			/**< The list of objects that are registered to be notified on internal status changes. */
+	std::vector<StateListener*>					m_stateListeners;			/**< The list of objects that are registered to be notified on internal status changes. */
+	std::map<ProtocolId, ObjectHandlingState>	m_currentStateMap;
 
 };

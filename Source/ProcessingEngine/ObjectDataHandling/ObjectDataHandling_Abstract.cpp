@@ -67,10 +67,6 @@ ObjectDataHandling_Abstract::ObjectDataHandling_Abstract(ProcessingEngineNode* p
  */
 ObjectDataHandling_Abstract::~ObjectDataHandling_Abstract()
 {
-	for (auto const& listener : m_stateListeners)
-	{
-		listener->ClearProtocolState();
-	}
 }
 
 /**
@@ -127,6 +123,8 @@ void ObjectDataHandling_Abstract::ClearProtocolIds()
 {
 	m_protocolAIds.clear();
 	m_protocolBIds.clear();
+
+	m_currentStateMap.clear();
 
 	ScopedLock	tsAccessLock(m_protocolReactionTSLock);
 	m_protocolReactionTSMap.clear();
@@ -211,9 +209,30 @@ const std::vector<ProtocolId>& ObjectDataHandling_Abstract::GetProtocolBIds()
  */
 void ObjectDataHandling_Abstract::SetChangedProtocolState(ProtocolId id, ObjectHandlingState state)
 {
-	for (auto const& listener : m_stateListeners)
+	if (m_currentStateMap.count(id) <= 0 || m_currentStateMap.at(id) != state)
 	{
-		listener->SetChangedProtocolState(id, state);
+		// if new state includes down, remove up from hashed states
+		if ((state & OHS_Protocol_Down) == OHS_Protocol_Down)
+			m_currentStateMap[id] &= ~OHS_Protocol_Up;
+		// if new state includes up, remove down from hashed states
+		if ((state & OHS_Protocol_Up) == OHS_Protocol_Up)
+			m_currentStateMap[id] &= ~OHS_Protocol_Down;
+
+		// if new state includes master, remove slave from hashed states
+		if ((state & OHS_Protocol_Master) == OHS_Protocol_Master)
+			m_currentStateMap[id] &= ~OHS_Protocol_Slave;
+		// if new state includes slave, remove master from hashed states
+		if ((state & OHS_Protocol_Slave) == OHS_Protocol_Slave)
+			m_currentStateMap[id] &= ~OHS_Protocol_Master;
+
+		m_currentStateMap[id] |= state;
+
+		DBG(String(__FUNCTION__) + " new state (" + String(id) + "):" + String::toHexString(m_currentStateMap.at(id)));
+
+		for (auto const& listener : m_stateListeners)
+		{
+			listener->SetChangedProtocolState(id, m_currentStateMap.at(id));
+		}
 	}
 }
 
@@ -237,6 +256,19 @@ void ObjectDataHandling_Abstract::RemoveStateListener(ObjectDataHandling_Abstrac
 	auto listenerIter = std::find(m_stateListeners.begin(), m_stateListeners.end(), listener);
 	if (listenerIter != m_stateListeners.end())
 		m_stateListeners.erase(listenerIter);
+}
+
+/**
+ * Getter for the internal state for a given protocol from the private member map.
+ * @param	id	The protocol id to get the state for.
+ * @return	The state for the given protocol id or Invalid of unknown.
+ */
+ObjectHandlingState ObjectDataHandling_Abstract::GetProtocolState(ProtocolId id)
+{
+	if (m_currentStateMap.count(id) <= 0)
+		return OHS_Invalid;
+	else
+		return m_currentStateMap.at(id);
 }
 
 /**
