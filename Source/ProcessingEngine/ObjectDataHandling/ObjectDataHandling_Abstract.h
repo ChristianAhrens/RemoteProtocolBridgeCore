@@ -130,6 +130,9 @@ public:
 	virtual bool setStateXml(XmlElement* stateXml) override;
 
 	//==============================================================================
+	virtual void UpdateOnlineState(ProtocolId id);
+
+	//==============================================================================
 	void timerCallback() override;
 
 protected:
@@ -139,7 +142,6 @@ protected:
 	const std::vector<ProtocolId>&		GetProtocolAIds();
 	const std::vector<ProtocolId>&		GetProtocolBIds();
 	void								SetChangedProtocolState(ProtocolId id, ObjectHandlingState state);
-	void								UpdateOnlineState(ProtocolId id);
 	const std::map<ProtocolId, double>&	GetLastProtocolReactionTSMap();
 
 private:

@@ -145,6 +145,32 @@ bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(ProtocolId PId, R
 		return false;
 }
 
+
+/**
+ * Reimplemented from ObjectDataHandling.
+ * This implementation first forwards the call to base implementation and
+ * afterwards takes care of master/slave switching if required.
+ * 
+ * @param	id	The protocol to update the online state for
+ */
+void Mirror_dualA_withValFilter::UpdateOnlineState(ProtocolId id)
+{
+	ObjectDataHandling_Abstract::UpdateOnlineState(id);
+
+
+	// swap master and slave if the master has failed to react in the configured failover time
+	if (id == m_currentSlave && GetLastProtocolReactionTSMap().count(m_currentMaster) > 0)
+	{
+		auto masterStaleTime = Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(m_currentMaster);
+		if (masterStaleTime > GetProtocolReactionTimeout())
+		{
+			SetChangedProtocolState(m_currentMaster, OHS_Protocol_Slave);
+			SetChangedProtocolState(m_currentSlave, OHS_Protocol_Master);
+			std::swap(m_currentMaster, m_currentSlave);
+		}
+	}
+}
+
 /**
  * Method to check if the incoming protocol typeA data shall be mirrored to the other typeA protocol
  * and if the check is positive, exec the mirroring by sending the data.
@@ -163,18 +189,6 @@ bool Mirror_dualA_withValFilter::MirrorDataIfRequired(ProtocolId PId, RemoteObje
 	{
 		jassertfalse;
 		return false;
-	}
-
-	// swap master and slave if the master has failed to react in the configured failover time
-	if (PId == m_currentSlave && GetLastProtocolReactionTSMap().count(m_currentMaster) > 0)
-	{
-		auto masterStaleTime = Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(m_currentMaster);
-		if (masterStaleTime > GetProtocolReactionTimeout())
-		{
-			SetChangedProtocolState(m_currentMaster, OHS_Protocol_Slave);
-			SetChangedProtocolState(m_currentSlave, OHS_Protocol_Master);
-			std::swap(m_currentMaster, m_currentSlave);
-		}
 	}
 	
 	// send values received from master to slave

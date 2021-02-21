@@ -39,9 +39,15 @@ public:
 
 	void AddProtocolAId(ProtocolId PAId) override;
 
+	//==============================================================================
+	bool OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier Id, RemoteObjectMessageData& msgData) override;
+
+	//==============================================================================
 	bool setStateXml(XmlElement* stateXml) override;
 
-	bool OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier Id, RemoteObjectMessageData& msgData) override;
+	//==============================================================================
+	void UpdateOnlineState(ProtocolId id) override;
+
 
 protected:
 
