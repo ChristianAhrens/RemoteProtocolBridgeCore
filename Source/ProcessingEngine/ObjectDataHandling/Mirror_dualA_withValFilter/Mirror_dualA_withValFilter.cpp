@@ -130,16 +130,25 @@ bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(ProtocolId PId, R
 	// check the incoming data regarding value change to then forward and if required mirror it to other protocols
 	if (IsChangedDataValue(Id, msgData._addrVal, msgData))
 	{
-		// data mirroring is only done inbetween typeA protocols
+		// mirror and forward to all B if data comes from A
 		if (isProtocolTypeA)
+		{
+			// data mirroring is only done inbetween typeA protocols
 			MirrorDataIfRequired(PId, Id, msgData);
 
-		// now do the basic A to B forwarding
-		auto const& protocolIdsToFwdTo = isProtocolTypeA ? GetProtocolAIds() : GetProtocolBIds();
-		auto sendSuccess = true;
-		for (auto const pId : protocolIdsToFwdTo)
-			sendSuccess &= parentNode->SendMessageTo(pId, Id, msgData);
-		return sendSuccess;
+			// now do the basic A to B forwarding
+			auto sendSuccess = true;
+			for (auto const& pId : GetProtocolBIds())
+				sendSuccess &= parentNode->SendMessageTo(pId, Id, msgData);
+			return sendSuccess;
+		}
+		// forward to A current master if data comes from B
+		else if (isProtocolTypeB)
+		{
+			return parentNode->SendMessageTo(m_currentMaster, Id, msgData);
+		}
+		else
+			return false;
 	}
 	else
 		return false;
@@ -156,7 +165,6 @@ bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(ProtocolId PId, R
 void Mirror_dualA_withValFilter::UpdateOnlineState(ProtocolId id)
 {
 	ObjectDataHandling_Abstract::UpdateOnlineState(id);
-
 
 	// swap master and slave if the master has failed to react in the configured failover time
 	if (id == m_currentSlave && GetLastProtocolReactionTSMap().count(m_currentMaster) > 0)
