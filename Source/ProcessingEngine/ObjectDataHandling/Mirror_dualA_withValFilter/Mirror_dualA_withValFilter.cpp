@@ -165,10 +165,8 @@ bool Mirror_dualA_withValFilter::MirrorDataIfRequired(ProtocolId PId, RemoteObje
 		auto masterStaleTime = Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(m_currentMaster);
 		if (masterStaleTime > GetProtocolReactionTimeout())
 		{
-			SetChangedProtocolStatus(m_currentMaster, OHS_Protocol_Down);
-			SetChangedProtocolStatus(m_currentMaster, OHS_Protocol_DegradedSecondary);
-			SetChangedProtocolStatus(m_currentSlave, OHS_Protocol_Up);
-			SetChangedProtocolStatus(m_currentSlave, OHS_Protocol_PromotedPrimary);
+			SetChangedProtocolState(m_currentMaster, OHS_Protocol_Down | OHS_Protocol_DegradedSecondary);
+			SetChangedProtocolState(m_currentSlave, OHS_Protocol_Up | OHS_Protocol_PromotedPrimary);
 			std::swap(m_currentMaster, m_currentSlave);
 		}
 	}

@@ -50,82 +50,67 @@ class ObjectDataHandling_Abstract : public ProcessingEngineConfig::XmlConfigurab
 	public Timer
 {
 public:
-	/**
-	 * Enum that describes the different
-	 * status a ObjectHandling instance can
-	 * notify registered listners of.
-	 */
-	enum ObjectHandlingStatus
-	{
-		OHS_Invalid,
-		OHS_Protocol_Up,
-		OHS_Protocol_Down,
-		OHS_Protocol_Fail,
-		OHS_Protocol_PromotedPrimary,
-		OHS_Protocol_DegradedSecondary,
-	};
-
-	class StatusListener : private MessageListener
+	class StateListener : private MessageListener
 	{
 	public:
 		/**
-		 * Implementation of a protocol status message to use with JUCE's message queue.
+		 * Implementation of a protocol state message to use with JUCE's message queue.
 		 */
-		struct StatusCallbackMessage : public Message
+		struct StateCallbackMessage : public Message
 		{
 			/**
 			 * Constructor with default initialization.
-			 * @param id		The protocol id this status message refers to
-			 * @param status	The status enum value that this message transports
+			 * @param id		The protocol id this state message refers to
+			 * @param status	The state enum value that this message transports
 			 */
-			StatusCallbackMessage(ProtocolId id, ObjectHandlingStatus status) :
-				_protocolId(id), _status(status) {};
+			StateCallbackMessage(ProtocolId id, ObjectHandlingState state) :
+				_protocolId(id), _state(state) {};
 
 			/**
 			 * Destructor.
 			 */
-			virtual ~StatusCallbackMessage() override {};
+			virtual ~StateCallbackMessage() override {};
 
-			ProtocolId				_protocolId;
-			ObjectHandlingStatus	_status;
+			ProtocolId			_protocolId;
+			ObjectHandlingState	_state;
 		};
 
 	public:
 		/**
 		 * Convenience method to be used by ObjectHandling classes to publish
-		 * status updates to listeners. This method internally stores the changed status
+		 * state updates to listeners. This method internally stores the changed state
 		 * in a map and uses message queue to asynchronously notify the derived object
 		 * of changes.
 		 * @param	id		The protocol id of the protocol that had changes
-		 * @param	status	The new status for the protocol that changed
+		 * @param	state	The new state for the protocol that changed
 		 * @return	True if change was published successfully, false if not
 		 */
-		void SetChangedProtocolStatus(ProtocolId id, ObjectHandlingStatus status)
+		void SetChangedProtocolState(ProtocolId id, ObjectHandlingState state)
 		{
-			if (m_currentStatusMap.count(id) <= 0 || m_currentStatusMap.at(id) != status)
+			if (m_currentStateMap.count(id) <= 0 || m_currentStateMap.at(id) != state)
 			{
-				postMessage(std::make_unique<StatusCallbackMessage>(id, status).release());
-				m_currentStatusMap[id] = status;
+				postMessage(std::make_unique<StateCallbackMessage>(id, state).release());
+				m_currentStateMap[id] = state;
 			}
 		}
 		/**
-		 * Getter for the internal status for a given protocol from the private member map.
-		 * @param	id	The protocol id to get the status for.
-		 * @return	The status for the given protocol id or Invalid of unknown.
+		 * Getter for the internal state for a given protocol from the private member map.
+		 * @param	id	The protocol id to get the state for.
+		 * @return	The state for the given protocol id or Invalid of unknown.
 		 */
-		ObjectHandlingStatus GetProtocolStatus(ProtocolId id)
+		ObjectHandlingState GetProtocolState(ProtocolId id)
 		{
-			if (m_currentStatusMap.count(id) <= 0)
+			if (m_currentStateMap.count(id) <= 0)
 				return OHS_Invalid;
 			else
-				return m_currentStatusMap.at(id);
+				return m_currentStateMap.at(id);
 		}
 		/**
-		 * Method to clear all hashed status entries.
+		 * Method to clear all hashed state entries.
 		 */
-		void ClearProtocolStatus()
+		void ClearProtocolState()
 		{
-			m_currentStatusMap.clear();
+			m_currentStateMap.clear();
 		}
 
 		/**
@@ -134,15 +119,15 @@ public:
 		 */
 		void handleMessage(const Message& msg) override
 		{
-			if (auto* statusMessage = dynamic_cast<const StatusCallbackMessage*> (&msg))
-				protocolStatusChanged(statusMessage->_protocolId, statusMessage->_status);
+			if (auto* stateMessage = dynamic_cast<const StateCallbackMessage*> (&msg))
+				protocolStateChanged(stateMessage->_protocolId, stateMessage->_state);
 		}
 
 		//==============================================================================
-		virtual void protocolStatusChanged(ProtocolId id, ObjectHandlingStatus status) = 0;
+		virtual void protocolStateChanged(ProtocolId id, ObjectHandlingState state) = 0;
 
 	private:
-		std::map<ProtocolId, ObjectHandlingStatus> m_currentStatusMap;
+		std::map<ProtocolId, ObjectHandlingState> m_currentStateMap;
 	};
 
 public:
@@ -159,8 +144,8 @@ public:
 	double GetProtocolReactionTimeout();
 
 	//==============================================================================
-	void AddStatusListener(StatusListener* listener);
-	void RemoveStatusListener(StatusListener* listener);
+	void AddStateListener(StateListener* listener);
+	void RemoveStateListener(StateListener* listener);
 
 	//==============================================================================
 	virtual bool OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier Id, RemoteObjectMessageData& msgData) = 0;
@@ -178,7 +163,7 @@ protected:
 	NodeId								GetParentNodeId();
 	const std::vector<ProtocolId>&		GetProtocolAIds();
 	const std::vector<ProtocolId>&		GetProtocolBIds();
-	void								SetChangedProtocolStatus(ProtocolId id, ObjectHandlingStatus status);
+	void								SetChangedProtocolState(ProtocolId id, ObjectHandlingState state);
 	void								UpdateOnlineState(ProtocolId id);
 	const std::map<ProtocolId, double>&	GetLastProtocolReactionTSMap();
 
@@ -193,6 +178,6 @@ private:
 	std::map<ProtocolId, double>		m_protocolReactionTSMap;	/**< Map of protocols and their last-seen-active TimeStamps. */
 	double								m_protocolReactionTimeout;	/**< Timeout in ms when a protocol is regarded as down. */
 
-	std::vector<StatusListener*>		m_statusListeners;			/**< The list of objects that are registered to be notified on internal status changes. */
+	std::vector<StateListener*>			m_stateListeners;			/**< The list of objects that are registered to be notified on internal status changes. */
 
 };
