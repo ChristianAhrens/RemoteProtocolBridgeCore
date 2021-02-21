@@ -118,6 +118,8 @@ bool Mux_nA_to_mB_withValFilter::OnReceivedMessageFromProtocol(ProtocolId PId, R
 	if (!muxConfigValid || !protocolIdValid)
 		return false;
 
+	UpdateOnlineState(PId);
+
 	// check for changed value based on mapped addressing and target protocol id before forwarding data
 	auto targetProtoSrc = GetTargetProtocolsAndSource(PId, msgData);
 	auto mappedOrigAddr = GetMappedOriginAddressing(PId, msgData);

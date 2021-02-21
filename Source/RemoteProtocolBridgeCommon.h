@@ -96,8 +96,19 @@ enum ObjectHandlingMode
     OHM_Forward_A_to_B_only,        /**< Data filtering mode to only pass on values from Role A to B protocols. */
     OHM_Reverse_B_to_A_only,        /**< Data filtering mode to only pass on values from Role B to A protocols. */
 	OHM_Mux_nA_to_mB_withValFilter,	/**< Data multiplexing mode from n channel typeA protocols to m channel typeB protocols, combined with filtering to only forward value changes. */
+	OHM_Mirror_dualA_withValFilter,	/**< Data mirroring mode inbetween two typeA protocols and forwarding value changes to typeB protocols. */
 	OHM_UserMAX						/**< Value to mark enum max; For iteration purpose. */
 };
+
+typedef std::uint16_t	ObjectHandlingState;								/** Type that describes the different
+																			 *  status a ObjectHandling instance can
+																			 *  notify registered listners of.
+																			 */
+static constexpr ObjectHandlingState OHS_Invalid			= 0x00000000;	/**< . */
+static constexpr ObjectHandlingState OHS_Protocol_Up		= 0x00000001;	/**< . */
+static constexpr ObjectHandlingState OHS_Protocol_Down		= 0x00000002;	/**< . */
+static constexpr ObjectHandlingState OHS_Protocol_Master	= 0x00000010;	/**< . */
+static constexpr ObjectHandlingState OHS_Protocol_Slave		= 0x00000020;	/**< . */
 
 /**
  * Remote Object Identification

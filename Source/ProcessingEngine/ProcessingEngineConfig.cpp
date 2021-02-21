@@ -1048,6 +1048,8 @@ String ProcessingEngineConfig::ObjectHandlingModeToString(ObjectHandlingMode ohm
 		return "Simulate DS100 object poll answers";
 	case OHM_Mux_nA_to_mB_withValFilter:
 		return "Multiplex mult. n-ch. A to m-ch. B (fwd. val. changes only)";
+	case OHM_Mirror_dualA_withValFilter:
+		return "Mirror dual A and fwd. to B (val. changes only)";
 	default:
 		return "";
 	}
@@ -1074,6 +1076,8 @@ ObjectHandlingMode ProcessingEngineConfig::ObjectHandlingModeFromString(String m
 		return OHM_DS100_DeviceSimulation;
 	if (mode == ObjectHandlingModeToString(OHM_Mux_nA_to_mB_withValFilter))
 		return OHM_Mux_nA_to_mB_withValFilter;
+	if (mode == ObjectHandlingModeToString(OHM_Mirror_dualA_withValFilter))
+		return OHM_Mirror_dualA_withValFilter;
 
 	return OHM_Invalid;
 }

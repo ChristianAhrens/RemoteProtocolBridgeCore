@@ -54,6 +54,15 @@ void TimerThreadBase::stopTimerThread()
 }
 
 /**
+ * Helper method to get the internal timer thread running state.
+ * @return  True if the juce::Thread is running, false if not.
+ */
+bool TimerThreadBase::isTimerThreadRunning()
+{
+    return isThreadRunning();
+}
+
+/**
  * Main thread loop reimplementation from JUCE thread.
  * This handles calling the pure virtual callback function calling in the given time intervals
  */

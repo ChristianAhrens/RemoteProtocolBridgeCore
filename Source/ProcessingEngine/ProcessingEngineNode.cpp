@@ -45,6 +45,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ObjectDataHandling/Forward_A_to_B_only/Forward_A_to_B_only.h"
 #include "ObjectDataHandling/Reverse_B_to_A_only/Reverse_B_to_A_only.h"
 #include "ObjectDataHandling/Mux_nA_to_mB_withValFilter/Mux_nA_to_mB_withValFilter.h"
+#include "ObjectDataHandling/Mirror_dualA_withValFilter/Mirror_dualA_withValFilter.h"
 
 #include "ProtocolProcessor/OCAProtocolProcessor/OCAProtocolProcessor.h"
 #include "ProtocolProcessor/OSCProtocolProcessor/OSCProtocolProcessor.h"
@@ -102,6 +103,16 @@ void ProcessingEngineNode::AddListener(ProcessingEngineNode::NodeListener* liste
 NodeId ProcessingEngineNode::GetId()
 {
 	return m_nodeId;
+}
+
+/**
+ * Getter for the id of the thread this node object instance is using.
+ * 
+ * @return	The thread id of this node object instance.
+ */
+Thread::ThreadID ProcessingEngineNode::GetNodeThreadId()
+{
+	return getThreadId();
 }
 
 /**
@@ -215,7 +226,8 @@ bool ProcessingEngineNode::setStateXml(XmlElement* stateXml)
 	auto objectHandlingStateXml = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::OBJECTHANDLING));
 	if (objectHandlingStateXml)
 	{
-		m_dataHandling = std::unique_ptr<ObjectDataHandling_Abstract>(CreateObjectDataHandling(ProcessingEngineConfig::ObjectHandlingModeFromString(objectHandlingStateXml->getStringAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::MODE)))));
+		auto &ohmName = objectHandlingStateXml->getStringAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::MODE));
+		m_dataHandling = std::unique_ptr<ObjectDataHandling_Abstract>(CreateObjectDataHandling(ProcessingEngineConfig::ObjectHandlingModeFromString(ohmName)));
 		if (m_dataHandling)
 			m_dataHandling->setStateXml(objectHandlingStateXml);
 		else
@@ -404,6 +416,8 @@ ObjectDataHandling_Abstract* ProcessingEngineNode::CreateObjectDataHandling(Obje
 		return new DS100_DeviceSimulation(this);
 	case OHM_Mux_nA_to_mB_withValFilter:
 		return new Mux_nA_to_mB_withValFilter(this);
+	case OHM_Mirror_dualA_withValFilter:
+		return new Mirror_dualA_withValFilter(this);
 	case OHM_Invalid:
 	default:
 		return nullptr;
