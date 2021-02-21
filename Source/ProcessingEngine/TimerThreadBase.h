@@ -24,6 +24,7 @@ public:
 
 	void startTimerThread(int callbackInterval, int initialCallbackOffset = 0);
 	void stopTimerThread();
+	bool isTimerThreadRunning();
 
 	//==============================================================================
 	void run() override;

@@ -120,6 +120,14 @@ bool OSCProtocolProcessor::setStateXml(XmlElement *stateXml)
 	{
         if (m_ipAddress.isEmpty())
             m_autodetectClientConnection = true;
+
+		auto pollingIntervalXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::POLLINGINTERVAL));
+		if (pollingIntervalXmlElement)
+		{
+			m_oscMsgRate = pollingIntervalXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::INTERVAL));
+		}
+		else
+			return false;
         
 		if (stateXml->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::USESACTIVEOBJ)) == 1)
 		{
@@ -128,16 +136,14 @@ bool OSCProtocolProcessor::setStateXml(XmlElement *stateXml)
 				SetRemoteObjectsActive(activeObjsXmlElement);
 			else
 				return false;
+
+			// special handling for heartbeats - this shall always be activated if active object usage is set to true
+			m_activeRemoteObjects.push_back(RemoteObject(ROI_HeartbeatPing, RemoteObjectAddressing()));
+			if (!isTimerThreadRunning())
+				startTimerThread(m_oscMsgRate);
 		}
 
-		auto pollingIntervalXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::POLLINGINTERVAL));
-		if (pollingIntervalXmlElement)
-		{
-			m_oscMsgRate = pollingIntervalXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::INTERVAL));
-			return true;
-		}
-		else
-			return false;
+		return true;
 	}
 }
 
