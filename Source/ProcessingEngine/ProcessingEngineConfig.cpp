@@ -236,8 +236,8 @@ bool ProcessingEngineConfig::ReadActiveObjects(XmlElement* activeObjectsElement,
 					{
 						for (int k = 0; k < records.size(); ++k)
 						{
-							obj._Addr._first = static_cast<SourceId>(channels[j]);
-							obj._Addr._second = static_cast<MappingId>(records[k]);
+							obj._Addr._first = static_cast<ChannelId>(channels[j]);
+							obj._Addr._second = static_cast<RecordId>(records[k]);
 							RemoteObjects.push_back(obj);
 						}
 					}

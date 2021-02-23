@@ -400,8 +400,8 @@ void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const S
 	else
 	{
 		RemoteObjectIdentifier newObjectId = ROI_Invalid;
-		SourceId channelId = INVALID_ADDRESS_VALUE;
-		MappingId recordId = INVALID_ADDRESS_VALUE;
+		ChannelId channelId = INVALID_ADDRESS_VALUE;
+		RecordId recordId = INVALID_ADDRESS_VALUE;
 
 		// Determine which parameter was changed depending on the incoming message's address pattern.
 		if (addressString.startsWith(GetRemoteObjectString(ROI_Settings_DeviceName)))
@@ -522,7 +522,7 @@ void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const S
 		if (ProcessingEngineConfig::IsChannelAddressingObject(newObjectId))
 		{
 			// Parse the Channel ID
-			channelId = static_cast<SourceId>((addressString.fromLastOccurrenceOf("/", false, true)).getIntValue());
+			channelId = static_cast<ChannelId>((addressString.fromLastOccurrenceOf("/", false, true)).getIntValue());
 			jassert(channelId > 0);
 			if (channelId <= 0)
 				return;
@@ -532,7 +532,7 @@ void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const S
 		{
 			// Parse the Record ID
 			addressString = addressString.upToLastOccurrenceOf("/", false, true);
-			recordId = static_cast<MappingId>((addressString.fromLastOccurrenceOf("/", false, true)).getIntValue());
+			recordId = static_cast<RecordId>((addressString.fromLastOccurrenceOf("/", false, true)).getIntValue());
 			jassert(recordId > 0);
 			if (recordId <= 0)
 				return;

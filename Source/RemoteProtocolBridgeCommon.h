@@ -46,8 +46,8 @@ static int uniqueIdCounter = 0;
  */
 typedef std::uint32_t	NodeId;
 typedef std::uint64_t	ProtocolId;
-typedef std::int32_t	SourceId;
-typedef std::int8_t		MappingId;
+typedef std::int32_t	ChannelId;
+typedef std::int8_t		RecordId;
 
 /**
 * Generic defines
@@ -194,8 +194,8 @@ enum RemoteObjectValueType
  */
 struct RemoteObjectAddressing
 {
-	SourceId	_first;	/**< First address definition value. Equivalent to channels in d&b OCA world or SourceId for OSC positioning messages. */
-	MappingId	_second;	/**< Second address definition value. Equivalent to records in d&b OCA world or MappingId for OSC positioning messages. */
+	ChannelId	_first;	/**< First address definition value. Equivalent to channels in d&b OCA world or SourceId for OSC positioning messages. */
+	RecordId	_second;	/**< Second address definition value. Equivalent to records in d&b OCA world or MappingId for OSC positioning messages. */
 
 	/**
 	 * Constructor to initialize with invalid values
@@ -218,7 +218,7 @@ struct RemoteObjectAddressing
 	 * @param a	The value to set for internal 'first' - SourceId (Channel)
 	 * @param b	The value to set for internal 'second' - MappingId (Record)
 	 */
-	RemoteObjectAddressing(SourceId a, MappingId b)
+	RemoteObjectAddressing(ChannelId a, RecordId b)
 	{
 		_first = a;
 		_second = b;
@@ -283,7 +283,7 @@ struct RemoteObject
 	RemoteObject()
 	{
 		_Id = ROI_Invalid;
-		_Addr = RemoteObjectAddressing(static_cast<SourceId>(INVALID_ADDRESS_VALUE), static_cast<MappingId>(INVALID_ADDRESS_VALUE));
+		_Addr = RemoteObjectAddressing(static_cast<ChannelId>(INVALID_ADDRESS_VALUE), static_cast<RecordId>(INVALID_ADDRESS_VALUE));
 	};
 	/**
 	 * Copy Constructor

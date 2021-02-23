@@ -109,8 +109,8 @@ void YmhOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, cons
 
 	// Handle the incoming message contents.
 
-	SourceId channelId = INVALID_ADDRESS_VALUE;
-	MappingId recordId = INVALID_ADDRESS_VALUE;
+	ChannelId channelId = INVALID_ADDRESS_VALUE;
+	RecordId recordId = INVALID_ADDRESS_VALUE;
 
 	// sanity check
 	if (!m_messageListener)
@@ -136,7 +136,7 @@ void YmhOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, cons
 	if (ProcessingEngineConfig::IsChannelAddressingObject(newObjectId))
 	{
 		// Parse the Channel ID
-		channelId = static_cast<SourceId>((addressString.fromLastOccurrenceOf(GetRemoteObjectDomainString(), false, true)).getIntValue());
+		channelId = static_cast<ChannelId>((addressString.fromLastOccurrenceOf(GetRemoteObjectDomainString(), false, true)).getIntValue());
 		jassert(channelId > 0);
 		if (channelId <= 0)
 			return;
@@ -149,7 +149,7 @@ void YmhOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, cons
 	// set the record info if the object needs it
 	if (ProcessingEngineConfig::IsRecordAddressingObject(newObjectId))
 	{
-		recordId = static_cast<MappingId>(m_mappingAreaId);
+		recordId = static_cast<RecordId>(m_mappingAreaId);
 	}
 
 	newMsgData._addrVal._first = channelId;

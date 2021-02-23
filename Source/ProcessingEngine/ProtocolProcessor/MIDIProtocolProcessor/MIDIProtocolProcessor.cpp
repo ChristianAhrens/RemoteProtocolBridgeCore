@@ -124,7 +124,7 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 		if (midiMessageMatchesCommandAssignment)
 		{
 			newObjectId = assignmentMapping.first;
-			newMsgData._addrVal._second = static_cast<MappingId>(ProcessingEngineConfig::IsRecordAddressingObject(newObjectId) ? m_mappingAreaId : INVALID_ADDRESS_VALUE);
+			newMsgData._addrVal._second = static_cast<RecordId>(ProcessingEngineConfig::IsRecordAddressingObject(newObjectId) ? m_mappingAreaId : INVALID_ADDRESS_VALUE);
 
 			// get the command value from midi message
 			auto commandValue = JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(midiMessage); 

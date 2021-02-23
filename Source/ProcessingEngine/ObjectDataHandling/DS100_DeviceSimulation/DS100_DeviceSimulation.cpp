@@ -313,7 +313,7 @@ void DS100_DeviceSimulation::InitDataValues()
 		ScopedLock l(m_currentValLock);
 		auto& remoteAddressValueMap = m_currentValues[roi];
 
-		MappingId mapping = 1;
+		RecordId mapping = 1;
 		auto mappingsCount = m_simulatedMappingsCount;
 		if (!ProcessingEngineConfig::IsRecordAddressingObject(roi))
 		{
@@ -323,7 +323,7 @@ void DS100_DeviceSimulation::InitDataValues()
 
 		for (; mapping <= mappingsCount && mapping != 0; mapping++)
 		{
-			SourceId channel = 1;
+			ChannelId channel = 1;
 			auto channelCount = m_simulatedChCount;
 			if (!ProcessingEngineConfig::IsChannelAddressingObject(roi))
 			{
@@ -525,7 +525,7 @@ void DS100_DeviceSimulation::UpdateDataValues()
 		jassert(m_currentValues.count(roi) > 0);
 		auto& remoteAddressValueMap = m_currentValues.at(roi);
 
-		MappingId mapping = 1;
+		RecordId mapping = 1;
 		auto mappingsCount = m_simulatedMappingsCount;
 		if (!ProcessingEngineConfig::IsRecordAddressingObject(roi))
 		{
@@ -535,7 +535,7 @@ void DS100_DeviceSimulation::UpdateDataValues()
 
 		for (; mapping <= mappingsCount && mapping != 0; mapping++)
 		{
-			SourceId channel = 1;
+			ChannelId channel = 1;
 			auto channelCount = m_simulatedChCount;
 			if (!ProcessingEngineConfig::IsChannelAddressingObject(roi))
 			{
