@@ -264,7 +264,7 @@ bool OSCProtocolProcessor::SendAddressedMessage(const String& addressString, con
 		break;
 	}
 
-	jassert((msgData._valCount * valSize) == msgData._payloadSize);
+	jassert(static_cast<std::uint32_t>(msgData._valCount * valSize) == msgData._payloadSize);
 
 	switch (msgData._valType)
 	{
