@@ -47,12 +47,20 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 std::map<RemoteObjectIdentifier, juce::Range<float>>	ProcessingEngineConfig::m_objectRanges = {
 	std::make_pair(ROI_RemoteProtocolBridge_SoundObjectSelect, juce::Range<float>(0.0f, 1.0f)),
-	std::make_pair(ROI_RemoteProtocolBridge_SoundObjectSelect, juce::Range<float>(0.0f, 1.0f)),
+	// Soundobject ROIs
 	std::make_pair(ROI_Positioning_SourceDelayMode, juce::Range<float>(0.0f, 2.0f)),
 	std::make_pair(ROI_MatrixInput_ReverbSendGain, juce::Range<float>(-120.0f, 24.0f)),
 	std::make_pair(ROI_Positioning_SourceSpread, juce::Range<float>(0.0f, 1.0f)),
 	std::make_pair(ROI_CoordinateMapping_SourcePosition_X, juce::Range<float>(0.0f, 1.0f)),
-	std::make_pair(ROI_CoordinateMapping_SourcePosition_Y, juce::Range<float>(0.0f, 1.0f)) };
+	std::make_pair(ROI_CoordinateMapping_SourcePosition_Y, juce::Range<float>(0.0f, 1.0f)),
+	// MatrixInput ROIs
+	std::make_pair(ROI_MatrixInput_LevelMeterPreMute, juce::Range<float>(-120.0f, 24.0f)),
+	std::make_pair(ROI_MatrixInput_Gain, juce::Range<float>(-120.0f, 24.0f)),
+	std::make_pair(ROI_MatrixInput_Mute, juce::Range<float>(0.0f, 1.0f)),
+	// MatrixOutput ROIs
+	std::make_pair(ROI_MatrixOutput_LevelMeterPostMute, juce::Range<float>(-120.0f, 24.0f)),
+	std::make_pair(ROI_MatrixOutput_Gain, juce::Range<float>(-120.0f, 24.0f)),
+	std::make_pair(ROI_MatrixOutput_Mute, juce::Range<float>(0.0f, 1.0f)) };
 
 /**
  * Constructs an object
@@ -236,8 +244,8 @@ bool ProcessingEngineConfig::ReadActiveObjects(XmlElement* activeObjectsElement,
 					{
 						for (int k = 0; k < records.size(); ++k)
 						{
-							obj._Addr._first = static_cast<SourceId>(channels[j]);
-							obj._Addr._second = static_cast<MappingId>(records[k]);
+							obj._Addr._first = static_cast<ChannelId>(channels[j]);
+							obj._Addr._second = static_cast<RecordId>(records[k]);
 							RemoteObjects.push_back(obj);
 						}
 					}

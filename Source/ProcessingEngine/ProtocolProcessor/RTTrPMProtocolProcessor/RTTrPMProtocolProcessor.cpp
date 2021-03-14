@@ -193,10 +193,10 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 						//DBG("PacketModuleTrackable('" + String(trackableModule->GetName()) + "'): seqNo" 
 						//	+ String(trackableModule->GetSeqNumber()) + " with " + String(trackableModule->GetNumberOfSubModules()) + " submodules");
 
-						SourceId sourceId = String(trackableModule->GetName()).getIntValue();
+						ChannelId channelId = String(trackableModule->GetName()).getIntValue();
 
-						newMsgData._addrVal._first = sourceId;
-						newMsgData._addrVal._second = static_cast<MappingId>(m_mappingAreaId);
+						newMsgData._addrVal._first = channelId;
+						newMsgData._addrVal._second = static_cast<RecordId>(m_mappingAreaId);
 					}
 				}
 				break;

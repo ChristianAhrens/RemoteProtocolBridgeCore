@@ -101,6 +101,10 @@ bool ObjectDataHandling_Abstract::setStateXml(XmlElement* stateXml)
 void ObjectDataHandling_Abstract::AddProtocolAId(ProtocolId PAId)
 {
 	m_protocolAIds.push_back(PAId);
+
+	ScopedLock l(m_protocolReactionTSLock);
+	m_protocolReactionTSMap[PAId] = Time::getMillisecondCounterHiRes();
+
 	SetChangedProtocolState(PAId, OHS_Protocol_Down);
 }
 
@@ -112,6 +116,10 @@ void ObjectDataHandling_Abstract::AddProtocolAId(ProtocolId PAId)
 void ObjectDataHandling_Abstract::AddProtocolBId(ProtocolId PBId)
 {
 	m_protocolBIds.push_back(PBId);
+
+	ScopedLock l(m_protocolReactionTSLock);
+	m_protocolReactionTSMap[PBId] = Time::getMillisecondCounterHiRes();
+
 	SetChangedProtocolState(PBId, OHS_Protocol_Down);
 }
 

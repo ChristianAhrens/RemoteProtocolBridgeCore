@@ -145,7 +145,7 @@ bool Mux_nA_to_mB_withValFilter::OnReceivedMessageFromProtocol(ProtocolId PId, R
  * @param msgData	The actual message value/content data
  * @return			The protocol indexes the mapped value shall be sent to and the mapped source id to use when sending the data to the protocols
  */
-std::pair<std::vector<ProtocolId>, SourceId> Mux_nA_to_mB_withValFilter::GetTargetProtocolsAndSource(ProtocolId PId, const RemoteObjectMessageData &msgData)
+std::pair<std::vector<ProtocolId>, ChannelId> Mux_nA_to_mB_withValFilter::GetTargetProtocolsAndSource(ProtocolId PId, const RemoteObjectMessageData &msgData)
 {
 	auto PIdAIter = std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId);
 	auto PIdBIter = std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId);
@@ -178,7 +178,7 @@ std::pair<std::vector<ProtocolId>, SourceId> Mux_nA_to_mB_withValFilter::GetTarg
 			return std::make_pair(std::vector<ProtocolId>(), chForA);
 	}
 
-	return std::make_pair(std::vector<ProtocolId>(), static_cast<SourceId>(INVALID_ADDRESS_VALUE));
+	return std::make_pair(std::vector<ProtocolId>(), static_cast<ChannelId>(INVALID_ADDRESS_VALUE));
 }
 
 /**
