@@ -73,7 +73,22 @@ bool DS100_DeviceSimulation::setStateXml(XmlElement* stateXml)
 		if (refreshIntervalXmlElement)
 			m_refreshInterval = refreshIntervalXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::INTERVAL), 50);
 
-		m_simulatedRemoteObjects = std::vector<RemoteObjectIdentifier>{ ROI_CoordinateMapping_SourcePosition_XY, ROI_CoordinateMapping_SourcePosition_X, ROI_CoordinateMapping_SourcePosition_Y, ROI_Positioning_SourceSpread, ROI_Positioning_SourceDelayMode, ROI_MatrixInput_ReverbSendGain};
+		m_simulatedRemoteObjects = std::vector<RemoteObjectIdentifier>{
+			// sound object related remote objects
+			ROI_CoordinateMapping_SourcePosition_XY,
+			ROI_CoordinateMapping_SourcePosition_X,
+			ROI_CoordinateMapping_SourcePosition_Y,
+			ROI_Positioning_SourceSpread,
+			ROI_Positioning_SourceDelayMode,
+			ROI_MatrixInput_ReverbSendGain,
+			// matrix input related remote objects
+			ROI_MatrixInput_LevelMeterPreMute,
+			ROI_MatrixInput_Gain,
+			ROI_MatrixInput_Mute,
+			// matrix input related remote objects
+			ROI_MatrixOutput_LevelMeterPostMute,
+			ROI_MatrixOutput_Gain,
+			ROI_MatrixOutput_Mute };
 	}
 	InitDataValues();
 
@@ -153,6 +168,12 @@ bool DS100_DeviceSimulation::IsDataRequestPollMessage(const RemoteObjectIdentifi
 	case ROI_Positioning_SourceSpread:
 	case ROI_Positioning_SourceDelayMode:
 	case ROI_MatrixInput_ReverbSendGain:
+	case ROI_MatrixInput_LevelMeterPreMute:
+	case ROI_MatrixInput_Gain:
+	case ROI_MatrixInput_Mute:
+	case ROI_MatrixOutput_LevelMeterPostMute:
+	case ROI_MatrixOutput_Gain:
+	case ROI_MatrixOutput_Mute:
 		remoteObjectRequiresReply = true;
 		break;
 	case ROI_HeartbeatPong:
@@ -218,6 +239,36 @@ void DS100_DeviceSimulation::PrintDataInfo(const String& actionName, const std::
 			+ " delaymode value (" + String(static_cast<int*>(idDataKV.second._payload)[0]) 
 			+ " at " + payloadPtrStr + ").");
 		break;
+	case ROI_MatrixInput_LevelMeterPreMute:
+		DBG(actionName + " Ch" + String(idDataKV.second._addrVal._first)
+			+ " MatrixInput level value (" + String(static_cast<float*>(idDataKV.second._payload)[0])
+			+ " at " + payloadPtrStr + ").");
+		break;
+	case ROI_MatrixInput_Gain:
+		DBG(actionName + " Ch" + String(idDataKV.second._addrVal._first)
+			+ " MatrixInput gain value (" + String(static_cast<float*>(idDataKV.second._payload)[0])
+			+ " at " + payloadPtrStr + ").");
+		break;
+	case ROI_MatrixInput_Mute:
+		DBG(actionName + " Ch" + String(idDataKV.second._addrVal._first)
+			+ " MatrixInput mute value (" + String(static_cast<int*>(idDataKV.second._payload)[0])
+			+ " at " + payloadPtrStr + ").");
+		break;
+	case ROI_MatrixOutput_LevelMeterPostMute:
+		DBG(actionName + " Ch" + String(idDataKV.second._addrVal._first)
+			+ " MatrixOutput level value (" + String(static_cast<float*>(idDataKV.second._payload)[0])
+			+ " at " + payloadPtrStr + ").");
+		break;
+	case ROI_MatrixOutput_Gain:
+		DBG(actionName + " Ch" + String(idDataKV.second._addrVal._first)
+			+ " MatrixOutput gain value (" + String(static_cast<float*>(idDataKV.second._payload)[0])
+			+ " at " + payloadPtrStr + ").");
+		break;
+	case ROI_MatrixOutput_Mute:
+		DBG(actionName + " Ch" + String(idDataKV.second._addrVal._first)
+			+ " MatrixOutput mute value (" + String(static_cast<int*>(idDataKV.second._payload)[0])
+			+ " at " + payloadPtrStr + ").");
+		break;
 	default:
 		return;
 	}
@@ -263,11 +314,17 @@ bool DS100_DeviceSimulation::ReplyToDataRequest(const ProtocolId PId, const Remo
 	case ROI_CoordinateMapping_SourcePosition_Y:
 	case ROI_Positioning_SourceSpread:
 	case ROI_MatrixInput_ReverbSendGain:
+	case ROI_MatrixInput_LevelMeterPreMute:
+	case ROI_MatrixInput_Gain:
+	case ROI_MatrixOutput_LevelMeterPostMute:
+	case ROI_MatrixOutput_Gain:
 		jassert(dataReplyValue._valCount == 1);
 		jassert(dataReplyValue._valType == ROVT_FLOAT);
 		jassert(dataReplyValue._addrVal == adressing);
 		break;
 	case ROI_Positioning_SourceDelayMode:
+	case ROI_MatrixInput_Mute:
+	case ROI_MatrixOutput_Mute:
 		jassert(dataReplyValue._valCount == 1);
 		jassert(dataReplyValue._valType == ROVT_INT);
 		jassert(dataReplyValue._addrVal == adressing);
@@ -367,6 +424,10 @@ void DS100_DeviceSimulation::InitDataValues()
 				case ROI_CoordinateMapping_SourcePosition_Y:
 				case ROI_Positioning_SourceSpread:
 				case ROI_MatrixInput_ReverbSendGain:
+				case ROI_MatrixInput_LevelMeterPreMute:
+				case ROI_MatrixInput_Gain:
+				case ROI_MatrixOutput_LevelMeterPostMute:
+				case ROI_MatrixOutput_Gain:
 					remoteValue._valCount = 1;
 					remoteValue._valType = ROVT_FLOAT;
 					jassert(remoteValue._payload == nullptr);
@@ -376,6 +437,8 @@ void DS100_DeviceSimulation::InitDataValues()
 					remoteValue._payloadSize = sizeof(float);
 					break;
 				case ROI_Positioning_SourceDelayMode:
+				case ROI_MatrixInput_Mute:
+				case ROI_MatrixOutput_Mute:
 					remoteValue._valCount = 1;
 					remoteValue._valType = ROVT_INT;
 					jassert(remoteValue._payload == nullptr);
@@ -560,15 +623,29 @@ void DS100_DeviceSimulation::UpdateDataValues()
 				case ROVT_FLOAT:
 					if ((remoteValue._valCount == 1) && (remoteValue._payloadSize == sizeof(float)))
 					{
-						if (roi == ROI_MatrixInput_ReverbSendGain) // scale 0...1 value to gain specific -120...+24 dB range
+						switch (roi)
 						{
-							auto rsgR = ProcessingEngineConfig::GetRemoteObjectRange(roi);
-							static_cast<float*>(remoteValue._payload)[0] = (val1 * rsgR.getLength()) + rsgR.getStart();
+						case ROI_MatrixInput_ReverbSendGain: // scale 0...1 value to gain specific -120...+24 dB range
+						case ROI_MatrixInput_LevelMeterPreMute:
+						case ROI_MatrixInput_Gain :
+						case ROI_MatrixOutput_LevelMeterPostMute:
+						case ROI_MatrixOutput_Gain:
+							{
+								auto rsgR = ProcessingEngineConfig::GetRemoteObjectRange(roi);
+								static_cast<float*>(remoteValue._payload)[0] = (val1 * rsgR.getLength()) + rsgR.getStart();
+							}
+							break;
+						case ROI_CoordinateMapping_SourcePosition_Y:// use second value (cosinus) for y, to get a circle movement when visualizing single x and y values on a 2d surface ui
+							{
+								static_cast<float*>(remoteValue._payload)[0] = val2;
+							}
+							break;
+						default:
+							{
+								static_cast<float*>(remoteValue._payload)[0] = val1;
+							}
+							break;
 						}
-						else if (roi == ROI_CoordinateMapping_SourcePosition_Y) // use second value (cosinus) for y, to get a circle movement when visualizing single x and y values on a 2d surface ui
-							static_cast<float*>(remoteValue._payload)[0] = val2;
-						else
-							static_cast<float*>(remoteValue._payload)[0] = val1;
 					}
 					else if ((remoteValue._valCount == 2) && (remoteValue._payloadSize == 2 * sizeof(float)))
 					{
@@ -579,10 +656,19 @@ void DS100_DeviceSimulation::UpdateDataValues()
 				case ROVT_INT:
 					if ((remoteValue._valCount == 1) && (remoteValue._payloadSize == sizeof(int)))
 					{
-						if (roi == ROI_Positioning_SourceDelayMode)
+						switch (roi)
+						{
+						case ROI_Positioning_SourceDelayMode: // special case : three-state delay mode
 							static_cast<int*>(remoteValue._payload)[0] = static_cast<int>(val1 * 3.0f);
-						else
+							break;
+						case ROI_MatrixInput_Mute:	// mute states shall switch between 0 and one, float int-cast requires appropriate offset therefor
+						case ROI_MatrixOutput_Mute:
+							static_cast<int*>(remoteValue._payload)[0] = static_cast<int>(val1 + 0.5f);
+							break;
+						default:
 							static_cast<int*>(remoteValue._payload)[0] = static_cast<int>(val1);
+							break;
+						}
 					}
 					else if ((remoteValue._valCount == 2) && (remoteValue._payloadSize == 2 * sizeof(int)))
 					{
