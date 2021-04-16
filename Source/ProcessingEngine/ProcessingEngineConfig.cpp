@@ -1058,6 +1058,10 @@ String ProcessingEngineConfig::ObjectHandlingModeToString(ObjectHandlingMode ohm
 		return "Multiplex mult. n-ch. A to m-ch. B (fwd. val. changes only)";
 	case OHM_Mirror_dualA_withValFilter:
 		return "Mirror dual A and fwd. to B (val. changes only)";
+	case OHM_A1active_withValFilter:
+		return "A1 forwarding only (val. changes only)";
+	case OHM_A2active_withValFilter:
+		return "A2 forwarding only (val. changes only)";
 	default:
 		return "";
 	}
@@ -1086,6 +1090,10 @@ ObjectHandlingMode ProcessingEngineConfig::ObjectHandlingModeFromString(String m
 		return OHM_Mux_nA_to_mB_withValFilter;
 	if (mode == ObjectHandlingModeToString(OHM_Mirror_dualA_withValFilter))
 		return OHM_Mirror_dualA_withValFilter;
+	if (mode == ObjectHandlingModeToString(OHM_A1active_withValFilter))
+		return OHM_A1active_withValFilter;
+	if (mode == ObjectHandlingModeToString(OHM_A2active_withValFilter))
+		return OHM_A2active_withValFilter;
 
 	return OHM_Invalid;
 }
