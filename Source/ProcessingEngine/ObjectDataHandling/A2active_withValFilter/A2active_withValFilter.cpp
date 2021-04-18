@@ -60,7 +60,7 @@ bool A2active_withValFilter::OnReceivedMessageFromProtocol(ProtocolId PId, Remot
 	UpdateOnlineState(PId);
 
 	auto isProtocolBId = std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) == GetProtocolAIds().end();
-	auto isSecondProtocolAId = GetProtocolAIds().size() >= 2 && PId == GetProtocolAIds().at(2);
+	auto isSecondProtocolAId = GetProtocolAIds().size() >= 2 && PId == GetProtocolAIds().at(1);
 
 	if (isProtocolBId || isSecondProtocolAId)
 		return Forward_only_valueChanges::OnReceivedMessageFromProtocol(PId, Id, msgData);
