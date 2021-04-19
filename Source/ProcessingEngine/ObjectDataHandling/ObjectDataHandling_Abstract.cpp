@@ -67,6 +67,10 @@ ObjectDataHandling_Abstract::ObjectDataHandling_Abstract(ProcessingEngineNode* p
  */
 ObjectDataHandling_Abstract::~ObjectDataHandling_Abstract()
 {
+	for (auto const& aid : m_protocolAIds)
+		SetChangedProtocolState(aid, OHS_Protocol_Down);
+	for (auto const& bid : m_protocolBIds)
+		SetChangedProtocolState(bid, OHS_Protocol_Down);
 }
 
 /**
@@ -318,7 +322,7 @@ void ObjectDataHandling_Abstract::UpdateOnlineState(ProtocolId id)
 	if (m_protocolReactionTSMap.count(id) <= 0)
 		SetChangedProtocolState(id, OHS_Protocol_Up);
 	// if the protocol is receiving data the first time after 1s of silence, set its status to UP
-	else if (Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(id) > m_protocolReactionTimeout)
+	else if (Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(id) <= m_protocolReactionTimeout)
 		SetChangedProtocolState(id, OHS_Protocol_Up);
 
 	m_protocolReactionTSMap[id] = Time::getMillisecondCounterHiRes();
