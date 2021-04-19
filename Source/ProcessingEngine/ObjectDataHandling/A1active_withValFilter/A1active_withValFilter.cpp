@@ -53,7 +53,7 @@ A1active_withValFilter::~A1active_withValFilter()
  */
 bool A1active_withValFilter::OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier Id, RemoteObjectMessageData& msgData)
 {
-	const ProcessingEngineNode* parentNode = ObjectDataHandling_Abstract::GetParentNode();
+	auto parentNode = ObjectDataHandling_Abstract::GetParentNode();
 	if (!parentNode)
 		return false;
 

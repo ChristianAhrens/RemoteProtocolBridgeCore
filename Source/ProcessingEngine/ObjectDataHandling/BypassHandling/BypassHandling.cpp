@@ -69,25 +69,27 @@ BypassHandling::~BypassHandling()
  */
 bool BypassHandling::OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier Id, RemoteObjectMessageData& msgData)
 {
+	auto parentNode = ObjectDataHandling_Abstract::GetParentNode();
+	if (!parentNode)
+		return false;
+
+	UpdateOnlineState(PId);
+
 	bool sendSuccess = false;
 
-	const ProcessingEngineNode* parentNode = ObjectDataHandling_Abstract::GetParentNode();
-	if (parentNode)
+	if (std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) != GetProtocolAIds().end())
 	{
-		if (std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) != GetProtocolAIds().end())
-		{
-			// Send to all typeB protocols
-			sendSuccess = true;
-			for (auto const& protocolB : GetProtocolBIds())
-				sendSuccess = sendSuccess && parentNode->SendMessageTo(protocolB, Id, msgData);
-		}
-		else if (std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) != GetProtocolBIds().end())
-		{
-			// Send to all typeA protocols
-			sendSuccess = true;
-			for (auto const& protocolA : GetProtocolAIds())
-				sendSuccess = sendSuccess && parentNode->SendMessageTo(protocolA, Id, msgData);
-		}
+		// Send to all typeB protocols
+		sendSuccess = true;
+		for (auto const& protocolB : GetProtocolBIds())
+			sendSuccess = sendSuccess && parentNode->SendMessageTo(protocolB, Id, msgData);
+	}
+	else if (std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) != GetProtocolBIds().end())
+	{
+		// Send to all typeA protocols
+		sendSuccess = true;
+		for (auto const& protocolA : GetProtocolAIds())
+			sendSuccess = sendSuccess && parentNode->SendMessageTo(protocolA, Id, msgData);
 	}
 
 	return sendSuccess;

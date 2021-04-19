@@ -100,8 +100,13 @@ bool Mux_nA_to_mB::setStateXml(XmlElement* stateXml)
  */
 bool Mux_nA_to_mB::OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier Id, RemoteObjectMessageData& msgData)
 {
-	const ProcessingEngineNode* parentNode = ObjectDataHandling_Abstract::GetParentNode();
-	if (parentNode && m_protoChCntA>0 && m_protoChCntB>0)
+	auto parentNode = ObjectDataHandling_Abstract::GetParentNode();
+	if (!parentNode)
+		return false;
+
+	UpdateOnlineState(PId);
+
+	if (m_protoChCntA>0 && m_protoChCntB>0)
 	{
 		auto PIdAIter = std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId);
 		auto PIdBIter = std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId);
