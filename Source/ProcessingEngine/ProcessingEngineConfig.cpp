@@ -58,8 +58,8 @@ std::map<RemoteObjectIdentifier, juce::Range<float>>	ProcessingEngineConfig::m_o
 	std::make_pair(ROI_MatrixInput_Gain, juce::Range<float>(-120.0f, 24.0f)),
 	std::make_pair(ROI_MatrixInput_Mute, juce::Range<float>(0.0f, 1.0f)),
 	// MatrixOutput ROIs
-	std::make_pair(ROI_MatrixOutput_LevelMeterPostMute, juce::Range<float>(-120.0f, 24.0f)),
-	std::make_pair(ROI_MatrixOutput_Gain, juce::Range<float>(-120.0f, 24.0f)),
+	std::make_pair(ROI_MatrixOutput_LevelMeterPostMute, juce::Range<float>(-120.0f, 10.0f)),
+	std::make_pair(ROI_MatrixOutput_Gain, juce::Range<float>(-120.0f, 10.0f)),
 	std::make_pair(ROI_MatrixOutput_Mute, juce::Range<float>(0.0f, 1.0f)) };
 
 /**
