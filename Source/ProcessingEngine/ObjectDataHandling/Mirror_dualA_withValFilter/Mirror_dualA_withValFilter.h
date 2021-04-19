@@ -37,6 +37,7 @@ public:
 	Mirror_dualA_withValFilter(ProcessingEngineNode* parentNode);
 	~Mirror_dualA_withValFilter();
 
+	//==============================================================================
 	void AddProtocolAId(ProtocolId PAId) override;
 
 	//==============================================================================

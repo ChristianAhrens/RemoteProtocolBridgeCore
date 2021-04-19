@@ -44,6 +44,24 @@ A1active_withValFilter::~A1active_withValFilter()
 }
 
 /**
+ * Overridden from ObjectDataHandling_Abstract to use incoming ids
+ * to initialize internal master and slave protocol ids.
+ *
+ * @param PAId	Protocol Id of typeA protocol to add.
+ */
+void A1active_withValFilter::AddProtocolAId(ProtocolId PAId)
+{
+	ObjectDataHandling_Abstract::AddProtocolAId(PAId);
+
+	if (GetProtocolAIds().size() == 1)
+		SetChangedProtocolState(PAId, OHS_Protocol_Master);
+	else if (GetProtocolAIds().size() == 2)
+		SetChangedProtocolState(PAId, OHS_Protocol_Slave);
+	else
+		jassertfalse; // only two typeA protocols are supported by this OHM!
+}
+
+/**
  * Method to be called by parent node on receiving data from node protocol with given id
  *
  * @param PId		The id of the protocol that received the data

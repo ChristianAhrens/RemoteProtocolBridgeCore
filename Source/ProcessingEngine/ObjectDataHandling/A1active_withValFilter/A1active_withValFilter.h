@@ -38,6 +38,9 @@ public:
 	~A1active_withValFilter();
 
 	//==============================================================================
+	void AddProtocolAId(ProtocolId PAId) override;
+
+	//==============================================================================
 	bool OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier Id, RemoteObjectMessageData& msgData) override;
 
 protected:
