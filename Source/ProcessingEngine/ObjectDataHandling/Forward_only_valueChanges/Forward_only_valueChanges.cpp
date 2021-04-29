@@ -195,8 +195,11 @@ bool Forward_only_valueChanges::IsChangedDataValue(const RemoteObjectIdentifier 
 					}
 					break;
 				case ROVT_STRING:
-					jassertfalse; // String not (yet?) supported
-					changeFound = true;
+					{
+					auto refVal = String(static_cast<char*>(currentVal._payload), currentVal._payloadSize);
+					auto newVal = String(static_cast<char*>(msgData._payload), msgData._payloadSize);
+					changeFound = (refVal != newVal);
+					}
 					break;
 				case ROVT_NONE:
 				default:
