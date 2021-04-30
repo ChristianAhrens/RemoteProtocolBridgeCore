@@ -860,9 +860,13 @@ void OSCProtocolProcessor::createStringMessageData(const OSCMessage& messageInpu
 		if (messageInput[0].isString())
 			m_stringValueBuffer = messageInput[0].getString();
 
-		newMessageData._valType = ROVT_STRING;
-		newMessageData._valCount = 1;
-		newMessageData._payload = m_stringValueBuffer.getCharPointer().getAddress();
-		newMessageData._payloadSize = m_stringValueBuffer.length();
+		RemoteObjectMessageData tempMessageData;
+		tempMessageData._valType = ROVT_STRING;
+		tempMessageData._valCount = static_cast<std::uint16_t>(m_stringValueBuffer.getCharPointer().sizeInBytes());
+		tempMessageData._payload = m_stringValueBuffer.getCharPointer().getAddress();
+		tempMessageData._payloadSize = static_cast<std::uint32_t>(m_stringValueBuffer.getCharPointer().sizeInBytes());
+		tempMessageData._payloadOwned = false;
+		
+		newMessageData.payloadCopy(tempMessageData);
 	}
 }
