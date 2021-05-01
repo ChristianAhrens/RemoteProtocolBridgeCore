@@ -161,7 +161,7 @@ enum RemoteObjectIdentifier
 	ROI_CoordinateMapping_SourcePosition_Y,		/**< y position remote object id. */
 	ROI_MatrixSettings_ReverbRoomId,
 	ROI_MatrixSettings_ReverbPredelayFactor,
-	ROI_MatrixSettings_RevebRearLevel,
+	ROI_MatrixSettings_ReverbRearLevel,
 	ROI_MatrixInput_ReverbSendGain,				/**< reverbsendgain remote object id. */
 	ROI_ReverbInput_Gain,
 	ROI_ReverbInputProcessing_Mute,

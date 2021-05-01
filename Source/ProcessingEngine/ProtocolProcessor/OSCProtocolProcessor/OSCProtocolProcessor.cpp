@@ -484,8 +484,8 @@ void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const S
 			newObjectId = ROI_MatrixSettings_ReverbRoomId;
 		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixSettings_ReverbPredelayFactor)))
 			newObjectId = ROI_MatrixSettings_ReverbPredelayFactor;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixSettings_RevebRearLevel)))
-			newObjectId = ROI_MatrixSettings_RevebRearLevel;
+		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixSettings_ReverbRearLevel)))
+			newObjectId = ROI_MatrixSettings_ReverbRearLevel;
 		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixInput_ReverbSendGain)))
 			newObjectId = ROI_MatrixInput_ReverbSendGain;
 		else if (addressString.startsWith(GetRemoteObjectString(ROI_ReverbInput_Gain)))
@@ -585,7 +585,7 @@ void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const S
 		case ROI_Positioning_SourcePosition_Y:
 		case ROI_Positioning_SourcePosition:
 		case ROI_MatrixSettings_ReverbPredelayFactor:
-		case ROI_MatrixSettings_RevebRearLevel:
+		case ROI_MatrixSettings_ReverbRearLevel:
 		case ROI_MatrixInput_ReverbSendGain:
 		case ROI_ReverbInput_Gain:
 		case ROI_ReverbInputProcessing_Gain:
@@ -713,7 +713,7 @@ String OSCProtocolProcessor::GetRemoteObjectString(RemoteObjectIdentifier id)
 		return "/dbaudio1/matrixsettings/reverbroomid";
 	case ROI_MatrixSettings_ReverbPredelayFactor:
 		return "/dbaudio1/matrixsettings/reverbpredelayfactor";
-	case ROI_MatrixSettings_RevebRearLevel:
+	case ROI_MatrixSettings_ReverbRearLevel:
 		return "/dbaudio1/matrixsettings/reverbrearlevel";
 	case ROI_MatrixInput_ReverbSendGain:
 		return "/dbaudio1/matrixinput/reverbsendgain";

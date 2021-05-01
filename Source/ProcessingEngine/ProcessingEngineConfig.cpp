@@ -60,7 +60,11 @@ std::map<RemoteObjectIdentifier, juce::Range<float>>	ProcessingEngineConfig::m_o
 	// MatrixOutput ROIs
 	std::make_pair(ROI_MatrixOutput_LevelMeterPostMute, juce::Range<float>(-120.0f, 10.0f)),
 	std::make_pair(ROI_MatrixOutput_Gain, juce::Range<float>(-120.0f, 10.0f)),
-	std::make_pair(ROI_MatrixOutput_Mute, juce::Range<float>(0.0f, 1.0f)) };
+	std::make_pair(ROI_MatrixOutput_Mute, juce::Range<float>(0.0f, 1.0f)),
+	// MatrixSettings ROIs
+	std::make_pair(ROI_MatrixSettings_ReverbRoomId, juce::Range<float>(0.0f, 9.0f)),
+	std::make_pair(ROI_MatrixSettings_ReverbPredelayFactor, juce::Range<float>(0.2f, 2.0f)),
+	std::make_pair(ROI_MatrixSettings_ReverbRearLevel, juce::Range<float>(-24.0f, 24.0f))};
 
 /**
  * Constructs an object
@@ -717,7 +721,7 @@ String ProcessingEngineConfig::GetObjectDescription(RemoteObjectIdentifier Id)
 		return "Matrix Settings ReverbRoomId";
 	case ROI_MatrixSettings_ReverbPredelayFactor:
 		return "Matrix Settings ReverbPredelayFactor";
-	case ROI_MatrixSettings_RevebRearLevel:
+	case ROI_MatrixSettings_ReverbRearLevel:
 		return "Matrix Settings ReverbRearLevel";
 	case ROI_MatrixInput_ReverbSendGain:
 		return "Matrix Input ReverbSendGain";
@@ -847,7 +851,7 @@ String ProcessingEngineConfig::GetObjectShortDescription(RemoteObjectIdentifier 
 		return "Mtrx Set. RevRoomId";
 	case ROI_MatrixSettings_ReverbPredelayFactor:
 		return "Mtrx Set. RevPredelay";
-	case ROI_MatrixSettings_RevebRearLevel:
+	case ROI_MatrixSettings_ReverbRearLevel:
 		return "Mtrx Set. RevRearLevel";
 	case ROI_MatrixInput_ReverbSendGain:
 		return "Mtrx In RevSndGain";
@@ -942,7 +946,7 @@ bool ProcessingEngineConfig::IsChannelAddressingObject(RemoteObjectIdentifier ob
 	case ROI_Status_StatusText:
 	case ROI_MatrixSettings_ReverbRoomId:
 	case ROI_MatrixSettings_ReverbPredelayFactor:
-	case ROI_MatrixSettings_RevebRearLevel:
+	case ROI_MatrixSettings_ReverbRearLevel:
 	case ROI_Device_Clear:
 	case ROI_Scene_Previous:
 	case ROI_Scene_Next:

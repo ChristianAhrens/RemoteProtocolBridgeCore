@@ -205,7 +205,7 @@ void YmhOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, cons
 	case ROI_Positioning_SourcePosition_Y:
 	case ROI_Positioning_SourcePosition:
 	case ROI_MatrixSettings_ReverbPredelayFactor:
-	case ROI_MatrixSettings_RevebRearLevel:
+	case ROI_MatrixSettings_ReverbRearLevel:
 	case ROI_ReverbInput_Gain:
 	case ROI_ReverbInputProcessing_Gain:
 	case ROI_ReverbInputProcessing_LevelMeter:
@@ -297,7 +297,7 @@ String YmhOSCProtocolProcessor::GetRemoteObjectParameterTypeString(RemoteObjectI
 	case ROI_CoordinateMapping_SourcePosition_XY:
 	case ROI_MatrixSettings_ReverbRoomId:
 	case ROI_MatrixSettings_ReverbPredelayFactor:
-	case ROI_MatrixSettings_RevebRearLevel:
+	case ROI_MatrixSettings_ReverbRearLevel:
 	case ROI_ReverbInput_Gain:
 	case ROI_ReverbInputProcessing_Mute:
 	case ROI_ReverbInputProcessing_Gain:
