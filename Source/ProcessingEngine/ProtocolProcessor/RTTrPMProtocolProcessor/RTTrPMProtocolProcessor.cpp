@@ -80,7 +80,7 @@ bool RTTrPMProtocolProcessor::Stop()
 {
 	m_IsRunning = !m_rttrpmReceiver.stop();
 
-	return m_IsRunning;
+	return !m_IsRunning;
 }
 
 /**
