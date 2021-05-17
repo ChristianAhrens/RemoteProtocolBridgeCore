@@ -54,6 +54,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ProtocolProcessor/RTTrPMProtocolProcessor/RTTrPMProtocolProcessor.h"
 #include "ProtocolProcessor/MIDIProtocolProcessor/MIDIProtocolProcessor.h"
 #include "ProtocolProcessor/OSCProtocolProcessor/YmhOSCProtocolProcessor.h"
+#include "ProtocolProcessor/OSCProtocolProcessor/ADMOSCProtocolProcessor.h"
 
 // **************************************************************************************
 //    class ProcessingEngineNode
@@ -387,6 +388,8 @@ ProtocolProcessorBase *ProcessingEngineNode::CreateProtocolProcessor(ProtocolTyp
 			return new MIDIProtocolProcessor(m_nodeId);
 		case PT_YamahaOSCProtocol:
 			return new YmhOSCProtocolProcessor(m_nodeId, listenerPortNumber);
+		case PT_ADMOSCProtocol:
+			return new ADMOSCProtocolProcessor(m_nodeId, listenerPortNumber);
 		default:
 			return nullptr;
 	}

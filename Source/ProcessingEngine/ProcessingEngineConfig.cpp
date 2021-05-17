@@ -1007,6 +1007,8 @@ String  ProcessingEngineConfig::ProtocolTypeToString(ProtocolType pt)
 		return "OSC";
 	case PT_YamahaOSCProtocol:
 		return "YamahaOSC";
+	case PT_ADMOSCProtocol:
+		return "ADM-OSC";
 	case PT_RTTrPMProtocol:
 		return "RTTrPM";
 	case PT_MidiProtocol:
@@ -1033,6 +1035,8 @@ ProtocolType  ProcessingEngineConfig::ProtocolTypeFromString(String type)
 		return PT_RTTrPMProtocol;
 	if (type == ProtocolTypeToString(PT_YamahaOSCProtocol))
 		return PT_YamahaOSCProtocol;
+	if (type == ProtocolTypeToString(PT_ADMOSCProtocol))
+		return PT_ADMOSCProtocol;
 
 	return PT_Invalid;
 }

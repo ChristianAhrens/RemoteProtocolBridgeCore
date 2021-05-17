@@ -68,6 +68,7 @@ enum ProtocolType
 	PT_MidiProtocol,		/**< MIDI protocol type value. */
 	PT_RTTrPMProtocol,		/**< Blacktrax RTTrPMotion protocol type value. */
 	PT_YamahaOSCProtocol,	/**< Yamaha OSC protocol type value. */
+	PT_ADMOSCProtocol,		/**< ADM OSC protocol type value. */
 	PT_UserMAX				/**< Value to mark enum max; For iteration purpose. */
 };
 
