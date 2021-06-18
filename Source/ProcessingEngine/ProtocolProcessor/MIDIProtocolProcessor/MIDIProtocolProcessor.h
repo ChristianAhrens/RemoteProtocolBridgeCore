@@ -67,8 +67,6 @@ public:
 	bool Stop() override;
 
 	//==============================================================================
-	void SetRemoteObjectsActive(XmlElement* activeObjsXmlElement) override;
-
 	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData) override;
 
 private:

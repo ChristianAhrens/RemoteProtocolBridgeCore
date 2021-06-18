@@ -271,8 +271,8 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 				break;
 			}
 
-			// If the received channel (source) is set to muted, return without further processing
-			if (IsChannelMuted(newMsgData._addrVal._first) || (newMsgData._addrVal._first <= INVALID_ADDRESS_VALUE))
+			// If the received message targets a muted object, return without further processing
+			if (IsRemoteObjectMuted(RemoteObject(newObjectId, newMsgData._addrVal)))
 				return;
 
 			// finally send the collected data struct to parent node for further handling
@@ -491,17 +491,6 @@ bool MIDIProtocolProcessor::Stop()
 		retVal = false;
 
 	return retVal;
-}
-
-/**
- * Setter for remote object to specifically activate.
- * For MIDI processing this is used to initialize MIDI Object Subscriptions
- *
- * @param Objs	The list of RemoteObjects that shall be activated
- */
-void MIDIProtocolProcessor::SetRemoteObjectsActive(XmlElement* activeObjsXmlElement)
-{
-	ignoreUnused(activeObjsXmlElement);
 }
 
 /**

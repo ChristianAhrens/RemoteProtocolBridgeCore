@@ -97,7 +97,7 @@ bool RTTrPMProtocolProcessor::setStateXml(XmlElement* stateXml)
 	{
 		auto hostPortXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::HOSTPORT));
 		if (hostPortXmlElement)
-			m_hostPort = hostPortXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::PORT));
+			SetHostPort(hostPortXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::PORT)));
 		else
 			return false;
 
@@ -110,20 +110,6 @@ bool RTTrPMProtocolProcessor::setStateXml(XmlElement* stateXml)
 		else
 			return false;
 	}
-}
-
-/**
- * Setter for remote object to specifically activate.
- * For OSC processing this is used to activate internal polling
- * of the object values.
- * In case an empty list of objects is passed, polling is stopped and
- * the internal list is cleared.
- *
- * @param activeObjsXmlElement	The xml element that has to be parsed to get the object data
- */
-void RTTrPMProtocolProcessor::SetRemoteObjectsActive(XmlElement* activeObjsXmlElement)
-{
-	ignoreUnused(activeObjsXmlElement);
 }
 
 /**
@@ -154,12 +140,12 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 		return;
 
 	ignoreUnused(senderPort);
-	if (m_ipAddress.isNotEmpty() && senderIPAddress != m_ipAddress)
+	if (!GetIpAddress().empty() && senderIPAddress != String(GetIpAddress()))
 	{
 #ifdef DEBUG
 		DBG("NId" + String(m_parentNodeId)
 			+ " PId" + String(m_protocolProcessorId) + ": ignore unexpected OSC message from " 
-			+ senderIPAddress + " (" + m_ipAddress + " expected)");
+			+ senderIPAddress + " (" + String(GetIpAddress()) + " expected)");
 #endif
 		return;
 	}
@@ -234,11 +220,9 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 						newMsgData._payload = &newDualFloatValue;
 						newMsgData._payloadSize = 2 * sizeof(float);
 
-
-						// If the received channel (source) is set to muted, dont forward the message
-						auto sourceId = static_cast<int>(newMsgData._addrVal._first);
-						if (IsChannelMuted(sourceId))
-							continue;
+						// If the received data targets a muted object, dont forward the message
+						if (IsRemoteObjectMuted(RemoteObject(newObjectId, newMsgData._addrVal)))
+							return;
 
 						// provide the received message to parent node
 						else if (m_messageListener)

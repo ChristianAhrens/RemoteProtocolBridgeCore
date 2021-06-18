@@ -54,8 +54,16 @@ public:
 	virtual bool setStateXml(XmlElement* stateXml) override;
 
 protected:
-	String					m_ipAddress;			/**< IP Address where messages will be sent to / received from. */
-	int						m_clientPort;			/**< TCP/UDP port where messages will be received from. */
-	int						m_hostPort;				/**< TCP/UDP port where messages will be sent to. */
+	const std::string& GetIpAddress();
+	void SetIpAddress(const std::string& ipAddress);
+	std::int32_t GetClientPort();
+	void SetClientPort(std::int32_t clientPort);
+	std::int32_t GetHostPort();
+	void SetHostPort(std::int32_t hostPort);
+
+private:
+	std::string		m_ipAddress;	/**< IP Address where messages will be sent to / received from. */
+	std::int32_t	m_clientPort;	/**< TCP/UDP port where messages will be received from. */
+	std::int32_t	m_hostPort;		/**< TCP/UDP port where messages will be sent to. */
 
 };
