@@ -138,6 +138,8 @@ bool Forward_only_valueChanges::IsChangedDataValue(const RemoteObjectIdentifier 
 {
     if (ProcessingEngineConfig::IsKeepaliveObject(Id))
         return true;
+	if (msgData._valCount == 0) // a value count of 0 indicates that this is a value polling message that shall be forwarded anyways
+		return true;
     
 	if (m_precision == 0)
 		return true;
