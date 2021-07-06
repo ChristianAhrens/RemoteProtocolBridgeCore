@@ -36,6 +36,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../../RemoteProtocolBridgeCommon.h"
 #include "../ProcessingEngineConfig.h"
+#include "../TimerThreadBase.h"
 
 #include <JuceHeader.h>
 
@@ -46,7 +47,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * implements in a derived object. Its parent node object provides a handler method to processed
  * received protocol message data.
  */
-class ProtocolProcessorBase : public ProcessingEngineConfig::XmlConfigurableElement
+class ProtocolProcessorBase :	public ProcessingEngineConfig::XmlConfigurableElement,
+								public TimerThreadBase
 {
 public:
 	/**
@@ -80,16 +82,20 @@ public:
 	virtual bool Start() = 0;
 	virtual bool Stop() = 0;
 
-	virtual void SetRemoteObjectsActive(XmlElement* activeObjsXmlElement) = 0;	/**< Objects that are to be handled actively (OSC polling, OCA subscribing). */
+	//==============================================================================
+	void SetActiveRemoteObjectsInterval(int interval);
+	int GetActiveRemoteObjectsInterval();
 	
+	//==============================================================================
+	void SetRemoteObjectsActive(XmlElement* activeObjsXmlElement);	/**< Objects that are to be handled actively (OSC polling, OCA subscribing). */
+
+	//==============================================================================
+	void SetRemoteObjectsMuted(XmlElement* mutedObjChsXmlElement);
+	bool IsRemoteObjectMuted(RemoteObject object);
 
 	//==============================================================================
 	std::unique_ptr<XmlElement> createStateXml() override { return nullptr; };
-	virtual bool setStateXml(XmlElement* stateXml) override;
-
-	//==============================================================================
-	virtual void SetRemoteObjectChannelsMuted(XmlElement* mutedObjChsXmlElement);
-	bool IsChannelMuted(int channelNumber);										
+	virtual bool setStateXml(XmlElement* stateXml) override;								
 
 protected:
 	Listener				*m_messageListener;				/**< The parent node object. Needed for e.g. triggering receive notifications. */
@@ -100,6 +106,11 @@ protected:
 	bool					m_IsRunning;					/**< Bool indication if the processor is successfully running. */
 
 private:
-	Array<int>				m_mutedRemoteObjectChannels;	/**< List of remote object channelss to be muted. */
+	void timerThreadCallback() override;
+
+	std::vector<RemoteObject>	m_mutedRemoteObjects;			/**< List of remote objects to be muted. */
+	std::vector<RemoteObject>	m_activeRemoteObjects;			/**< List of remote objects to be activly handled. */
+	int							m_activeRemoteObjectsInterval;	/**< Interval at which data is polled/requested from protocol peer. */
+	CriticalSection				m_activeRemoteObjectsLock;
 
 };

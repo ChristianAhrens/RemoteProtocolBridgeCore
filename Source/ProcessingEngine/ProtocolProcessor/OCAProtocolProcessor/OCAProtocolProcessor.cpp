@@ -88,18 +88,6 @@ bool OCAProtocolProcessor::setStateXml(XmlElement* stateXml)
 }
 
 /**
- * Setter for remote object to specifically activate.
- * For OCA processing this is used to initialize OCA Object Subscriptions
- * NOT YET IMPLEMENTED
- *
- * @param Objs	The list of RemoteObjects that shall be activated
- */
-void OCAProtocolProcessor::SetRemoteObjectsActive(XmlElement* activeObjsXmlElement)
-{
-	ignoreUnused(activeObjsXmlElement);
-}
-
-/**
  * Method to trigger sending of a message
  * NOT YET IMPLEMENTED
  *

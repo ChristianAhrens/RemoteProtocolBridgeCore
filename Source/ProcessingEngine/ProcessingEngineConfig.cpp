@@ -195,18 +195,45 @@ Array<NodeId> ProcessingEngineConfig::GetNodeIds()
 /**
  * Method to read the node configuration part regarding active objects per protocol
  *
- * @param ActiveObjectsElement	The xml element for the nodes' protocols' active objects in the DOM
- * @param RemoteObjects			The remote objects list to fill according config contents
+ * @param activeObjectsElement	The xml element for the nodes' protocols' active objects in the DOM
+ * @param remoteObjects			The remote objects list to fill according config contents
  * @return	True if remote objects were inserted, false if empty list is returned
  */
-bool ProcessingEngineConfig::ReadActiveObjects(XmlElement* activeObjectsElement, std::vector<RemoteObject>& RemoteObjects)
+bool ProcessingEngineConfig::ReadActiveObjects(XmlElement* activeObjectsElement, std::vector<RemoteObject>& remoteObjects)
 {
-	RemoteObjects.clear();
-
 	if (!activeObjectsElement || activeObjectsElement->getTagName() != getTagName(TagID::ACTIVEOBJECTS))
 		return false;
 
-	XmlElement* objectChild = activeObjectsElement->getFirstChildElement();
+	return ReadObjects(activeObjectsElement, remoteObjects);
+}
+
+/**
+ * Method to read the node configuration part regarding muted objects per protocol
+ *
+ * @param mutedObjectsElement	The xml element for the nodes' protocols' muted objects in the DOM
+ * @param remoteObjects			The remote object list to fill according config contents
+ * @return	True if remote objects were inserted, false if empty list is returned
+ */
+bool ProcessingEngineConfig::ReadMutedObjects(XmlElement* mutedObjectsElement, std::vector<RemoteObject>& remoteObjects)
+{
+	if (!mutedObjectsElement || mutedObjectsElement->getTagName() != getTagName(TagID::MUTEDOBJECTS))
+		return false;
+
+	return ReadObjects(mutedObjectsElement, remoteObjects);
+}
+
+/**
+ * Private static helper method to read the node configuration part regarding muted/activated/... objects per protocol
+ *
+ * @param objectsElement	The xml element for the nodes' protocols' muted objects in the DOM
+ * @param remoteObjects			The remote object list to fill according config contents
+ * @return	True if remote objects were inserted, false if empty list is returned
+ */
+bool ProcessingEngineConfig::ReadObjects(XmlElement* objectsElement, std::vector<RemoteObject>& remoteObjects)
+{
+	remoteObjects.clear(); // The incoming vector may contain remoteobjects, that can be regarded as obsolete. (the member vector of protocolprocessorbase e.g. is passed in here with the expectation of being filled only with the current objects after the call)
+
+	XmlElement* objectChild = objectsElement->getFirstChildElement();
 	RemoteObject obj;
 	
 	while (objectChild != nullptr)
@@ -250,14 +277,14 @@ bool ProcessingEngineConfig::ReadActiveObjects(XmlElement* activeObjectsElement,
 						{
 							obj._Addr._first = static_cast<ChannelId>(channels[j]);
 							obj._Addr._second = static_cast<RecordId>(records[k]);
-							RemoteObjects.push_back(obj);
+							remoteObjects.push_back(obj);
 						}
 					}
 					else
 					{
 						obj._Addr._first = (int16)channels[j];
 						obj._Addr._second = -1;
-						RemoteObjects.push_back(obj);
+						remoteObjects.push_back(obj);
 					}
 				}
 			}
@@ -266,38 +293,7 @@ bool ProcessingEngineConfig::ReadActiveObjects(XmlElement* activeObjectsElement,
 		objectChild = objectChild->getNextElement();
 	}
 
-	return !RemoteObjects.empty();
-}
-
-/**
- * Method to read the node configuration part regarding muted objects per protocol
- *
- * @param mutedObjectChannelsElement	The xml element for the nodes' protocols' muted objects in the DOM
- * @param channel						The remote object channels list to fill according config contents
- * @return	True if remote object channels were inserted, false if empty list is returned
- */
-bool ProcessingEngineConfig::ReadMutedObjectChannels(XmlElement* mutedObjectChannelsElement, Array<int>& channels)
-{
-	channels.clear();
-
-	if (!mutedObjectChannelsElement || mutedObjectChannelsElement->getTagName() != getTagName(TagID::MUTEDCHANNELS))
-		return false;
-
-	XmlElement* objectsTextXmlElement = mutedObjectChannelsElement->getFirstChildElement();
-	if (objectsTextXmlElement && objectsTextXmlElement->isTextElement())
-	{
-		String chStrToSplit = objectsTextXmlElement->getText();
-		StringArray chNumbers;
-		chNumbers.addTokens(chStrToSplit, ", ", "");
-		for (int j = 0; j < chNumbers.size(); ++j)
-		{
-			int chNum = chNumbers[j].getIntValue();
-			if (chNum > 0)
-				channels.add(chNum);
-		}
-	}
-
-	return !channels.isEmpty();
+	return !remoteObjects.empty();
 }
 
 /**
@@ -325,18 +321,48 @@ bool ProcessingEngineConfig::ReadPollingInterval(XmlElement* PollingIntervalElem
 /**
  * Method to write the node configuration part regarding active objects per protocol
  *
- * @param ActiveObjectsElement	The xml element for the nodes' protocols' active objects in the DOM
- * @param RemoteObjects			The remote objects to set active in config
+ * @param activeObjectsElement	The xml element for the nodes' protocols' active objects in the DOM
+ * @param remoteObjects			The remote objects to set active in config
  * @return	True on success, false on failure
  */
-bool ProcessingEngineConfig::WriteActiveObjects(XmlElement* ActiveObjectsElement, const std::vector<RemoteObject>& RemoteObjects)
+bool ProcessingEngineConfig::WriteActiveObjects(XmlElement* activeObjectsElement, const std::vector<RemoteObject>& remoteObjects)
 {
-	if (!ActiveObjectsElement)
+	if (!activeObjectsElement || activeObjectsElement->getTagName() != getTagName(TagID::ACTIVEOBJECTS))
+		return false;
+
+	return WriteObjects(activeObjectsElement, remoteObjects);
+}
+
+/**
+ * Method to write the node configuration part regarding muted channels per protocol
+ *
+ * @param mutedObjectsElement	The xml element for the nodes' protocols' muted objects
+ * @param remoteObjects			The remote objects to set active in config
+ * @return	True on success, false on failure
+ */
+bool ProcessingEngineConfig::WriteMutedObjects(XmlElement* mutedObjectsElement, const std::vector<RemoteObject>& remoteObjects)
+{
+	if (!mutedObjectsElement || mutedObjectsElement->getTagName() != getTagName(TagID::MUTEDOBJECTS))
+		return false;
+
+	return WriteObjects(mutedObjectsElement, remoteObjects);
+}
+
+/**
+ * Method to write the node configuration part regarding muted channels per protocol
+ *
+ * @param objectsElement	The xml element to write the given objects to
+ * @param remoteObjects		The remote objects to write
+ * @return	True on success, false on failure
+ */
+bool ProcessingEngineConfig::WriteObjects(XmlElement* objectsElement, const std::vector<RemoteObject>& remoteObjects)
+{
+	if (!objectsElement)
 		return false;
 
 	std::map<int, std::vector<int>> channelsPerObj;
 	std::map<int, std::vector<int>> recordsPerObj;
-	for (auto const& ro : RemoteObjects)
+	for (auto const& ro : remoteObjects)
 	{
 		auto selChs = &channelsPerObj[ro._Id];
 		auto selChIter = std::find(selChs->begin(), selChs->end(), ro._Addr._first);
@@ -351,7 +377,7 @@ bool ProcessingEngineConfig::WriteActiveObjects(XmlElement* ActiveObjectsElement
 
 	for (int k = ROI_Invalid + 1; k < ROI_BridgingMAX; ++k)
 	{
-		if (XmlElement* ObjectElement = ActiveObjectsElement->createNewChildElement(GetObjectDescription((RemoteObjectIdentifier)k).removeCharacters(" ")))
+		if (XmlElement* objectElement = objectsElement->createNewChildElement(GetObjectDescription((RemoteObjectIdentifier)k).removeCharacters(" ")))
 		{
 			String selChanTxt;
 			for (int j = 0; j < channelsPerObj[k].size(); ++j)
@@ -363,7 +389,7 @@ bool ProcessingEngineConfig::WriteActiveObjects(XmlElement* ActiveObjectsElement
 					selChanTxt << channelsPerObj[k][j];
 				}
 			}
-			ObjectElement->setAttribute("channels", selChanTxt);
+			objectElement->setAttribute("channels", selChanTxt);
 
 			String selRecTxt;
 			for (int j = 0; j < recordsPerObj[k].size(); ++j)
@@ -375,46 +401,9 @@ bool ProcessingEngineConfig::WriteActiveObjects(XmlElement* ActiveObjectsElement
 					selRecTxt << recordsPerObj[k][j];
 				}
 			}
-			ObjectElement->setAttribute("records", selRecTxt);
+			objectElement->setAttribute("records", selRecTxt);
 		}
 	}
-
-	return true;
-}
-
-/**
- * Method to write the node configuration part regarding muted channels per protocol
- *
- * @param mutedObjectChannelsElement	The xml element for the nodes' protocols' active objects in the DOM
- * @param channels			The remote objects to set active in config
- * @return	True on success, false on failure
- */
-bool ProcessingEngineConfig::WriteMutedObjectChannels(XmlElement* mutedObjectChannelsElement, Array<int> const& channels)
-{
-	if (!mutedObjectChannelsElement || mutedObjectChannelsElement->getTagName() != getTagName(TagID::MUTEDCHANNELS))
-		return false;
-
-	String mutedChannels;
-	for (auto channelNr : channels)
-	{
-		if (!mutedChannels.isEmpty())
-			mutedChannels << ", ";
-
-		mutedChannels << channelNr;
-	}
-
-	auto mutedChannelsTextXmlElement = mutedObjectChannelsElement->getFirstChildElement();
-	if (!mutedChannelsTextXmlElement)
-	{
-		mutedChannelsTextXmlElement = mutedObjectChannelsElement->createTextElement(mutedChannels);
-		mutedObjectChannelsElement->addChildElement(mutedChannelsTextXmlElement);
-	}
-	else if (mutedChannelsTextXmlElement->isTextElement())
-	{
-		mutedChannelsTextXmlElement->setText(mutedChannels);
-	}
-	else
-		jassertfalse;
 
 	return true;
 }
@@ -426,15 +415,45 @@ bool ProcessingEngineConfig::WriteMutedObjectChannels(XmlElement* mutedObjectCha
  * @param RemoteObjects			The remote objects to set active in config
  * @return	True on success, false on failure
  */
-bool ProcessingEngineConfig::ReplaceActiveObjects(XmlElement* ActiveObjectsElement, const std::vector<RemoteObject>& RemoteObjects)
+bool ProcessingEngineConfig::ReplaceActiveObjects(XmlElement* activeObjectsElement, const std::vector<RemoteObject>& remoteObjects)
 {
-	if (!ActiveObjectsElement)
+	if (!activeObjectsElement || activeObjectsElement->getTagName() != getTagName(TagID::ACTIVEOBJECTS))
+		return false;
+
+	return ReplaceObjects(activeObjectsElement, remoteObjects);
+}
+
+/**
+ * Method to replace the node configuration part regarding active objects per protocol
+ *
+ * @param mutedObjectsElement	The xml element for the nodes' protocols' muted objects in the DOM
+ * @param remoteObjects		The remote objects to set muted in config
+ * @return	True on success, false on failure
+ */
+bool ProcessingEngineConfig::ReplaceMutedObjects(XmlElement* mutedObjectsElement, const std::vector<RemoteObject>& remoteObjects)
+{
+	if (!mutedObjectsElement)
+		return false;
+
+	return ReplaceObjects(mutedObjectsElement, remoteObjects);
+}
+
+/**
+ * Method to replace the node configuration part regarding active objects per protocol
+ *
+ * @param ActiveObjectsElement	The xml element for the nodes' protocols' active objects in the DOM
+ * @param RemoteObjects			The remote objects to set active in config
+ * @return	True on success, false on failure
+ */
+bool ProcessingEngineConfig::ReplaceObjects(XmlElement* objectsElement, const std::vector<RemoteObject>& remoteObjects)
+{
+	if (!objectsElement)
 		return false;
 
 	// iterate through remote objects to be activated and create lists of active channels/records per roi
 	std::map<int, std::vector<int>> channelsPerObj;
 	std::map<int, std::vector<int>> recordsPerObj;
-	for (auto const& roi : RemoteObjects)
+	for (auto const& roi : remoteObjects)
 	{
 		auto chsToActivate = &channelsPerObj[roi._Id];
 		if (std::find(chsToActivate->begin(), chsToActivate->end(), roi._Addr._first) == chsToActivate->end())
@@ -448,7 +467,7 @@ bool ProcessingEngineConfig::ReplaceActiveObjects(XmlElement* ActiveObjectsEleme
 	for (int k = ROI_Invalid + 1; k < ROI_BridgingMAX; ++k)
 	{
 		auto roi = static_cast<RemoteObjectIdentifier>(k);
-		if (XmlElement* ObjectElement = ActiveObjectsElement->getChildByName(GetObjectDescription(roi).removeCharacters(" ")))
+		if (XmlElement* objectElement = objectsElement->getChildByName(GetObjectDescription(roi).removeCharacters(" ")))
 		{
 			String selChanTxt;
 			for (auto const& chToActivate : channelsPerObj[k])
@@ -460,7 +479,7 @@ bool ProcessingEngineConfig::ReplaceActiveObjects(XmlElement* ActiveObjectsEleme
 					selChanTxt << chToActivate;
 				}
 			}
-			ObjectElement->setAttribute("channels", selChanTxt);
+			objectElement->setAttribute("channels", selChanTxt);
 
 			String selRecTxt;
 			for (auto const& recToActivate : recordsPerObj[k])
@@ -472,7 +491,7 @@ bool ProcessingEngineConfig::ReplaceActiveObjects(XmlElement* ActiveObjectsEleme
 					selRecTxt << recToActivate;
 				}
 			}
-			ObjectElement->setAttribute("records", selRecTxt);
+			objectElement->setAttribute("records", selRecTxt);
 		}
 	}
 

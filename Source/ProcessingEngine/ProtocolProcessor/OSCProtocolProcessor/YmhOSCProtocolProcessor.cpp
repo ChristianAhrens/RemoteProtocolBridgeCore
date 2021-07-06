@@ -86,12 +86,12 @@ bool YmhOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id,
 void YmhOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, const String& senderIPAddress, const int& senderPort)
 {
 	ignoreUnused(senderPort);
-	if (senderIPAddress != m_ipAddress)
+	if (senderIPAddress != String(GetIpAddress()))
 	{
 #ifdef DEBUG
 		DBG("NId" + String(m_parentNodeId)
 			+ " PId" + String(m_protocolProcessorId) + ": ignore unexpected OSC message from "
-			+ senderIPAddress + " (" + m_ipAddress + " expected)");
+			+ senderIPAddress + " (" + String(GetIpAddress()) + " expected)");
 #endif
 		return;
 	}
@@ -142,10 +142,6 @@ void YmhOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, cons
 			return;
 	}
 
-	// If the received channel (source) is set to muted, return without further processing
-	if (IsChannelMuted(channelId))
-		return;
-
 	// set the record info if the object needs it
 	if (ProcessingEngineConfig::IsRecordAddressingObject(newObjectId))
 	{
@@ -155,6 +151,10 @@ void YmhOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, cons
 	newMsgData._addrVal._first = channelId;
 	newMsgData._addrVal._second = recordId;
 	newMsgData._valType = ROVT_FLOAT;
+
+	// If the received channel (source) is set to muted, return without further processing
+	if (IsRemoteObjectMuted(RemoteObject(newObjectId, RemoteObjectAddressing(channelId, recordId))))
+		return;
 
 	switch (newObjectId)
 	{

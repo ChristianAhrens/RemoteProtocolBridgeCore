@@ -65,6 +65,7 @@ ProtocolProcessorBase::ProtocolProcessorBase(const NodeId& parentNodeId)
 	m_type = ProtocolType::PT_Invalid;
 	m_IsRunning = false;
 	m_messageListener = nullptr;
+	m_activeRemoteObjectsInterval = ET_DefaultPollingRate;
 }
 
 /**
@@ -108,11 +109,76 @@ bool ProtocolProcessorBase::setStateXml(XmlElement* stateXml)
 
 	m_protocolProcessorId = stateXml->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::ID));
 
-	auto mutedObjChsXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::MUTEDCHANNELS));
-	if (mutedObjChsXmlElement)
-		SetRemoteObjectChannelsMuted(mutedObjChsXmlElement);
+
+	auto pollingIntervalXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::POLLINGINTERVAL));
+	if (pollingIntervalXmlElement)
+		SetActiveRemoteObjectsInterval(pollingIntervalXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::INTERVAL)));
+
+	if (stateXml->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::USESACTIVEOBJ)) == 1)
+	{
+		auto activeObjsXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::ACTIVEOBJECTS));
+		if (activeObjsXmlElement)
+			SetRemoteObjectsActive(activeObjsXmlElement);
+		else
+			return false;
+
+		// special handling for heartbeats - this shall always be activated if active object usage is set to true
+		m_activeRemoteObjects.push_back(RemoteObject(ROI_HeartbeatPing, RemoteObjectAddressing()));
+		if (!isTimerThreadRunning())
+			startTimerThread(m_activeRemoteObjectsInterval);
+	}
+
+	auto mutedObjsXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::MUTEDOBJECTS));
+	if (mutedObjsXmlElement)
+		SetRemoteObjectsMuted(mutedObjsXmlElement);
 
 	return retVal;
+}
+
+/**
+ * Setter for the active objects polling interval member value.
+ * @param	interval	The polling interval for active objects.
+ */
+void ProtocolProcessorBase::SetActiveRemoteObjectsInterval(int interval)
+{
+	m_activeRemoteObjectsInterval = interval;
+}
+
+/**
+ * Getter for the active objects polling interval member value.
+ * @return	The polling interval for active objects.
+ */
+int ProtocolProcessorBase::GetActiveRemoteObjectsInterval()
+{
+	return m_activeRemoteObjectsInterval;
+}
+
+/**
+ * Setter for remote object to specifically activate.
+ * For OSC processing this is used to activate internal polling
+ * of the object values.
+ * In case an empty list of objects is passed, polling is stopped and
+ * the internal list is cleared.
+ *
+ * @param activeObjsXmlElement	The xml element that has to be parsed to get the object data
+ */
+void ProtocolProcessorBase::SetRemoteObjectsActive(XmlElement* activeObjsXmlElement)
+{
+	ScopedLock l(m_activeRemoteObjectsLock);
+	ProcessingEngineConfig::ReadActiveObjects(activeObjsXmlElement, m_activeRemoteObjects);
+
+	// Start timer callback if objects are to be polled
+	if (m_IsRunning)
+	{
+		if (m_activeRemoteObjects.size() > 0)
+		{
+			startTimerThread(m_activeRemoteObjectsInterval);
+		}
+		else
+		{
+			stopTimerThread();
+		}
+	}
 }
 
 /**
@@ -122,18 +188,19 @@ bool ProtocolProcessorBase::setStateXml(XmlElement* stateXml)
  *
  * @param mutedObjChsXmlElement	The xml element that has to be parsed to get the object data
  */
-void ProtocolProcessorBase::SetRemoteObjectChannelsMuted(XmlElement* mutedObjChsXmlElement)
+void ProtocolProcessorBase::SetRemoteObjectsMuted(XmlElement* mutedObjChsXmlElement)
 {
-	ProcessingEngineConfig::ReadMutedObjectChannels(mutedObjChsXmlElement, m_mutedRemoteObjectChannels);
+	ProcessingEngineConfig::ReadMutedObjects(mutedObjChsXmlElement, m_mutedRemoteObjects);
 }
 
 /**
- * Getter for the mute state of a given channel.
+ * Getter for the mute state of a given remote object.
+ * @param	roi	The remote object to look for.
  * @return	True if the channel is muted (contained in internal list of muted channels), false if not.
  */
-bool ProtocolProcessorBase::IsChannelMuted(int channelNumber)
+bool ProtocolProcessorBase::IsRemoteObjectMuted(RemoteObject roi)
 {
-	return m_mutedRemoteObjectChannels.contains(channelNumber);
+	return std::find(m_mutedRemoteObjects.begin(), m_mutedRemoteObjects.end(), roi) != m_mutedRemoteObjects.end();
 }
 
 /**
@@ -164,4 +231,20 @@ ProtocolId ProtocolProcessorBase::GetId()
 ProtocolRole ProtocolProcessorBase::GetRole()
 {
 	return m_protocolProcessorRole;
+}
+
+/**
+ * Timer callback function, which will be called at regular intervals to
+ * send out OSC poll messages.
+ */
+void ProtocolProcessorBase::timerThreadCallback()
+{
+	RemoteObjectMessageData msgData;
+
+	ScopedLock l(m_activeRemoteObjectsLock);
+	for (auto const& obj : m_activeRemoteObjects)
+	{
+		msgData._addrVal = obj._Addr;
+		SendRemoteObjectMessage(obj._Id, msgData);
+	}
 }
