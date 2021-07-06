@@ -136,6 +136,9 @@ bool Forward_only_valueChanges::OnReceivedMessageFromProtocol(ProtocolId PId, Re
  */
 bool Forward_only_valueChanges::IsChangedDataValue(const RemoteObjectIdentifier Id, const RemoteObjectAddressing& roAddr, const RemoteObjectMessageData& msgData, bool setAsNewCurrentData)
 {
+    if (ProcessingEngineConfig::IsKeepaliveObject(Id))
+        return true;
+    
 	if (m_precision == 0)
 		return true;
 
