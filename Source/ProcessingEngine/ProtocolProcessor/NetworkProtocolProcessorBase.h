@@ -36,6 +36,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ProtocolProcessorBase.h"
 
+#include <string>
 
 /**
  * Class NetworkProtocolProcessorBase is an abstract interfacing base class for protocol interaction.

@@ -85,15 +85,15 @@ bool ADMOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id,
  * @param senderIPAddress	The ip the message originates from.
  * @param senderPort			The port this message was received on.
  */
-void ADMOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, const String& senderIPAddress, const int& senderPort)
+void ADMOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, const juce::String& senderIPAddress, const int& senderPort)
 {
 	ignoreUnused(senderPort);
-	if (senderIPAddress != m_ipAddress)
+	if (senderIPAddress.toStdString() != GetIpAddress())
 	{
 #ifdef DEBUG
 		DBG("NId" + String(m_parentNodeId)
 			+ " PId" + String(m_protocolProcessorId) + ": ignore unexpected OSC message from "
-			+ senderIPAddress + " (" + m_ipAddress + " expected)");
+			+ senderIPAddress + " (" + GetIpAddress() + " expected)");
 #endif
 		return;
 	}
@@ -212,8 +212,8 @@ void ADMOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, cons
 				return;
 		}
 
-		// If the received channel (source) is set to muted, return without further processing
-		if (IsChannelMuted(channelId))
+		// If the received object is set to muted, return without further processing
+		if (IsRemoteObjectMuted(RemoteObject(newObjectId, RemoteObjectAddressing(channelId, recordId))))
 			return;
 
 		// set the record info if the object needs it
