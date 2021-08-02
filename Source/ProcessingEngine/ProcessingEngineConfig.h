@@ -62,7 +62,7 @@ public:
 		HOSTPORT,
 		POLLINGINTERVAL,
 		ACTIVEOBJECTS,
-		MUTEDCHANNELS,
+		MUTEDOBJECTS,
 		GLOBALCONFIG,
 		TRAFFICLOGGING,
 		ENGINE,
@@ -101,8 +101,8 @@ public:
 			return "PollingInterval";
 		case ACTIVEOBJECTS:
 			return "ActiveObjects";
-		case MUTEDCHANNELS:
-			return "MutedChannels";
+		case MUTEDOBJECTS:
+			return "MutedObjects";
 		case GLOBALCONFIG:
 			return "GlobalConfig";
 		case TRAFFICLOGGING:
@@ -186,12 +186,16 @@ public:
 	static std::unique_ptr<XmlElement>	GetDefaultProtocol(ProtocolRole role);
 	bool				RemoveNodeOrProtocol(int Id);
 
+	static bool	ReadPollingInterval(XmlElement* pollingIntervalElement, int& PollingInterval);
+
 	static bool	ReadActiveObjects(XmlElement* activeObjectsElement, std::vector<RemoteObject>& remoteObjects);
-	static bool	ReadMutedObjectChannels(XmlElement* mutedObjectChannelsElement, Array<int>& channels);
-	static bool	ReadPollingInterval(XmlElement* PollingIntervalElement, int& PollingInterval);
-	static bool	WriteActiveObjects(XmlElement* ActiveObjectsElement, const std::vector<RemoteObject>& RemoteObjects);
-	static bool	WriteMutedObjectChannels(XmlElement* mutedObjectChannelsElement, Array<int> const& channels);
-	static bool	ReplaceActiveObjects(XmlElement* ActiveObjectsElement, const std::vector<RemoteObject>& RemoteObjects);
+	static bool	ReadMutedObjects(XmlElement* mutedObjectsElement, std::vector<RemoteObject>& remoteObjects);
+
+	static bool	WriteActiveObjects(XmlElement* activeObjectsElement, const std::vector<RemoteObject>& remoteObjects);
+	static bool	WriteMutedObjects(XmlElement* mutedObjectsElement, const std::vector<RemoteObject>& remoteObjects);
+
+	static bool	ReplaceActiveObjects(XmlElement* activeObjectsElement, const std::vector<RemoteObject>& remoteObjects);
+	static bool	ReplaceMutedObjects(XmlElement* mutedObjectsElement, const std::vector<RemoteObject>& remoteObjects);
 
 	static String				ProtocolTypeToString(ProtocolType pt);
 	static ProtocolType			ProtocolTypeFromString(String type);
@@ -202,6 +206,7 @@ public:
 	static String GetObjectShortDescription(RemoteObjectIdentifier Id);
 	static bool IsChannelAddressingObject(RemoteObjectIdentifier objectId);
 	static bool IsRecordAddressingObject(RemoteObjectIdentifier objectId);
+    static bool IsKeepaliveObject(RemoteObjectIdentifier objectId);
 
 	static juce::Range<float>& GetRemoteObjectRange(RemoteObjectIdentifier id);
 
@@ -209,6 +214,10 @@ public:
 	bool isValid() override;
 
 private:
+	static bool	ReadObjects(XmlElement* objectsElement, std::vector<RemoteObject>& remoteObjects);
+	static bool	WriteObjects(XmlElement* objectsElement, const std::vector<RemoteObject>& remoteObjects);
+	static bool	ReplaceObjects(XmlElement* objectsElement, const std::vector<RemoteObject>& remoteObjects);
+
     int GetNextUniqueId();
 	int ValidateUniqueId(int uniqueId);
 

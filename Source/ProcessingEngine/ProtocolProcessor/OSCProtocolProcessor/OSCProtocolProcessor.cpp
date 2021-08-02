@@ -47,7 +47,6 @@ OSCProtocolProcessor::OSCProtocolProcessor(const NodeId& parentNodeId, int liste
 	: NetworkProtocolProcessorBase(parentNodeId), m_oscReceiver(listenerPortNumber)
 {
 	m_type = ProtocolType::PT_OSCProtocol;
-	m_oscMsgRate = ET_DefaultPollingRate;
 
 	// OSCProtocolProcessor derives from OSCReceiver::RealtimeCallback
 	m_oscReceiver.addListener(this);
@@ -79,7 +78,7 @@ bool OSCProtocolProcessor::Start()
 	jassert(successR);
 
 	// start the send timer thread
-	startTimerThread(m_oscMsgRate, 100);
+	startTimerThread(GetActiveRemoteObjectsInterval(), 100);
 
 	m_IsRunning = (successS && successR);
 
@@ -118,60 +117,10 @@ bool OSCProtocolProcessor::setStateXml(XmlElement *stateXml)
 		return false;
 	else
 	{
-        if (m_ipAddress.isEmpty())
+        if (GetIpAddress().empty())
             m_autodetectClientConnection = true;
 
-		auto pollingIntervalXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::POLLINGINTERVAL));
-		if (pollingIntervalXmlElement)
-		{
-			m_oscMsgRate = pollingIntervalXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::INTERVAL));
-		}
-		else
-			return false;
-        
-		if (stateXml->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::USESACTIVEOBJ)) == 1)
-		{
-			auto activeObjsXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::ACTIVEOBJECTS));
-			if (activeObjsXmlElement)
-				SetRemoteObjectsActive(activeObjsXmlElement);
-			else
-				return false;
-
-			// special handling for heartbeats - this shall always be activated if active object usage is set to true
-			m_activeRemoteObjects.push_back(RemoteObject(ROI_HeartbeatPing, RemoteObjectAddressing()));
-			if (!isTimerThreadRunning())
-				startTimerThread(m_oscMsgRate);
-		}
-
 		return true;
-	}
-}
-
-/**
- * Setter for remote object to specifically activate.
- * For OSC processing this is used to activate internal polling
- * of the object values.
- * In case an empty list of objects is passed, polling is stopped and
- * the internal list is cleared.
- *
- * @param activeObjsXmlElement	The xml element that has to be parsed to get the object data
- */
-void OSCProtocolProcessor::SetRemoteObjectsActive(XmlElement* activeObjsXmlElement)
-{
-	ScopedLock l(m_activeRemoteObjectsLock);
-	ProcessingEngineConfig::ReadActiveObjects(activeObjsXmlElement, m_activeRemoteObjects);
-
-	// Start timer callback if objects are to be polled
-	if (m_IsRunning)
-	{
-		if (m_activeRemoteObjects.size() > 0)
-		{
-			startTimerThread(m_oscMsgRate);
-		}
-		else
-		{
-			stopTimerThread();
-		}
 	}
 }
 
@@ -195,9 +144,9 @@ bool OSCProtocolProcessor::connectSenderIfRequired()
     {
         ScopedLock l(m_connectionParamsLock);
 
-		jassert(m_ipAddress.isNotEmpty());
+		jassert(!GetIpAddress().empty());
         
-		m_oscSenderConnected = m_oscSender.connect(m_ipAddress, m_clientPort);
+		m_oscSenderConnected = m_oscSender.connect(GetIpAddress(), GetClientPort());
         jassert(m_oscSenderConnected);
         
         m_clientConnectionParamsChanged = false;
@@ -328,7 +277,7 @@ bool OSCProtocolProcessor::SendAddressedMessage(const String& addressString, con
 */
 void OSCProtocolProcessor::oscBundleReceived(const OSCBundle &bundle, const String& senderIPAddress, const int& senderPort)
 {
-	if (senderIPAddress != m_ipAddress)
+	if (senderIPAddress != String(GetIpAddress()))
 	{
 #ifdef LOG_IGNORED_OSC_MESSAGES
 		DBG("NId"+String(m_parentNodeId) 
@@ -363,15 +312,15 @@ void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const S
     // do some special handling regarding potentially changed connection parameters first
     if (m_autodetectClientConnection)
     {
-        if (senderIPAddress != m_ipAddress)
+        if (senderIPAddress != String(GetIpAddress()))
         {
             ScopedLock l(m_connectionParamsLock);
-            m_ipAddress = senderIPAddress;
+			SetIpAddress(senderIPAddress.toStdString());
             m_clientConnectionParamsChanged = true;
         }
     }
     
-	if (senderIPAddress != m_ipAddress)
+	if (senderIPAddress != String(GetIpAddress()))
 	{
 #ifdef LOG_IGNORED_OSC_MESSAGES
 		DBG("NId" + String(m_parentNodeId)
@@ -539,7 +488,7 @@ void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const S
 		}
 
 		// If the received channel (source) is set to muted, return without further processing
-		if (IsChannelMuted(channelId))
+		if (IsRemoteObjectMuted(RemoteObject(newObjectId, RemoteObjectAddressing(channelId, recordId))))
 			return;
 
 		newMsgData._addrVal._first = channelId;
@@ -747,22 +696,6 @@ String OSCProtocolProcessor::GetRemoteObjectString(RemoteObjectIdentifier id)
 		return "/RemoteProtocolBridge/UIElementIndexSelect";
 	default:
 		return "";
-	}
-}
-
-/**
- * Timer callback function, which will be called at regular intervals to
- * send out OSC poll messages.
- */
-void OSCProtocolProcessor::timerThreadCallback()
-{
-	RemoteObjectMessageData msgData;
-
-	ScopedLock l(m_activeRemoteObjectsLock);
-	for (auto const& obj : m_activeRemoteObjects)
-	{
-		msgData._addrVal = obj._Addr;
-		SendRemoteObjectMessage(obj._Id, msgData);
 	}
 }
 

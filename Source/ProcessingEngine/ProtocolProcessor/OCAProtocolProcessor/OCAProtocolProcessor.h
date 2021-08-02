@@ -51,15 +51,17 @@ public:
 	OCAProtocolProcessor(const NodeId& parentNodeId);
 	~OCAProtocolProcessor();
 
+	//==============================================================================
 	bool setStateXml(XmlElement* stateXml) override;
 
+	//==============================================================================
 	bool Start() override;
 	bool Stop() override;
 
-	void SetRemoteObjectsActive(XmlElement* activeObjsXmlElement) override;
-
+	//==============================================================================
 	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData) override;
 
+	//==============================================================================
 	static String GetRemoteObjectString(RemoteObjectIdentifier id);
 
 };

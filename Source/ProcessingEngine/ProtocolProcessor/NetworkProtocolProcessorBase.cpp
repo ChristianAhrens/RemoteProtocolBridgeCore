@@ -71,21 +71,77 @@ bool NetworkProtocolProcessorBase::setStateXml(XmlElement* stateXml)
 
 	auto ipAdressXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::IPADDRESS));
 	if (ipAdressXmlElement)
-		m_ipAddress = ipAdressXmlElement->getStringAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::ADRESS));
+		SetIpAddress(ipAdressXmlElement->getStringAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::ADRESS)).toStdString());
 	else
 		retVal = false;
 
 	auto clientPortXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::CLIENTPORT));
 	if (clientPortXmlElement)
-		m_clientPort = clientPortXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::PORT));
+		SetClientPort(clientPortXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::PORT)));
 	else
 		retVal = false;
 
 	auto hostPortXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::HOSTPORT));
 	if (hostPortXmlElement)
-		m_hostPort = hostPortXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::PORT));
+		SetHostPort(hostPortXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::PORT)));
 	else
 		retVal = false;
 
 	return retVal;
+}
+
+/**
+ * Getter for the internal ip address string member
+ * @return	The internal ip address string member.
+ */
+const std::string& NetworkProtocolProcessorBase::GetIpAddress()
+{
+	return m_ipAddress;
+}
+
+/**
+ * Setter for the internal ip address string member
+ * @param	ipAddress	The value to set for internal ip address string member.
+ */
+void NetworkProtocolProcessorBase::SetIpAddress(const std::string& ipAddress)
+{
+	jassert(!ipAddress.empty());
+	m_ipAddress = ipAddress;
+}
+
+/**
+ * Getter for the internal client port member
+ * @return	The internal client port member.
+ */
+std::int32_t NetworkProtocolProcessorBase::GetClientPort()
+{
+	return m_clientPort;
+}
+
+/**
+ * Setter for the internal client port member
+ * @param	ipAddress	The value to set for internal client port member.
+ */
+void NetworkProtocolProcessorBase::SetClientPort(std::int32_t clientPort)
+{
+	jassert(clientPort != INVALID_ADDRESS_VALUE);
+	m_clientPort = clientPort;
+}
+
+/**
+ * Getter for the internal host port member
+ * @return	The internal host port member.
+ */
+std::int32_t NetworkProtocolProcessorBase::GetHostPort()
+{
+	return m_hostPort;
+}
+/**
+ * Setter for the internal ip address string member
+ * @param	ipAddress	The value to set for internal ip address string member.
+ */
+void NetworkProtocolProcessorBase::SetHostPort(std::int32_t hostPort)
+{
+	jassert(hostPort != INVALID_ADDRESS_VALUE);
+	m_hostPort = hostPort;
 }

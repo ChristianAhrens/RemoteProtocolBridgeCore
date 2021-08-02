@@ -51,15 +51,17 @@ public:
 	RTTrPMProtocolProcessor(const NodeId& parentNodeId, int listenerPortNumber);
 	~RTTrPMProtocolProcessor();
 
+	//==============================================================================
 	bool setStateXml(XmlElement* stateXml) override;
 
+	//==============================================================================
 	bool Start() override;
 	bool Stop() override;
 
-	void SetRemoteObjectsActive(XmlElement* activeObjsXmlElement) override;
-
+	//==============================================================================
 	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData) override;
 
+	//==============================================================================
 	void RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMMessage& rttrpmMessage, const String& senderIPAddress, const int& senderPort) override;
 
 private:

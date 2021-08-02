@@ -36,7 +36,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../../../RemoteProtocolBridgeCommon.h"
 #include "../NetworkProtocolProcessorBase.h"
-#include "../../TimerThreadBase.h"
 
 #include "SenderAwareOSCReceiver.h"
 
@@ -48,8 +47,7 @@ using namespace SenderAwareOSC;
  * Class OSCProtocolProcessor is a derived class for OSC protocol interaction.
  */
 class OSCProtocolProcessor : public SenderAwareOSCReceiver::SAOListener<OSCReceiver::RealtimeCallback>,
-	public NetworkProtocolProcessorBase,
-	public TimerThreadBase
+	public NetworkProtocolProcessorBase
 {
 public:
 	OSCProtocolProcessor(const NodeId& parentNodeId, int listenerPortNumber);
@@ -60,8 +58,6 @@ public:
 	bool Start() override;
 	bool Stop() override;
 
-	void SetRemoteObjectsActive(XmlElement* activeObjsXmlElement) override;
-
 	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData) override;
 
 	bool SendAddressedMessage(const String& addressString, const RemoteObjectMessageData& msgData);
@@ -70,9 +66,6 @@ public:
 
 	virtual void oscBundleReceived(const OSCBundle &bundle, const String& senderIPAddress, const int& senderPort) override;
 	virtual void oscMessageReceived(const OSCMessage &message, const String& senderIPAddress, const int& senderPort) override;
-
-private:
-	void timerThreadCallback() override;
 
 protected:
 	void createIntMessageData(const OSCMessage &messageInput, RemoteObjectMessageData &newMessageData);
@@ -92,10 +85,6 @@ protected:
 	String m_stringValueBuffer;
 
 private:
-	int							m_oscMsgRate;					/**< Interval at which OSC messages are sent to the host, in ms. */
-	std::vector<RemoteObject>	m_activeRemoteObjects;			/**< List of remote objects to be activly handled. */
-	CriticalSection				m_activeRemoteObjectsLock;
-    
     CriticalSection m_connectionParamsLock;
     bool            m_autodetectClientConnection{ false };
     bool            m_clientConnectionParamsChanged{ false };
