@@ -1006,9 +1006,9 @@ String  ProcessingEngineConfig::ProtocolTypeToString(ProtocolType pt)
 	case PT_OSCProtocol:
 		return "OSC";
 	case PT_YamahaOSCProtocol:
-		return "YamahaOSC";
+		return "Yamaha";
 	case PT_ADMOSCProtocol:
-		return "ADM-OSC";
+		return "ADM";
 	case PT_RTTrPMProtocol:
 		return "RTTrPM";
 	case PT_MidiProtocol:
