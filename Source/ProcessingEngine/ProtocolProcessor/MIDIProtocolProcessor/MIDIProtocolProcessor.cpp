@@ -185,8 +185,8 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 				}
 				break;
 			case ROI_Positioning_SourceDelayMode:
-				{
 				// delaymode can have values 0, 1, 2
+				{
 				if (assiCommandData.isValueRangeAssignment()) // this is supposed to prevent us from running into zero-division in jmap() call
 				{
 					m_intValueBuffer[0] = jmap(midiValue,
@@ -205,8 +205,9 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 				}
 				else if (assiCommandData.isCommandRangeAssignment())
 				{
-					auto assiCommandValue = JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCommandData.getCommandRange().getStart());
-					m_intValueBuffer[0] = jlimit(0, 2, static_cast<int>(0 + (commandValue - assiCommandValue)));
+					auto assiCommandStartValue = JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCommandData.getCommandRange().getStart());
+					m_intValueBuffer[0] = jlimit(static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getStart()), static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getEnd()),
+						static_cast<int>(0 + (commandValue - assiCommandStartValue)));
 
 					newMsgData._addrVal._first = m_currentSelectedChannel;
 				}
@@ -217,9 +218,48 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 				newMsgData._payloadSize = sizeof(int);
 				}
 				break;
-			case ROI_MatrixInput_ReverbSendGain:
+			case ROI_MatrixInput_Mute:
+			case ROI_MatrixOutput_Mute:
+				// mute can have values 0, 1
 				{
-				// gain has values -120 ... 24
+				if (assiCommandData.isCommandRangeAssignment())
+				{
+					auto isNoteOnOrOffAssignment = assiCommandData.isNoteOffCommand() || assiCommandData.isNoteOnCommand();
+					auto non = assiCommandData.isNoteOnCommand();
+					auto noff = assiCommandData.isNoteOffCommand();
+					auto monoff = midiMessage.isNoteOnOrOff();
+					auto mon = midiMessage.isNoteOn();
+					auto moff = midiMessage.isNoteOff();
+					if (isNoteOnOrOffAssignment && midiMessage.isNoteOnOrOff())
+					{
+						auto isInvertedAssignment = assiCommandData.isNoteOffCommand();
+						if (isInvertedAssignment)
+							m_intValueBuffer[0] = midiMessage.isNoteOff();
+						else
+							m_intValueBuffer[0] = midiMessage.isNoteOn();
+					}
+					else
+					{
+						auto assiCommandValue = JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCommandData.getCommandRange().getStart());
+						m_intValueBuffer[0] = jlimit(static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getStart()), static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getEnd()),
+							static_cast<int>(0 + (commandValue - assiCommandValue)));
+					}
+
+					auto assiCommandStartValue = JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCommandData.getCommandRange().getStart());
+					newMsgData._addrVal._first = commandRangeMatch ? 1 + commandValue - assiCommandStartValue : INVALID_ADDRESS_VALUE;
+				}
+
+				newMsgData._valType = ROVT_INT;
+				newMsgData._valCount = 1;
+				newMsgData._payload = &m_intValueBuffer;
+				newMsgData._payloadSize = sizeof(int);
+				}
+				break;
+			case ROI_MatrixInput_ReverbSendGain:
+			case ROI_MatrixInput_Gain:
+			case ROI_MatrixOutput_Gain:
+				// gain has values -120 ... 24 o. 10
+				{
 				if (assiCommandData.isValueRangeAssignment()) // this is supposed to prevent us from running into zero-division in jmap() call
 				{
 					m_floatValueBuffer[0] = jmap(static_cast<float>(midiValue),

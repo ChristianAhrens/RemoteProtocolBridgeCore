@@ -89,7 +89,11 @@ private:
 		ROI_CoordinateMapping_SourcePosition_Y, 
 		ROI_Positioning_SourceSpread, 
 		ROI_Positioning_SourceDelayMode, 
-		ROI_MatrixInput_ReverbSendGain };
+		ROI_MatrixInput_ReverbSendGain, 
+		ROI_MatrixInput_Gain, 
+		ROI_MatrixInput_Mute, 
+		ROI_MatrixOutput_Gain, 
+		ROI_MatrixOutput_Mute };
 
 	std::map<RemoteObjectIdentifier, JUCEAppBasics::MidiCommandRangeAssignment>	m_midiAssiMap;
 	String																		m_midiInputIdentifier;
