@@ -185,32 +185,47 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 				}
 				break;
 			case ROI_Positioning_SourceDelayMode:
-				// delaymode can have values 0, 1, 2
-				m_intValueBuffer[0] = jmap(midiValue, 
-					assiCommandData.getValueRange().getStart(), assiCommandData.getValueRange().getEnd(), 
-					static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getStart()), static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getEnd()));
-
-				if (assiCommandData.isCommandRangeAssignment())
 				{
-					auto commandValueRange = juce::Range<int>(
-						static_cast<int>(JUCEAppBasics::MidiCommandRangeAssignment::getAsValue(assiCommandData.getCommandRange().getStart())),
-						static_cast<int>(JUCEAppBasics::MidiCommandRangeAssignment::getAsValue(assiCommandData.getCommandRange().getEnd())));
-					newMsgData._addrVal._first = commandRangeMatch ? 1 + commandValue - commandValueRange.getStart() : INVALID_ADDRESS_VALUE;
+				// delaymode can have values 0, 1, 2
+				if (assiCommandData.isValueRangeAssignment()) // this is supposed to prevent us from running into zero-division in jmap() call
+				{
+					m_intValueBuffer[0] = jmap(midiValue,
+						assiCommandData.getValueRange().getStart(), assiCommandData.getValueRange().getEnd(),
+						static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getStart()), static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getEnd()));
+
+					if (assiCommandData.isCommandRangeAssignment())
+					{
+						auto commandValueRange = juce::Range<int>(
+							static_cast<int>(JUCEAppBasics::MidiCommandRangeAssignment::getAsValue(assiCommandData.getCommandRange().getStart())),
+							static_cast<int>(JUCEAppBasics::MidiCommandRangeAssignment::getAsValue(assiCommandData.getCommandRange().getEnd())));
+						newMsgData._addrVal._first = commandRangeMatch ? 1 + commandValue - commandValueRange.getStart() : INVALID_ADDRESS_VALUE;
+					}
+					else
+						newMsgData._addrVal._first = m_currentSelectedChannel;
 				}
-				else
+				else if (assiCommandData.isCommandRangeAssignment())
+				{
+					auto assiCommandValue = JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCommandData.getCommandRange().getStart());
+					m_intValueBuffer[0] = jlimit(0, 2, static_cast<int>(0 + (commandValue - assiCommandValue)));
+
 					newMsgData._addrVal._first = m_currentSelectedChannel;
+				}
 
 				newMsgData._valType = ROVT_INT;
 				newMsgData._valCount = 1;
 				newMsgData._payload = &m_intValueBuffer;
 				newMsgData._payloadSize = sizeof(int);
-
+				}
 				break;
 			case ROI_MatrixInput_ReverbSendGain:
+				{
 				// gain has values -120 ... 24
-				m_floatValueBuffer[0] = jmap(static_cast<float>(midiValue), 
-					static_cast<float>(assiCommandData.getValueRange().getStart()), static_cast<float>(assiCommandData.getValueRange().getEnd()), 
-					ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getStart(), ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getEnd());
+				if (assiCommandData.isValueRangeAssignment()) // this is supposed to prevent us from running into zero-division in jmap() call
+				{
+					m_floatValueBuffer[0] = jmap(static_cast<float>(midiValue),
+						static_cast<float>(assiCommandData.getValueRange().getStart()), static_cast<float>(assiCommandData.getValueRange().getEnd()),
+						ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getStart(), ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getEnd());
+				}
 
 				if (assiCommandData.isCommandRangeAssignment())
 				{
@@ -226,16 +241,20 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 				newMsgData._valCount = 1;
 				newMsgData._payload = &m_floatValueBuffer;
 				newMsgData._payloadSize = sizeof(float);
-
+				}
 				break;
 			case ROI_Positioning_SourceSpread:
 			case ROI_CoordinateMapping_SourcePosition_X:
 			case ROI_CoordinateMapping_SourcePosition_Y:
 			default:
+				{
 				// all else is between 0 ... 1
-				m_floatValueBuffer[0] = jmap(static_cast<float>(midiValue), 
-					static_cast<float>(assiCommandData.getValueRange().getStart()), static_cast<float>(assiCommandData.getValueRange().getEnd()), 
-					ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getStart(), ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getEnd());
+				if (assiCommandData.isValueRangeAssignment()) // this is supposed to prevent us from running into zero-division in jmap() call
+				{
+					m_floatValueBuffer[0] = jmap(static_cast<float>(midiValue),
+						static_cast<float>(assiCommandData.getValueRange().getStart()), static_cast<float>(assiCommandData.getValueRange().getEnd()),
+						ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getStart(), ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getEnd());
+				}
 
 				if (assiCommandData.isCommandRangeAssignment())
 				{
@@ -251,7 +270,7 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 				newMsgData._valCount = 1;
 				newMsgData._payload = &m_floatValueBuffer;
 				newMsgData._payloadSize = sizeof(float);
-
+				}
 				break;
 			}
 
