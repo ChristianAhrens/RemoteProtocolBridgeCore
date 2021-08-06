@@ -102,7 +102,7 @@ private:
 	std::map<RemoteObjectIdentifier, std::map<RemoteObjectAddressing, double>>	m_addressedObjectOutputDeafStampMap;
 	const double																m_outputDeafTimeMs{ 300 };
 
-	float m_floatValueBuffer[3] = { 0.0f, 0.0f, 0.0f };
-	int m_intValueBuffer[2] = { 0, 0 };
-	String m_stringValueBuffer;
+	float																		m_floatValueBuffer[3] = { 0.0f, 0.0f, 0.0f };
+	int																			m_intValueBuffer[2] = { 0, 0 };
+	String																		m_stringValueBuffer;
 };

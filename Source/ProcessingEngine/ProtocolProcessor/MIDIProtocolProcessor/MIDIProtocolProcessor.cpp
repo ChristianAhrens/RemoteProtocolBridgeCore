@@ -224,19 +224,12 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 				{
 				if (assiCommandData.isCommandRangeAssignment())
 				{
-					auto isNoteOnOrOffAssignment = assiCommandData.isNoteOffCommand() || assiCommandData.isNoteOnCommand();
-					auto non = assiCommandData.isNoteOnCommand();
-					auto noff = assiCommandData.isNoteOffCommand();
-					auto monoff = midiMessage.isNoteOnOrOff();
-					auto mon = midiMessage.isNoteOn();
-					auto moff = midiMessage.isNoteOff();
-					if (isNoteOnOrOffAssignment && midiMessage.isNoteOnOrOff())
+					auto assiCommandStartValue = JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCommandData.getCommandRange().getStart());
+					newMsgData._addrVal._first = commandRangeMatch ? 1 + commandValue - assiCommandStartValue : INVALID_ADDRESS_VALUE;
+
+					if (assiCommandData.isNoteOffCommand() || assiCommandData.isNoteOnCommand())
 					{
-						auto isInvertedAssignment = assiCommandData.isNoteOffCommand();
-						if (isInvertedAssignment)
-							m_intValueBuffer[0] = midiMessage.isNoteOff();
-						else
-							m_intValueBuffer[0] = midiMessage.isNoteOn();
+						m_intValueBuffer[0] = static_cast<bool>(GetValueCache().GetIntValue(RemoteObject(newObjectId, newMsgData._addrVal))) ? 0 : 1;
 					}
 					else
 					{
@@ -244,9 +237,6 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 						m_intValueBuffer[0] = jlimit(static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getStart()), static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getEnd()),
 							static_cast<int>(0 + (commandValue - assiCommandValue)));
 					}
-
-					auto assiCommandStartValue = JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCommandData.getCommandRange().getStart());
-					newMsgData._addrVal._first = commandRangeMatch ? 1 + commandValue - assiCommandStartValue : INVALID_ADDRESS_VALUE;
 				}
 
 				newMsgData._valType = ROVT_INT;
@@ -317,6 +307,9 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 			// If the received message targets a muted object, return without further processing
 			if (IsRemoteObjectMuted(RemoteObject(newObjectId, newMsgData._addrVal)))
 				return;
+
+			// Insert the new object and value to local cache
+			GetValueCache().SetValue(RemoteObject(newObjectId, newMsgData._addrVal), newMsgData);
 
 			// finally send the collected data struct to parent node for further handling
 			forwardAndDeafProofMessage(newObjectId, newMsgData);
