@@ -537,6 +537,9 @@ bool MIDIProtocolProcessor::Stop()
  */
 bool MIDIProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
 {
+	// keep our MIDI specific value cache in sync with what is going on in the rest of the world first
+	GetValueCache().SetValue(RemoteObject(Id, msgData._addrVal), msgData);
+
 	// without valid output, we cannot send anything
 	if (!m_midiOutput)
 		return false;

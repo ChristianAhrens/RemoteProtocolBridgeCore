@@ -18,6 +18,10 @@
 
 #include "RemoteObjectValueCache.h"
 
+#ifdef DEBUG
+#include "ProcessingEngineConfig.h"
+#endif
+
 
 // **************************************************************************************
 //    class RemoteObjectValueCache
@@ -52,6 +56,7 @@ int RemoteObjectValueCache::GetIntValue(const RemoteObject& ro) const
 			jassertfalse;
 	}
 
+	DBG(String(__FUNCTION__) + " no ROVT_INT value available for requested RO");
 	return 0;
 }
 
@@ -70,6 +75,7 @@ float RemoteObjectValueCache::GetFloatValue(const RemoteObject& ro) const
 			jassertfalse;
 	}
 
+	DBG(String(__FUNCTION__) + " no ROVT_FLOAT value available for requested RO");
 	return 0.0f;
 }
 
@@ -88,6 +94,7 @@ std::string RemoteObjectValueCache::GetStringValue(const RemoteObject& ro) const
 			jassertfalse;
 	}
 
+	DBG(String(__FUNCTION__) + " no ROVT_STRING value available for requested RO");
 	return "";
 }
 
@@ -98,5 +105,41 @@ std::string RemoteObjectValueCache::GetStringValue(const RemoteObject& ro) const
  */
 void RemoteObjectValueCache::SetValue(const RemoteObject& ro, const RemoteObjectMessageData& valueData)
 {
-	m_cachedValues[ro] = valueData;
+	m_cachedValues[ro].payloadCopy(valueData);
+
+#ifdef DEBUG
+	DbgPrintCacheContent();
+#endif
 }
+
+#ifdef DEBUG
+void RemoteObjectValueCache::DbgPrintCacheContent()
+{
+	for (auto const& val : m_cachedValues)
+	{
+		auto valString = String();
+		switch (val.second._valType)
+		{
+		case ROVT_INT:
+			{
+				auto p = static_cast<int*>(val.second._payload);
+				for (auto i = 0; i < val.second._valCount; i++)
+					valString = String(*(p + i)) + ";";
+			}
+			break;
+		case ROVT_FLOAT:
+			{
+			auto p = static_cast<float*>(val.second._payload);
+			for (auto i = 0; i < val.second._valCount; i++)
+				valString = String(*(p + i)) + ";";
+			}
+			break;
+		default:
+			break;
+		}
+		DBG(ProcessingEngineConfig::GetObjectShortDescription(val.first._Id)
+			+ " (" + String(val.second._addrVal._first) + ":" + String(val.second._addrVal._second) + ") "
+			+ valString);
+	}
+}
+#endif

@@ -34,9 +34,11 @@ public:
 	std::string GetStringValue(const RemoteObject& ro) const;
 	void SetValue(const RemoteObject& ro, const RemoteObjectMessageData& valueData);
 
-protected:
-
 private:
+#ifdef DEBUG
+	void DbgPrintCacheContent();
+#endif
+
 	std::map<RemoteObject, RemoteObjectMessageData> m_cachedValues;
 
 };
