@@ -1,36 +1,20 @@
-/*
-===============================================================================
-
-Copyright (C) 2019 d&b audiotechnik GmbH & Co. KG. All Rights Reserved.
-
-This file is part of RemoteProtocolBridge.
-
-Redistribution and use in source and binary forms, with or without 
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice,
-this list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice,
-this list of conditions and the following disclaimer in the documentation
-and/or other materials provided with the distribution.
-
-3. The name of the author may not be used to endorse or promote products
-derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY d&b audiotechnik GmbH & Co. KG "AS IS" AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-===============================================================================
-*/
+/* Copyright (c) 2020-2021, Christian Ahrens
+ *
+ * This file is part of RemoteProtocolBridgeCore <https://github.com/ChristianAhrens/RemoteProtocolBridgeCore>
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License version 3.0 as published
+ * by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this library; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 
 #include "MIDIProtocolProcessor.h"
 
@@ -202,31 +186,76 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 				break;
 			case ROI_Positioning_SourceDelayMode:
 				// delaymode can have values 0, 1, 2
-				m_intValueBuffer[0] = jmap(midiValue, 
-					assiCommandData.getValueRange().getStart(), assiCommandData.getValueRange().getEnd(), 
-					static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getStart()), static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getEnd()));
-
-				if (assiCommandData.isCommandRangeAssignment())
 				{
-					auto commandValueRange = juce::Range<int>(
-						static_cast<int>(JUCEAppBasics::MidiCommandRangeAssignment::getAsValue(assiCommandData.getCommandRange().getStart())),
-						static_cast<int>(JUCEAppBasics::MidiCommandRangeAssignment::getAsValue(assiCommandData.getCommandRange().getEnd())));
-					newMsgData._addrVal._first = commandRangeMatch ? 1 + commandValue - commandValueRange.getStart() : INVALID_ADDRESS_VALUE;
+				if (assiCommandData.isValueRangeAssignment()) // this is supposed to prevent us from running into zero-division in jmap() call
+				{
+					m_intValueBuffer[0] = jmap(midiValue,
+						assiCommandData.getValueRange().getStart(), assiCommandData.getValueRange().getEnd(),
+						static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getStart()), static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getEnd()));
+
+					if (assiCommandData.isCommandRangeAssignment())
+					{
+						auto commandValueRange = juce::Range<int>(
+							static_cast<int>(JUCEAppBasics::MidiCommandRangeAssignment::getAsValue(assiCommandData.getCommandRange().getStart())),
+							static_cast<int>(JUCEAppBasics::MidiCommandRangeAssignment::getAsValue(assiCommandData.getCommandRange().getEnd())));
+						newMsgData._addrVal._first = commandRangeMatch ? 1 + commandValue - commandValueRange.getStart() : INVALID_ADDRESS_VALUE;
+					}
+					else
+						newMsgData._addrVal._first = m_currentSelectedChannel;
 				}
-				else
+				else if (assiCommandData.isCommandRangeAssignment())
+				{
+					auto assiCommandStartValue = JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCommandData.getCommandRange().getStart());
+					m_intValueBuffer[0] = jlimit(static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getStart()), static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getEnd()),
+						static_cast<int>(0 + (commandValue - assiCommandStartValue)));
+
 					newMsgData._addrVal._first = m_currentSelectedChannel;
+				}
 
 				newMsgData._valType = ROVT_INT;
 				newMsgData._valCount = 1;
 				newMsgData._payload = &m_intValueBuffer;
 				newMsgData._payloadSize = sizeof(int);
+				}
+				break;
+			case ROI_MatrixInput_Mute:
+			case ROI_MatrixOutput_Mute:
+				// mute can have values 0, 1
+				{
+				if (assiCommandData.isCommandRangeAssignment())
+				{
+					auto assiCommandStartValue = JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCommandData.getCommandRange().getStart());
+					newMsgData._addrVal._first = commandRangeMatch ? 1 + commandValue - assiCommandStartValue : INVALID_ADDRESS_VALUE;
 
+					if (assiCommandData.isNoteOffCommand() || assiCommandData.isNoteOnCommand())
+					{
+						m_intValueBuffer[0] = static_cast<bool>(GetValueCache().GetIntValue(RemoteObject(newObjectId, newMsgData._addrVal))) ? 0 : 1;
+					}
+					else
+					{
+						auto assiCommandValue = JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCommandData.getCommandRange().getStart());
+						m_intValueBuffer[0] = jlimit(static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getStart()), static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getEnd()),
+							static_cast<int>(0 + (commandValue - assiCommandValue)));
+					}
+				}
+
+				newMsgData._valType = ROVT_INT;
+				newMsgData._valCount = 1;
+				newMsgData._payload = &m_intValueBuffer;
+				newMsgData._payloadSize = sizeof(int);
+				}
 				break;
 			case ROI_MatrixInput_ReverbSendGain:
-				// gain has values -120 ... 24
-				m_floatValueBuffer[0] = jmap(static_cast<float>(midiValue), 
-					static_cast<float>(assiCommandData.getValueRange().getStart()), static_cast<float>(assiCommandData.getValueRange().getEnd()), 
-					ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getStart(), ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getEnd());
+			case ROI_MatrixInput_Gain:
+			case ROI_MatrixOutput_Gain:
+				// gain has values -120 ... 24 o. 10
+				{
+				if (assiCommandData.isValueRangeAssignment()) // this is supposed to prevent us from running into zero-division in jmap() call
+				{
+					m_floatValueBuffer[0] = jmap(static_cast<float>(midiValue),
+						static_cast<float>(assiCommandData.getValueRange().getStart()), static_cast<float>(assiCommandData.getValueRange().getEnd()),
+						ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getStart(), ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getEnd());
+				}
 
 				if (assiCommandData.isCommandRangeAssignment())
 				{
@@ -242,16 +271,20 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 				newMsgData._valCount = 1;
 				newMsgData._payload = &m_floatValueBuffer;
 				newMsgData._payloadSize = sizeof(float);
-
+				}
 				break;
 			case ROI_Positioning_SourceSpread:
 			case ROI_CoordinateMapping_SourcePosition_X:
 			case ROI_CoordinateMapping_SourcePosition_Y:
 			default:
+				{
 				// all else is between 0 ... 1
-				m_floatValueBuffer[0] = jmap(static_cast<float>(midiValue), 
-					static_cast<float>(assiCommandData.getValueRange().getStart()), static_cast<float>(assiCommandData.getValueRange().getEnd()), 
-					ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getStart(), ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getEnd());
+				if (assiCommandData.isValueRangeAssignment()) // this is supposed to prevent us from running into zero-division in jmap() call
+				{
+					m_floatValueBuffer[0] = jmap(static_cast<float>(midiValue),
+						static_cast<float>(assiCommandData.getValueRange().getStart()), static_cast<float>(assiCommandData.getValueRange().getEnd()),
+						ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getStart(), ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getEnd());
+				}
 
 				if (assiCommandData.isCommandRangeAssignment())
 				{
@@ -267,13 +300,16 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 				newMsgData._valCount = 1;
 				newMsgData._payload = &m_floatValueBuffer;
 				newMsgData._payloadSize = sizeof(float);
-
+				}
 				break;
 			}
 
 			// If the received message targets a muted object, return without further processing
 			if (IsRemoteObjectMuted(RemoteObject(newObjectId, newMsgData._addrVal)))
 				return;
+
+			// Insert the new object and value to local cache
+			GetValueCache().SetValue(RemoteObject(newObjectId, newMsgData._addrVal), newMsgData);
 
 			// finally send the collected data struct to parent node for further handling
 			forwardAndDeafProofMessage(newObjectId, newMsgData);
@@ -501,6 +537,9 @@ bool MIDIProtocolProcessor::Stop()
  */
 bool MIDIProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
 {
+	// keep our MIDI specific value cache in sync with what is going on in the rest of the world first
+	GetValueCache().SetValue(RemoteObject(Id, msgData._addrVal), msgData);
+
 	// without valid output, we cannot send anything
 	if (!m_midiOutput)
 		return false;
