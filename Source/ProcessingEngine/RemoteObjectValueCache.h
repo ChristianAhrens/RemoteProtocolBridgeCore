@@ -18,38 +18,27 @@
 
 #pragma once
 
-#include "PacketModule.h"
+#include "../RemoteProtocolBridgeCommon.h"
 
-#include <vector>
-
-
-// **************************************************************
-// class OrientationQuaternionModule
-// **************************************************************
 /**
-* A class to sort the information from RTTrPM - quaternion orientation module
-*
-*/
-class OrientationQuaternionModule : public PacketModule
+ * 
+ */
+class RemoteObjectValueCache
 {
 public:
-	OrientationQuaternionModule(std::vector<unsigned char>& data, int& readPos);
-	~OrientationQuaternionModule() override;
+	RemoteObjectValueCache();
+	~RemoteObjectValueCache();
 
-	void readData(std::vector<unsigned char>& data, int& readPos) override;
-
-	uint16_t GetLatency() const;
-	double GetQx() const;
-	double GetQy() const;
-	double GetQz() const;
-	double GetQw() const;
-
-	bool isValid() const override;
+	int GetIntValue(const RemoteObject& ro) const;
+	float GetFloatValue(const RemoteObject& ro) const;
+	std::string GetStringValue(const RemoteObject& ro) const;
+	void SetValue(const RemoteObject& ro, const RemoteObjectMessageData& valueData);
 
 private:
-	uint16_t	m_latency{ 0 };
-	double		m_Qx{ 0 };
-	double		m_Qy{ 0 };
-	double		m_Qz{ 0 };
-	double		m_Qw{ 0 };
+#ifdef DEBUG
+	void DbgPrintCacheContent();
+#endif
+
+	std::map<RemoteObject, RemoteObjectMessageData> m_cachedValues;
+
 };

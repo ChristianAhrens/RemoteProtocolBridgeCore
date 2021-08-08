@@ -77,6 +77,15 @@ ProtocolProcessorBase::~ProtocolProcessorBase()
 }
 
 /**
+ * Getter for the value cache object member.
+ * @return	The requested value cache object ref.
+ */
+RemoteObjectValueCache& ProtocolProcessorBase::GetValueCache()
+{
+	return m_valueCache;
+}
+
+/**
  * Sets the message listener object to be used for callback on message received.
  *
  * @param messageListener	The listener object

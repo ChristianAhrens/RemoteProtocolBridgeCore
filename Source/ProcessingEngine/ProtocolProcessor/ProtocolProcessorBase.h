@@ -36,6 +36,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../../RemoteProtocolBridgeCommon.h"
 #include "../ProcessingEngineConfig.h"
+#include "../RemoteObjectValueCache.h"
 #include "../TimerThreadBase.h"
 
 #include <JuceHeader.h>
@@ -70,6 +71,8 @@ public:
 public:
 	ProtocolProcessorBase(const NodeId& parentNodeId);
 	virtual ~ProtocolProcessorBase();
+
+	RemoteObjectValueCache& GetValueCache();
 
 	void AddListener(Listener *messageReceiver);
 	ProtocolType GetType();
@@ -112,5 +115,7 @@ private:
 	std::vector<RemoteObject>	m_activeRemoteObjects;			/**< List of remote objects to be activly handled. */
 	int							m_activeRemoteObjectsInterval;	/**< Interval at which data is polled/requested from protocol peer. */
 	CriticalSection				m_activeRemoteObjectsLock;
+
+	RemoteObjectValueCache		m_valueCache;
 
 };
