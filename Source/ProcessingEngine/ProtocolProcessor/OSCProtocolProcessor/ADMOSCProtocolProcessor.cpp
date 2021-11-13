@@ -147,10 +147,10 @@ void ADMOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, cons
 			targetedObjectId = ROI_CoordinateMapping_SourcePosition_XY;
 			break;
 		case AOT_XPos:
-			targetedObjectId = ROI_CoordinateMapping_SourcePosition_X;
+			targetedObjectId = ROI_CoordinateMapping_SourcePosition_Y; // d&b vs EBU coords inverted!
 			break;
 		case AOT_YPos:
-			targetedObjectId = ROI_CoordinateMapping_SourcePosition_Y;
+			targetedObjectId = ROI_CoordinateMapping_SourcePosition_X; // d&b vs EBU coords inverted!
 			break;
 		case AOT_ZPos:
 			targetedObjectId = ROI_CoordinateMapping_SourcePosition_XY;
@@ -562,8 +562,8 @@ bool ADMOSCProtocolProcessor::CreateMessageDataFromObjectCache(const RemoteObjec
 		{
 			auto admRange = GetADMObjectRange(AOT_XPos);
 
-			m_floatValueBuffer[0] = jmap(admRange.convertTo0to1(ReadFromObjectCache(channel, AOT_XPos)), valRange.getStart(), valRange.getEnd());
-			m_floatValueBuffer[1] = jmap(admRange.convertTo0to1(ReadFromObjectCache(channel, AOT_YPos)), valRange.getStart(), valRange.getEnd());
+			m_floatValueBuffer[0] = jmap(admRange.convertTo0to1(ReadFromObjectCache(channel, AOT_YPos)), valRange.getStart(), valRange.getEnd()) * -1.0f; // d&b vs EBU coords inverted!
+			m_floatValueBuffer[1] = jmap(admRange.convertTo0to1(ReadFromObjectCache(channel, AOT_XPos)), valRange.getStart(), valRange.getEnd()); // d&b vs EBU coords inverted!
 			m_floatValueBuffer[2] = jmap(admRange.convertTo0to1(ReadFromObjectCache(channel, AOT_ZPos)), valRange.getStart(), valRange.getEnd());
 			
 			newMessageData._valCount = 3;
@@ -575,7 +575,7 @@ bool ADMOSCProtocolProcessor::CreateMessageDataFromObjectCache(const RemoteObjec
 		{
 			auto admRange = GetADMObjectRange(AOT_XPos);
 
-			m_floatValueBuffer[0] = jmap(admRange.convertTo0to1(ReadFromObjectCache(channel, AOT_XPos)), valRange.getStart(), valRange.getEnd());
+			m_floatValueBuffer[0] = jmap(admRange.convertTo0to1(ReadFromObjectCache(channel, AOT_YPos)), valRange.getStart(), valRange.getEnd()) * -1.0f; // d&b vs EBU coords inverted!
 
 			newMessageData._valCount = 1;
 			newMessageData._payload = m_floatValueBuffer;
@@ -586,7 +586,7 @@ bool ADMOSCProtocolProcessor::CreateMessageDataFromObjectCache(const RemoteObjec
 		{
 			auto admRange = GetADMObjectRange(AOT_YPos);
 
-			m_floatValueBuffer[0] = jmap(admRange.convertTo0to1(ReadFromObjectCache(channel, AOT_YPos)), valRange.getStart(), valRange.getEnd());
+			m_floatValueBuffer[0] = jmap(admRange.convertTo0to1(ReadFromObjectCache(channel, AOT_XPos)), valRange.getStart(), valRange.getEnd()); // d&b vs EBU coords inverted!
 
 			newMessageData._valCount = 1;
 			newMessageData._payload = m_floatValueBuffer;
@@ -597,8 +597,8 @@ bool ADMOSCProtocolProcessor::CreateMessageDataFromObjectCache(const RemoteObjec
 		{
 			auto admRange = GetADMObjectRange(AOT_XPos);
 
-			m_floatValueBuffer[0] = jmap(admRange.convertTo0to1(ReadFromObjectCache(channel, AOT_XPos)), valRange.getStart(), valRange.getEnd());
-			m_floatValueBuffer[1] = jmap(admRange.convertTo0to1(ReadFromObjectCache(channel, AOT_YPos)), valRange.getStart(), valRange.getEnd());
+			m_floatValueBuffer[0] = jmap(admRange.convertTo0to1(ReadFromObjectCache(channel, AOT_YPos)), valRange.getStart(), valRange.getEnd()) * -1.0f; // d&b vs EBU coords inverted!
+			m_floatValueBuffer[1] = jmap(admRange.convertTo0to1(ReadFromObjectCache(channel, AOT_XPos)), valRange.getStart(), valRange.getEnd()); // d&b vs EBU coords inverted!
 
 			newMessageData._valCount = 2;
 			newMessageData._payload = m_floatValueBuffer;
