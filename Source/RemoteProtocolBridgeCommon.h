@@ -394,6 +394,7 @@ struct RemoteObjectMessageData
 		_valCount = valCount;
 		_payload = payload;
 		_payloadSize = payloadSize;
+		_payloadOwned = false;
 	};
 	/**
 	 * Destructor

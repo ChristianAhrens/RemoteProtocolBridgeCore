@@ -45,7 +45,7 @@ public:
 		AOT_XPos,				// "x"
 		AOT_YPos,				// "y"
 		AOT_ZPos,				// "z"
-		AOT_XYZPos,			// combined "xzy"
+		AOT_XYZPos,				// combined "xzy"
 		AOT_CartesianCoords,	// "cartesian"
 		AOT_Gain,				// "gain"
 	};
@@ -59,17 +59,28 @@ public:
 	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData) override;
 
 	static String GetADMMessageDomainString();
-	static String GetADMMessageTypeString(ADMMessageType type);
-	static String GetADMObjectTypeString(ADMObjectType type);
+	static String GetADMMessageTypeString(const ADMOSCProtocolProcessor::ADMMessageType& msgType);
+	static String GetADMObjectTypeString(const ADMOSCProtocolProcessor::ADMObjectType& objType);
+	static ADMOSCProtocolProcessor::CoodinateSystem GetObjectTypeCoordinateSystem(const ADMOSCProtocolProcessor::ADMObjectType& objType);
+	static ADMOSCProtocolProcessor::ADMMessageType GetObjectTypeMessageType(const ADMOSCProtocolProcessor::ADMObjectType& objType);
+	static const juce::NormalisableRange<float> GetADMObjectRange(const ADMObjectType& objType);
 
-	ADMObjectType GetADMObjectType(const String& typeString);
+	ADMOSCProtocolProcessor::ADMObjectType GetADMObjectType(const String& typeString);
 
 	virtual void oscMessageReceived(const OSCMessage &message, const String& senderIPAddress, const int& senderPort) override;
 
 private:
-	void createRangeMappedFloatMessageData(const OSCMessage& messageInput, RemoteObjectMessageData& newMessageData, float mappingRangeMin, float mappingRangeMax, const std::vector<float>& valueFactors = std::vector<float>());
+	bool WriteToObjectCache(const ChannelId& channel, const ADMObjectType& objType, float objValue, bool syncPolarAndCartesian = false);
+	bool WriteToObjectCache(const ChannelId& channel, const std::vector<ADMObjectType>& objTypes, const std::vector<float>& objValues, bool syncPolarAndCartesian = false);
+	float ReadFromObjectCache(const ChannelId& channel, const ADMObjectType& objType);
+	bool SyncCachedPolarToCartesianValues(const ChannelId& channel);
+	bool SyncCachedCartesianToPolarValues(const ChannelId& channel);
+	bool CreateMessageDataFromObjectCache(const RemoteObjectIdentifier& id, const ChannelId& channel, RemoteObjectMessageData& addressing);
 
-	std::map<ADMObjectType, float>	m_objectValueCache;				/**< The cached object values, to be able to cross-calculate between coordinate systems, even if only single-val message is received. */
-	MappingAreaId					m_mappingAreaId{ MAI_Invalid };	/**< The DS100 mapping area to be used when converting incoming coords into relative messages. If this is MAI_Invalid, absolute messages will be generated. */
+	std::map<ChannelId, std::map<ADMObjectType, float>>	m_objectValueCache;				/**<	The cached object values, to be able to cross-calculate
+																						 *		between coordinate systems, even if only single-val message is received. */
+	MappingAreaId										m_mappingAreaId{ MAI_Invalid };	/**<	The DS100 mapping area to be used when converting
+																						 *		incoming coords into relative messages.
+																						 *		If this is MAI_Invalid, absolute messages will be generated. */
 
 };

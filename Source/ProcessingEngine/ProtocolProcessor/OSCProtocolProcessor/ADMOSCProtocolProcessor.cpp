@@ -21,6 +21,14 @@ ADMOSCProtocolProcessor::ADMOSCProtocolProcessor(const NodeId& parentNodeId, int
 	: OSCProtocolProcessor(parentNodeId, listenerPortNumber)
 {
 	m_type = ProtocolType::PT_ADMOSCProtocol;
+
+	auto chacheInitSuccess = true;
+	auto chacheInitTypes = std::vector<ADMObjectType>{ AOT_XPos, AOT_YPos, AOT_ZPos };
+	auto chacheInitValues = std::vector<float>{0.0f, 0.0f, 0.0f};
+	for (int i = 1; i <= 128; i++)
+		if (!WriteToObjectCache(static_cast<ChannelId>(i), chacheInitTypes, chacheInitValues, true))
+			chacheInitSuccess = false;
+	jassert(chacheInitSuccess);
 }
 
 /**
@@ -29,7 +37,6 @@ ADMOSCProtocolProcessor::ADMOSCProtocolProcessor(const NodeId& parentNodeId, int
 ADMOSCProtocolProcessor::~ADMOSCProtocolProcessor()
 {
 }
-
 
 /**
  * Sets the xml configuration for the protocol processor object.
@@ -123,76 +130,41 @@ void ADMOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, cons
 		// Determine which parameter was changed depending on the incoming message's address pattern.
 		auto admObjectType = GetADMObjectType(addressString.fromFirstOccurrenceOf(GetADMMessageTypeString(AMT_Object), false, false));
 
-		// process the admMessageType into an internal remoteobject for further handling
-		RemoteObjectMessageData newMsgData;
-		newMsgData._addrVal._first = INVALID_ADDRESS_VALUE;
-		newMsgData._addrVal._second = INVALID_ADDRESS_VALUE;
-		newMsgData._valType = ROVT_NONE;
-		newMsgData._valCount = 0;
-		newMsgData._payload = 0;
-		newMsgData._payloadSize = 0;
-		auto newObjectId = ROI_Invalid;
-
-		auto floatRange = juce::Range<float>();
-		
-		// create the remote object to be forwarded to processing node for further processing
+		// process the admMessageType into an internal remoteobjectid for further handling
+		auto targetedObjectId = ROI_Invalid;
 		switch (admObjectType)
 		{
 		case AOT_Azimuth:
-			// cache the incoming unaltered value
-			m_objectValueCache[AOT_Azimuth] = message[0].getFloat32();
+			targetedObjectId = ROI_CoordinateMapping_SourcePosition_XY;
 			break;
 		case AOT_Elevation:
-			// cache the incoming unaltered value
-			m_objectValueCache[AOT_Elevation] = message[0].getFloat32();
+			targetedObjectId = ROI_CoordinateMapping_SourcePosition_XY;
 			break;
 		case AOT_Distance:
-			// cache the incoming unaltered value
-			m_objectValueCache[AOT_Distance] = message[0].getFloat32();
+			targetedObjectId = ROI_CoordinateMapping_SourcePosition_XY;
 			break;
 		case AOT_AzimElevDist:
-			// cache the incoming unaltered value
-			m_objectValueCache[AOT_Azimuth] = message[0].getFloat32();
-			m_objectValueCache[AOT_Elevation] = message[1].getFloat32();
-			m_objectValueCache[AOT_Distance] = message[2].getFloat32();
-			break;
-		case AOT_Width:
-			// cache the incoming unaltered value
-			m_objectValueCache[AOT_Width] = message[0].getFloat32();
+			targetedObjectId = ROI_CoordinateMapping_SourcePosition_XY;
 			break;
 		case AOT_XPos:
-			// cache the incoming unaltered value
-			m_objectValueCache[AOT_XPos] = message[0].getFloat32();
-			newObjectId = ROI_CoordinateMapping_SourcePosition_Y;
-			floatRange = ProcessingEngineConfig::GetRemoteObjectRange(newObjectId);
-			createRangeMappedFloatMessageData(message, newMsgData, floatRange.getStart(), floatRange.getEnd(), std::vector<float>{ -1.0f });
+			targetedObjectId = ROI_CoordinateMapping_SourcePosition_X;
 			break;
 		case AOT_YPos:
-			// cache the incoming unaltered value
-			m_objectValueCache[AOT_YPos] = message[0].getFloat32();
-			newObjectId = ROI_CoordinateMapping_SourcePosition_X;
-			floatRange = ProcessingEngineConfig::GetRemoteObjectRange(newObjectId);
-			createRangeMappedFloatMessageData(message, newMsgData, floatRange.getStart(), floatRange.getEnd());
+			targetedObjectId = ROI_CoordinateMapping_SourcePosition_Y;
 			break;
 		case AOT_ZPos:
-			// cache the incoming unaltered value
-			m_objectValueCache[AOT_ZPos] = message[0].getFloat32();
+			targetedObjectId = ROI_CoordinateMapping_SourcePosition_XY;
 			break;
 		case AOT_XYZPos:
-			// cache the incoming unaltered value
-			m_objectValueCache[AOT_XPos] = message[0].getFloat32();
-			m_objectValueCache[AOT_YPos] = message[1].getFloat32();
-			m_objectValueCache[AOT_ZPos] = message[2].getFloat32();
+			targetedObjectId = ROI_CoordinateMapping_SourcePosition_XY;
+			break;
+		case AOT_Width:
+			targetedObjectId = ROI_Positioning_SourceSpread;
 			break;
 		case AOT_Gain:
-			// cache the incoming unaltered value
-			m_objectValueCache[AOT_Gain] = message[0].getFloat32();
-			newObjectId = ROI_MatrixInput_ReverbSendGain;
-			floatRange = ProcessingEngineConfig::GetRemoteObjectRange(newObjectId);
-			createRangeMappedFloatMessageData(message, newMsgData, floatRange.getStart(), floatRange.getEnd());
+			targetedObjectId = ROI_MatrixInput_Gain;
 			break;
 		case AOT_CartesianCoords:
-			break;
 		case AOT_Invalid:
 		default:
 			jassertfalse;
@@ -203,31 +175,79 @@ void ADMOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, cons
 		auto recordId = static_cast<RecordId>(INVALID_ADDRESS_VALUE);
 
 		// get the channel info if the object is supposed to provide it
-		if (ProcessingEngineConfig::IsChannelAddressingObject(newObjectId))
+		if (ProcessingEngineConfig::IsChannelAddressingObject(targetedObjectId))
 		{
 			// Parse the Channel ID
-			channelId = static_cast<ChannelId>((addressString.fromLastOccurrenceOf(GetADMMessageDomainString() + GetADMMessageTypeString(AMT_Object), false, true)).getIntValue());
+			channelId = static_cast<ChannelId>((addressString.fromLastOccurrenceOf(GetADMMessageTypeString(AMT_Object), false, true)).getIntValue());
 			jassert(channelId > 0);
 			if (channelId <= 0)
 				return;
 		}
 
-		// If the received object is set to muted, return without further processing
-		if (IsRemoteObjectMuted(RemoteObject(newObjectId, RemoteObjectAddressing(channelId, recordId))))
-			return;
-
 		// set the record info if the object needs it
-		if (ProcessingEngineConfig::IsRecordAddressingObject(newObjectId))
-		{
+		if (ProcessingEngineConfig::IsRecordAddressingObject(targetedObjectId))
 			recordId = static_cast<RecordId>(m_mappingAreaId);
+
+		// assemble a remote object structure from the collected addressing data
+		auto remoteObject = RemoteObject(targetedObjectId, RemoteObjectAddressing(channelId, recordId));
+		
+		// create the remote object to be forwarded to processing node for further processing
+		switch (admObjectType)
+		{
+		case AOT_Azimuth:
+			WriteToObjectCache(channelId, AOT_Azimuth, message[0].getFloat32(), true);
+			break;
+		case AOT_Elevation:
+			WriteToObjectCache(channelId, AOT_Elevation, message[0].getFloat32(), true);
+			break;
+		case AOT_Distance:
+			WriteToObjectCache(channelId, AOT_Distance, message[0].getFloat32(), true);
+			break;
+		case AOT_AzimElevDist:
+			WriteToObjectCache(channelId, std::vector<ADMObjectType>{AOT_Azimuth, AOT_Elevation, AOT_Distance}, std::vector<float>{message[0].getFloat32(), message[1].getFloat32(), message[2].getFloat32()}, true);
+			break;
+		case AOT_XPos:
+			WriteToObjectCache(channelId, AOT_XPos, message[0].getFloat32(), true);
+			break;
+		case AOT_YPos:
+			WriteToObjectCache(channelId, AOT_YPos, message[0].getFloat32(), true);
+			break;
+		case AOT_ZPos:
+			WriteToObjectCache(channelId, AOT_ZPos, message[0].getFloat32(), true);
+			break;
+		case AOT_XYZPos:
+			WriteToObjectCache(channelId, std::vector<ADMObjectType>{AOT_XPos, AOT_YPos, AOT_ZPos}, std::vector<float>{message[0].getFloat32(), message[1].getFloat32(), message[2].getFloat32()}, true);
+			break;
+		case AOT_Width:
+			WriteToObjectCache(channelId, AOT_Width, message[0].getFloat32());
+			break;
+		case AOT_Gain:
+			WriteToObjectCache(channelId, AOT_Gain, message[0].getFloat32());
+			break;
+		case AOT_CartesianCoords:
+			if (message[0].getInt32() == 1) // switch to cartesian coordinates - we take this as opportunity to sync current polar data to cartesian once
+				SyncCachedPolarToCartesianValues(channelId);
+			if (message[0].getInt32() == 0) // switch to cartesian coordinates - we take this as opportunity to sync current cartesian data to polar once
+				SyncCachedCartesianToPolarValues(channelId);
+			break;
+		case AOT_Invalid:
+		default:
+			jassertfalse;
+			break;
 		}
 
-		newMsgData._addrVal._first = channelId;
-		newMsgData._addrVal._second = recordId;
+		// If the received object is set to muted, return without further processing
+		if (IsRemoteObjectMuted(remoteObject))
+			return;
 
-		// provide the received message to parent node
+		// create a new message in internally known format
+		auto newMsgData = RemoteObjectMessageData(remoteObject._Addr, ROVT_FLOAT, 0, nullptr, 0);
+		if (!CreateMessageDataFromObjectCache(remoteObject._Id, channelId, newMsgData))
+			return;
+
+		// and provide that message to parent node
 		if (m_messageListener)
-			m_messageListener->OnProtocolMessageReceived(this, newObjectId, newMsgData);
+			m_messageListener->OnProtocolMessageReceived(this, targetedObjectId, newMsgData);
 	}
 }
 
@@ -244,9 +264,9 @@ String ADMOSCProtocolProcessor::GetADMMessageDomainString()
  * static method to get ADM OSC specific object def string
  * @return		The ADM specific OSC object addressing string fragment
  */
-String ADMOSCProtocolProcessor::GetADMMessageTypeString(ADMMessageType type)
+String ADMOSCProtocolProcessor::GetADMMessageTypeString(const ADMMessageType& msgType)
 {
-	switch (type)
+	switch (msgType)
 	{
 	case AMT_ObjectConfig:
 		return "config/obj/1/";
@@ -261,13 +281,12 @@ String ADMOSCProtocolProcessor::GetADMMessageTypeString(ADMMessageType type)
 
 /**
  * static method to get ADM specific OSC address string parameter definition trailer
- *
  * @param type	The message type to get the OSC specific parameter def string for
  * @return		The parameter defining string, empty if not available
  */
-String ADMOSCProtocolProcessor::GetADMObjectTypeString(ADMObjectType type)
+String ADMOSCProtocolProcessor::GetADMObjectTypeString(const ADMObjectType& objType)
 {
-	switch (type)
+	switch (objType)
 	{
 	case AOT_Azimuth:
 		return "/azim";
@@ -332,41 +351,333 @@ ADMOSCProtocolProcessor::ADMObjectType ADMOSCProtocolProcessor::GetADMObjectType
 }
 
 /**
- * Helper method to fill a new remote object message data struct with data from an osc message.
- * This method reads a single float from osc message, maps it to the given min/max range and fills it into the message data struct.
- * @param messageInput	The osc input message to read from.
- * @param newMessageData	The message data struct to fill data into.
- * @param mappingRangeMin	Min range value to map onto
- * @param mappingRangeMax	Max range value to map onto
- * @param valueFactors		Set of factors to apply to the float values. Must be empty or equal to message value contents size to be taken into account!
+ * static helper method to get ADM specific coordinate system the given object type is associated with.
+ * @param type	The object type to get the coordinate system for
+ * @return		The coordinate system enum value for the object type
  */
-void ADMOSCProtocolProcessor::createRangeMappedFloatMessageData(const OSCMessage& messageInput, RemoteObjectMessageData& newMessageData, float mappingRangeMin, float mappingRangeMax, const std::vector<float>& valueFactors)
+ADMOSCProtocolProcessor::CoodinateSystem ADMOSCProtocolProcessor::GetObjectTypeCoordinateSystem(const ADMObjectType& objType)
 {
-	if (messageInput.size() == 1)
+	switch (objType)
 	{
-		m_floatValueBuffer[0] = jmap(jlimit(0.0f, 1.0f, messageInput[0].getFloat32()), mappingRangeMin, mappingRangeMax) * (valueFactors.size() >= 1 ? valueFactors.at(0) : 1.0f);
-
-		newMessageData._valCount = 1;
-		newMessageData._payload = m_floatValueBuffer;
-		newMessageData._payloadSize = sizeof(float);
+	case AOT_Azimuth:
+	case AOT_Elevation:
+	case AOT_Distance:
+	case AOT_AzimElevDist:
+		return ADMOSCProtocolProcessor::CoodinateSystem::CS_Polar;
+	case AOT_XPos:
+	case AOT_YPos:
+	case AOT_ZPos:
+	case AOT_XYZPos:
+		return ADMOSCProtocolProcessor::CoodinateSystem::CS_Cartesian;
+	case AOT_Width:
+	case AOT_CartesianCoords:
+	case AOT_Gain:
+	case AOT_Invalid:
+	default:
+		return ADMOSCProtocolProcessor::CoodinateSystem::CS_Invalid;
 	}
-	if (messageInput.size() == 2)
+}
+
+/**
+ * static helper method to get ADM specific message type the given object type is associated with.
+ * @param type	The object type to get the message type for
+ * @return		The message type enum value for the object type
+ */
+ADMOSCProtocolProcessor::ADMMessageType ADMOSCProtocolProcessor::GetObjectTypeMessageType(const ADMObjectType& objType)
+{
+	switch (objType)
 	{
-		m_floatValueBuffer[0] = jmap(jlimit(0.0f, 1.0f, messageInput[0].getFloat32()), mappingRangeMin, mappingRangeMax) * (valueFactors.size() >= 2 ? valueFactors.at(0) : 1.0f);
-		m_floatValueBuffer[1] = jmap(jlimit(0.0f, 1.0f, messageInput[1].getFloat32()), mappingRangeMin, mappingRangeMax) * (valueFactors.size() >= 2 ? valueFactors.at(1) : 1.0f);
-
-		newMessageData._valCount = 2;
-		newMessageData._payload = m_floatValueBuffer;
-		newMessageData._payloadSize = 2 * sizeof(float);
+	case AOT_Azimuth:
+	case AOT_Elevation:
+	case AOT_Distance:
+	case AOT_AzimElevDist:
+	case AOT_XPos:
+	case AOT_YPos:
+	case AOT_ZPos:
+	case AOT_XYZPos:
+	case AOT_Width:
+	case AOT_Gain:
+		return ADMOSCProtocolProcessor::ADMMessageType::AMT_Object;
+	case AOT_CartesianCoords:
+		return ADMOSCProtocolProcessor::ADMMessageType::AMT_ObjectConfig;
+	case AOT_Invalid:
+	default:
+		return ADMOSCProtocolProcessor::ADMMessageType::AMT_Invalid;
 	}
-	if (messageInput.size() == 3)
+}
+
+/**
+ * Static method to get a valid value range for a given ADM object type.
+ * @param	objType	The type of ADM object to get the range for.
+ * @return	The requested range. Invalid (0.0f<->0.0f) if not supported.
+ */
+const juce::NormalisableRange<float> ADMOSCProtocolProcessor::GetADMObjectRange(const ADMObjectType& objType)
+{
+	switch (objType)
 	{
-		m_floatValueBuffer[0] = jmap(jlimit(0.0f, 1.0f, messageInput[0].getFloat32()), mappingRangeMin, mappingRangeMax) * (valueFactors.size() >= 3 ? valueFactors.at(0) : 1.0f);
-		m_floatValueBuffer[1] = jmap(jlimit(0.0f, 1.0f, messageInput[1].getFloat32()), mappingRangeMin, mappingRangeMax) * (valueFactors.size() >= 3 ? valueFactors.at(1) : 1.0f);
-		m_floatValueBuffer[2] = jmap(jlimit(0.0f, 1.0f, messageInput[2].getFloat32()), mappingRangeMin, mappingRangeMax) * (valueFactors.size() >= 3 ? valueFactors.at(2) : 1.0f);
-
-		newMessageData._valCount = 3;
-		newMessageData._payload = m_floatValueBuffer;
-		newMessageData._payloadSize = 3 * sizeof(float);
+	case AOT_Azimuth:
+		return juce::NormalisableRange<float>(-180.0f, 180.0f);
+	case AOT_Elevation:
+		return juce::NormalisableRange<float>(-90.0f, 90.0f);
+	case AOT_Distance:
+		return juce::NormalisableRange<float>(0.0f, 1.0f);
+	case AOT_XPos:
+	case AOT_YPos:
+	case AOT_ZPos:
+		return juce::NormalisableRange<float>(-1.0f, 1.0f);
+	case AOT_Width:
+		return juce::NormalisableRange<float>(0.0f, 180.0f);
+	case AOT_Gain:
+		return juce::NormalisableRange<float>(0.0f, 1.0f);
+	case AOT_AzimElevDist:
+	case AOT_XYZPos:
+	case AOT_CartesianCoords:
+	case AOT_Invalid:
+	default:
+		jassertfalse;
+		return juce::NormalisableRange<float>(0.0f, 0.0f);
 	}
+}
+
+/**
+* Method to write a given value to object value cache member and optionnally sync the values 
+* to cached values for opposing coordinate system (cartesian vs. polar).
+* @param	channel					The addressing to use to write to the cache.
+* @param	objType					The incoming type of object.
+* @param	objValue				The incoming object value.
+* @param	syncPolarAndCartesian	Bool indicator if the incoming object value shall be synced
+*									to its counter part in the opposing coordinate system.
+* @return	False if syncing to opposing coordinate system was requested but failed. Otherwise true.
+*/
+bool ADMOSCProtocolProcessor::WriteToObjectCache(const ChannelId& channel, const ADMObjectType& objType, float objValue, bool syncPolarAndCartesian)
+{
+	m_objectValueCache[channel][objType] = objValue;
+
+	if (syncPolarAndCartesian)
+	{
+		switch (GetObjectTypeCoordinateSystem(objType))
+		{
+		case ADMOSCProtocolProcessor::CoodinateSystem::CS_Cartesian:
+			return SyncCachedCartesianToPolarValues(channel);
+		case ADMOSCProtocolProcessor::CoodinateSystem::CS_Polar:
+			return SyncCachedPolarToCartesianValues(channel);
+		case ADMOSCProtocolProcessor::CoodinateSystem::CS_Invalid:
+		default:
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/**
+* Method to write a given value to object value cache member and optionnally sync the values
+* to cached values for opposing coordinate system (cartesian vs. polar). Syncing is only possible
+* if the incoming object types refer to the same coordinate system. If they don't syncing is skipped
+* and the method return falue is false (failure).
+* @param	channel					The addressing to use to write to the cache.
+* @param	objTypes				The incoming object types.
+* @param	objValues				The incoming object values.
+* @param	syncPolarAndCartesian	Bool indicator if the incoming object value shall be synced
+*									to its counter part in the opposing coordinate system.
+* @return	False if the incoming data is invalid or syncing to opposing coordinate system was requested but failed. Otherwise true.
+*/
+bool ADMOSCProtocolProcessor::WriteToObjectCache(const ChannelId& channel, const std::vector<ADMObjectType>& objTypes, const std::vector<float>& objValues, bool syncPolarAndCartesian)
+{
+	if (objTypes.size() != objValues.size() || objTypes.empty())
+		return false;
+
+	auto commonCoordinateSystem = GetObjectTypeCoordinateSystem(objTypes.front());
+	for (int i = 0; i < objTypes.size(); i++)
+	{
+		auto const& objType = objTypes.at(i);
+		auto const& objValue = objValues.at(i);
+
+		auto objTypeCoordSystem = GetObjectTypeCoordinateSystem(objType);
+		if (objTypeCoordSystem != commonCoordinateSystem)
+			commonCoordinateSystem = ADMOSCProtocolProcessor::CoodinateSystem::CS_Invalid;
+
+		m_objectValueCache[channel][objType] = objValue;
+	}
+
+	if (syncPolarAndCartesian && commonCoordinateSystem != ADMOSCProtocolProcessor::CoodinateSystem::CS_Invalid)
+	{
+		switch (commonCoordinateSystem)
+		{
+		case ADMOSCProtocolProcessor::CoodinateSystem::CS_Cartesian:
+			return SyncCachedCartesianToPolarValues(channel);
+		case ADMOSCProtocolProcessor::CoodinateSystem::CS_Polar:
+			return SyncCachedPolarToCartesianValues(channel);
+		case ADMOSCProtocolProcessor::CoodinateSystem::CS_Invalid:
+		default:
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/**
+ * Read the value for a given object type from value cache.
+ * @param	channel	The addressing to use to read from the cache.
+ * @param	objType	The type of object to read the valu for.
+ * @return	The requested object value.
+ */
+float ADMOSCProtocolProcessor::ReadFromObjectCache(const ChannelId& channel, const ADMObjectType& objType)
+{
+	return m_objectValueCache[channel][objType];
+}
+
+/**
+ *
+ */
+bool ADMOSCProtocolProcessor::SyncCachedPolarToCartesianValues(const ChannelId& channel)
+{
+	return false;
+}
+
+/**
+ *
+ */
+bool ADMOSCProtocolProcessor::SyncCachedCartesianToPolarValues(const ChannelId& channel)
+{
+	return false;
+}
+
+/**
+ * Method to create a message data struct from internally cached ADM object values.
+ * If the given RemoteObjectIdentifier is not supported, an empty struct is returned.
+ * @param	id				The remote object identification to create a data struct for.
+ * @param	channel			The remote object channel to use to access the cache.
+ * @param	newMessageData	The message data struct as requested. Unaltered if other input parameters are invalid.
+ * @return	True on success.
+ */
+bool ADMOSCProtocolProcessor::CreateMessageDataFromObjectCache(const RemoteObjectIdentifier& id, const ChannelId& channel, RemoteObjectMessageData& newMessageData)
+{
+	auto valRange = ProcessingEngineConfig::GetRemoteObjectRange(id);
+
+	switch (id)
+	{
+	case ROI_CoordinateMapping_SourcePosition:
+		{
+			auto admRange = GetADMObjectRange(AOT_XPos);
+
+			m_floatValueBuffer[0] = jmap(admRange.convertTo0to1(ReadFromObjectCache(channel, AOT_XPos)), valRange.getStart(), valRange.getEnd());
+			m_floatValueBuffer[1] = jmap(admRange.convertTo0to1(ReadFromObjectCache(channel, AOT_YPos)), valRange.getStart(), valRange.getEnd());
+			m_floatValueBuffer[2] = jmap(admRange.convertTo0to1(ReadFromObjectCache(channel, AOT_ZPos)), valRange.getStart(), valRange.getEnd());
+			
+			newMessageData._valCount = 3;
+			newMessageData._payload = m_floatValueBuffer;
+			newMessageData._payloadSize = 3 * sizeof(float);
+		}
+		return true;
+	case ROI_CoordinateMapping_SourcePosition_X:
+		{
+			auto admRange = GetADMObjectRange(AOT_XPos);
+
+			m_floatValueBuffer[0] = jmap(admRange.convertTo0to1(ReadFromObjectCache(channel, AOT_XPos)), valRange.getStart(), valRange.getEnd());
+
+			newMessageData._valCount = 1;
+			newMessageData._payload = m_floatValueBuffer;
+			newMessageData._payloadSize = 1 * sizeof(float);
+		}
+		return true;
+	case ROI_CoordinateMapping_SourcePosition_Y:
+		{
+			auto admRange = GetADMObjectRange(AOT_YPos);
+
+			m_floatValueBuffer[0] = jmap(admRange.convertTo0to1(ReadFromObjectCache(channel, AOT_YPos)), valRange.getStart(), valRange.getEnd());
+
+			newMessageData._valCount = 1;
+			newMessageData._payload = m_floatValueBuffer;
+			newMessageData._payloadSize = 1 * sizeof(float);
+		}
+		return true;
+	case ROI_CoordinateMapping_SourcePosition_XY:
+		{
+			auto admRange = GetADMObjectRange(AOT_XPos);
+
+			m_floatValueBuffer[0] = jmap(admRange.convertTo0to1(ReadFromObjectCache(channel, AOT_XPos)), valRange.getStart(), valRange.getEnd());
+			m_floatValueBuffer[1] = jmap(admRange.convertTo0to1(ReadFromObjectCache(channel, AOT_YPos)), valRange.getStart(), valRange.getEnd());
+
+			newMessageData._valCount = 2;
+			newMessageData._payload = m_floatValueBuffer;
+			newMessageData._payloadSize = 2 * sizeof(float);
+		}
+		return true;
+	case ROI_MatrixInput_Gain:
+		{
+			auto admRange = GetADMObjectRange(AOT_Gain);
+
+			m_floatValueBuffer[0] = jmap(admRange.convertTo0to1(ReadFromObjectCache(channel, AOT_Gain)), valRange.getStart(), valRange.getEnd());
+
+			newMessageData._valCount = 1;
+			newMessageData._payload = m_floatValueBuffer;
+			newMessageData._payloadSize = 1 * sizeof(float);
+		}
+		return true;
+	case ROI_Positioning_SourceSpread:
+		{
+			auto admRange = GetADMObjectRange(AOT_Width);
+
+			m_floatValueBuffer[0] = jmap(admRange.convertTo0to1(ReadFromObjectCache(channel, AOT_Width)), valRange.getStart(), valRange.getEnd());
+
+			newMessageData._valCount = 1;
+			newMessageData._payload = m_floatValueBuffer;
+			newMessageData._payloadSize = 1 * sizeof(float);
+		}
+		return true;
+	case ROI_HeartbeatPong:
+	case ROI_HeartbeatPing:
+	case ROI_Settings_DeviceName:
+	case ROI_Error_GnrlErr:
+	case ROI_Error_ErrorText:
+	case ROI_Status_StatusText:
+	case ROI_MatrixInput_Select:
+	case ROI_MatrixInput_Mute:
+	case ROI_MatrixInput_Delay:
+	case ROI_MatrixInput_DelayEnable:
+	case ROI_MatrixInput_EqEnable:
+	case ROI_MatrixInput_Polarity:
+	case ROI_MatrixInput_ChannelName:
+	case ROI_MatrixInput_LevelMeterPreMute:
+	case ROI_MatrixInput_LevelMeterPostMute:
+	case ROI_MatrixNode_Enable:
+	case ROI_MatrixNode_Gain:
+	case ROI_MatrixNode_DelayEnable:
+	case ROI_MatrixNode_Delay:
+	case ROI_MatrixOutput_Mute:
+	case ROI_MatrixOutput_Gain:
+	case ROI_MatrixOutput_Delay:
+	case ROI_MatrixOutput_DelayEnable:
+	case ROI_MatrixOutput_EqEnable:
+	case ROI_MatrixOutput_Polarity:
+	case ROI_MatrixOutput_ChannelName:
+	case ROI_MatrixOutput_LevelMeterPreMute:
+	case ROI_MatrixOutput_LevelMeterPostMute:
+	case ROI_Positioning_SourceDelayMode:
+	case ROI_MatrixSettings_ReverbRoomId:
+	case ROI_MatrixSettings_ReverbPredelayFactor:
+	case ROI_MatrixSettings_ReverbRearLevel:
+	case ROI_MatrixInput_ReverbSendGain:
+	case ROI_ReverbInput_Gain:
+	case ROI_ReverbInputProcessing_Mute:
+	case ROI_ReverbInputProcessing_Gain:
+	case ROI_ReverbInputProcessing_LevelMeter:
+	case ROI_ReverbInputProcessing_EqEnable:
+	case ROI_Device_Clear:
+	case ROI_Scene_Previous:
+	case ROI_Scene_Next:
+	case ROI_Scene_Recall:
+	case ROI_Scene_SceneIndex:
+	case ROI_Scene_SceneName:
+	case ROI_Scene_SceneComment:
+	case ROI_RemoteProtocolBridge_SoundObjectSelect:
+	case ROI_RemoteProtocolBridge_UIElementIndexSelect:
+	default:
+		jassertfalse;
+		break;
+	}
+
+	return false;
 }
