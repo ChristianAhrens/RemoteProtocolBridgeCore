@@ -171,64 +171,64 @@ void ADMOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, cons
 			break;
 		}
 
-		auto channelId = static_cast<ChannelId>(INVALID_ADDRESS_VALUE);
-		auto recordId = static_cast<RecordId>(INVALID_ADDRESS_VALUE);
+		auto channel = static_cast<ChannelId>(INVALID_ADDRESS_VALUE);
+		auto record = static_cast<RecordId>(INVALID_ADDRESS_VALUE);
 
 		// get the channel info if the object is supposed to provide it
 		if (ProcessingEngineConfig::IsChannelAddressingObject(targetedObjectId))
 		{
 			// Parse the Channel ID
-			channelId = static_cast<ChannelId>((addressString.fromLastOccurrenceOf(GetADMMessageTypeString(AMT_Object), false, true)).getIntValue());
-			jassert(channelId > 0);
-			if (channelId <= 0)
+			channel = static_cast<ChannelId>((addressString.fromLastOccurrenceOf(GetADMMessageTypeString(AMT_Object), false, true)).getIntValue());
+			jassert(channel > 0);
+			if (channel <= 0)
 				return;
 		}
 
 		// set the record info if the object needs it
 		if (ProcessingEngineConfig::IsRecordAddressingObject(targetedObjectId))
-			recordId = static_cast<RecordId>(m_mappingAreaId);
+			record = static_cast<RecordId>(m_mappingAreaId);
 
 		// assemble a remote object structure from the collected addressing data
-		auto remoteObject = RemoteObject(targetedObjectId, RemoteObjectAddressing(channelId, recordId));
+		auto remoteObject = RemoteObject(targetedObjectId, RemoteObjectAddressing(channel, record));
 		
 		// create the remote object to be forwarded to processing node for further processing
 		switch (admObjectType)
 		{
 		case AOT_Azimuth:
-			WriteToObjectCache(channelId, AOT_Azimuth, message[0].getFloat32(), true);
+			WriteToObjectCache(channel, AOT_Azimuth, message[0].getFloat32(), true);
 			break;
 		case AOT_Elevation:
-			WriteToObjectCache(channelId, AOT_Elevation, message[0].getFloat32(), true);
+			WriteToObjectCache(channel, AOT_Elevation, message[0].getFloat32(), true);
 			break;
 		case AOT_Distance:
-			WriteToObjectCache(channelId, AOT_Distance, message[0].getFloat32(), true);
+			WriteToObjectCache(channel, AOT_Distance, message[0].getFloat32(), true);
 			break;
 		case AOT_AzimElevDist:
-			WriteToObjectCache(channelId, std::vector<ADMObjectType>{AOT_Azimuth, AOT_Elevation, AOT_Distance}, std::vector<float>{message[0].getFloat32(), message[1].getFloat32(), message[2].getFloat32()}, true);
+			WriteToObjectCache(channel, std::vector<ADMObjectType>{AOT_Azimuth, AOT_Elevation, AOT_Distance}, std::vector<float>{message[0].getFloat32(), message[1].getFloat32(), message[2].getFloat32()}, true);
 			break;
 		case AOT_XPos:
-			WriteToObjectCache(channelId, AOT_XPos, message[0].getFloat32(), true);
+			WriteToObjectCache(channel, AOT_XPos, message[0].getFloat32(), true);
 			break;
 		case AOT_YPos:
-			WriteToObjectCache(channelId, AOT_YPos, message[0].getFloat32(), true);
+			WriteToObjectCache(channel, AOT_YPos, message[0].getFloat32(), true);
 			break;
 		case AOT_ZPos:
-			WriteToObjectCache(channelId, AOT_ZPos, message[0].getFloat32(), true);
+			WriteToObjectCache(channel, AOT_ZPos, message[0].getFloat32(), true);
 			break;
 		case AOT_XYZPos:
-			WriteToObjectCache(channelId, std::vector<ADMObjectType>{AOT_XPos, AOT_YPos, AOT_ZPos}, std::vector<float>{message[0].getFloat32(), message[1].getFloat32(), message[2].getFloat32()}, true);
+			WriteToObjectCache(channel, std::vector<ADMObjectType>{AOT_XPos, AOT_YPos, AOT_ZPos}, std::vector<float>{message[0].getFloat32(), message[1].getFloat32(), message[2].getFloat32()}, true);
 			break;
 		case AOT_Width:
-			WriteToObjectCache(channelId, AOT_Width, message[0].getFloat32());
+			WriteToObjectCache(channel, AOT_Width, message[0].getFloat32());
 			break;
 		case AOT_Gain:
-			WriteToObjectCache(channelId, AOT_Gain, message[0].getFloat32());
+			WriteToObjectCache(channel, AOT_Gain, message[0].getFloat32());
 			break;
 		case AOT_CartesianCoords:
 			if (message[0].getInt32() == 1) // switch to cartesian coordinates - we take this as opportunity to sync current polar data to cartesian once
-				SyncCachedPolarToCartesianValues(channelId);
+				SyncCachedPolarToCartesianValues(channel);
 			if (message[0].getInt32() == 0) // switch to cartesian coordinates - we take this as opportunity to sync current cartesian data to polar once
-				SyncCachedCartesianToPolarValues(channelId);
+				SyncCachedCartesianToPolarValues(channel);
 			break;
 		case AOT_Invalid:
 		default:
@@ -242,7 +242,7 @@ void ADMOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, cons
 
 		// create a new message in internally known format
 		auto newMsgData = RemoteObjectMessageData(remoteObject._Addr, ROVT_FLOAT, 0, nullptr, 0);
-		if (!CreateMessageDataFromObjectCache(remoteObject._Id, channelId, newMsgData))
+		if (!CreateMessageDataFromObjectCache(remoteObject._Id, channel, newMsgData))
 			return;
 
 		// and provide that message to parent node
