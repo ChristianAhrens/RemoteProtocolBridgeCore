@@ -529,19 +529,67 @@ float ADMOSCProtocolProcessor::ReadFromObjectCache(const ChannelId& channel, con
 }
 
 /**
- *
+ * Method to sync the cached azimuth and elevation angles and the distance from origin values
+ * into x, y, z adm cached coordinate values for a given channel.
+ * @param	channel	The channel number to sync the values in cache for.
+ * @return	True on success, false if syncing failed due to something.
  */
 bool ADMOSCProtocolProcessor::SyncCachedPolarToCartesianValues(const ChannelId& channel)
 {
-	return false;
+	/******************** Read values *********************/
+	auto admAzimuth = ReadFromObjectCache(channel, AOT_Azimuth);
+	auto admElevation = ReadFromObjectCache(channel, AOT_Elevation);
+	auto admDistance = ReadFromObjectCache(channel, AOT_Distance);
+	auto admOrigin = juce::Vector3D<float>(0.0f, 0.0f, 0.0f);
+
+	/********************* Conversion *********************/
+	auto admPos = juce::Vector3D<float>(0.0f, 0.0f, 0.0f);
+
+	admPos.z = std::cos(admElevation) * admDistance;
+	auto admXYAbs = std::sqrt((admDistance * admDistance) - (admPos.z * admPos.z));
+	admPos.x = std::sin(admAzimuth) * admXYAbs;
+	admPos.y = std::cos(admAzimuth) * admXYAbs;
+
+	/******************** Write values ********************/
+	WriteToObjectCache(channel, AOT_XPos, admPos.x);
+	WriteToObjectCache(channel, AOT_YPos, admPos.y);
+	WriteToObjectCache(channel, AOT_ZPos, admPos.z);
+
+	return true;
 }
 
 /**
- *
+ * Method to sync x, y, z adm cached coordinate values into cached 
+ * azimuth and elevation angles and the distance from origin values 
+ * for a given channel.
+ * @param	channel	The channel number to sync the values in cache for.
+ * @return	True on success, false if syncing failed due to something.
  */
 bool ADMOSCProtocolProcessor::SyncCachedCartesianToPolarValues(const ChannelId& channel)
 {
-	return false;
+	/******************** Read values *********************/
+	auto admPos = juce::Vector3D<float>(ReadFromObjectCache(channel, AOT_XPos), ReadFromObjectCache(channel, AOT_YPos), ReadFromObjectCache(channel, AOT_ZPos));
+	auto admOrigin = juce::Vector3D<float>(0.0f, 0.0f, 0.0f);
+
+	/********************* Conversion *********************/
+	auto admAzimuth = 0.0f;
+	auto admElevation = 0.0f;
+	auto admDistance = 0.0f;
+
+	auto admPosAbs = admPos.length();
+	if (admPos.y != 0.0f && admPosAbs != 0.0f)
+	{
+		admAzimuth = std::atan(admPos.x / admPos.y);
+		admElevation = std::acos(admPos.z / admPosAbs);
+		admDistance = admPosAbs;
+	}
+
+	/******************** Write values ********************/
+	WriteToObjectCache(channel, AOT_Azimuth, admAzimuth);
+	WriteToObjectCache(channel, AOT_Elevation, admElevation);
+	WriteToObjectCache(channel, AOT_Distance, admDistance);
+
+	return true;
 }
 
 /**
