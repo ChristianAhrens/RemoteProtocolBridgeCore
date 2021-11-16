@@ -15,7 +15,7 @@
 #include <JuceHeader.h>
 
 /**
- * Class ADMOSCProtocolProcessor is a derived class for special Yamaha RIVAGES OSC protocol interaction.
+ * Class ADMOSCProtocolProcessor is a derived class for special ADM OSC protocol interaction.
  */
 class ADMOSCProtocolProcessor : public OSCProtocolProcessor
 {
