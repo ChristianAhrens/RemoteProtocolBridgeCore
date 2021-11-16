@@ -76,12 +76,133 @@ bool ADMOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id,
 	if (msgData._addrVal._first <= INVALID_ADDRESS_VALUE)
 		return false;
 
-	//// assemble the addressing string
-	//String addressString = GetADMObjectDomainString() + String(msgData._addrVal._first) + GetADMObjectParameterTypeString(Id);
-	//
-	//return SendAddressedMessage(addressString, msgData);
-	ignoreUnused(Id);
-	return false;
+	// Send object config message to make sender aware of us sending only cartesian coordinate values
+	if (m_expectedCoordinateSystem != CS_Cartesian)
+	{
+		String addressString = GetADMMessageDomainString() + GetADMMessageTypeString(AMT_ObjectConfig) + GetADMObjectTypeString(AOT_CartesianCoords);
+
+		int intValue[1] = { 1 };
+
+		RemoteObjectMessageData coordSysMsgData;
+		coordSysMsgData._valType = ROVT_INT;
+		coordSysMsgData._valCount = 1;
+		coordSysMsgData._payload = intValue;
+		coordSysMsgData._payloadSize = sizeof(int);
+		SendAddressedMessage(addressString, coordSysMsgData);
+	}
+
+	float floatValueSendBuffer[3] = { 0.0f, 0.0f, 0.0f };
+	ADMObjectType objType = ADMObjectType::AOT_Invalid;
+	RemoteObjectMessageData admConvertedMsgData;
+
+	switch (Id)
+	{
+	case ROI_CoordinateMapping_SourcePosition_X:
+		{
+		objType = ADMObjectType::AOT_XPos;
+
+		floatValueSendBuffer[0] = 0.0f;
+
+		admConvertedMsgData._valType = ROVT_FLOAT;
+		admConvertedMsgData._valCount = 1;
+		admConvertedMsgData._payload = floatValueSendBuffer;
+		admConvertedMsgData._payloadSize = sizeof(float);
+		}
+		break;
+	case ROI_CoordinateMapping_SourcePosition_Y:
+		{
+		objType = ADMObjectType::AOT_YPos;
+
+		floatValueSendBuffer[0] = 0.0f;
+
+		admConvertedMsgData._valType = ROVT_FLOAT;
+		admConvertedMsgData._valCount = 1;
+		admConvertedMsgData._payload = floatValueSendBuffer;
+		admConvertedMsgData._payloadSize = sizeof(float);
+		}
+		break;
+
+	case ROI_MatrixInput_Gain:
+		{
+		objType = ADMObjectType::AOT_Gain;
+
+		floatValueSendBuffer[0] = 0.0f;
+
+		admConvertedMsgData._valType = ROVT_FLOAT;
+		admConvertedMsgData._valCount = 1;
+		admConvertedMsgData._payload = floatValueSendBuffer;
+		admConvertedMsgData._payloadSize = sizeof(float);
+		}
+		break;
+	case ROI_Positioning_SourceSpread:
+		{
+		objType = ADMObjectType::AOT_Width;
+
+		floatValueSendBuffer[0] = 0.0f;
+
+		admConvertedMsgData._valType = ROVT_FLOAT;
+		admConvertedMsgData._valCount = 1;
+		admConvertedMsgData._payload = floatValueSendBuffer;
+		admConvertedMsgData._payloadSize = sizeof(float);
+		}
+		break;
+	case ROI_CoordinateMapping_SourcePosition:
+	case ROI_CoordinateMapping_SourcePosition_XY:
+	case ROI_HeartbeatPong:
+	case ROI_HeartbeatPing:
+	case ROI_Settings_DeviceName:
+	case ROI_Error_GnrlErr:
+	case ROI_Error_ErrorText:
+	case ROI_Status_StatusText:
+	case ROI_MatrixInput_Select:
+	case ROI_MatrixInput_Mute:
+	case ROI_MatrixInput_Delay:
+	case ROI_MatrixInput_DelayEnable:
+	case ROI_MatrixInput_EqEnable:
+	case ROI_MatrixInput_Polarity:
+	case ROI_MatrixInput_ChannelName:
+	case ROI_MatrixInput_LevelMeterPreMute:
+	case ROI_MatrixInput_LevelMeterPostMute:
+	case ROI_MatrixNode_Enable:
+	case ROI_MatrixNode_Gain:
+	case ROI_MatrixNode_DelayEnable:
+	case ROI_MatrixNode_Delay:
+	case ROI_MatrixOutput_Mute:
+	case ROI_MatrixOutput_Gain:
+	case ROI_MatrixOutput_Delay:
+	case ROI_MatrixOutput_DelayEnable:
+	case ROI_MatrixOutput_EqEnable:
+	case ROI_MatrixOutput_Polarity:
+	case ROI_MatrixOutput_ChannelName:
+	case ROI_MatrixOutput_LevelMeterPreMute:
+	case ROI_MatrixOutput_LevelMeterPostMute:
+	case ROI_Positioning_SourceDelayMode:
+	case ROI_MatrixSettings_ReverbRoomId:
+	case ROI_MatrixSettings_ReverbPredelayFactor:
+	case ROI_MatrixSettings_ReverbRearLevel:
+	case ROI_MatrixInput_ReverbSendGain:
+	case ROI_ReverbInput_Gain:
+	case ROI_ReverbInputProcessing_Mute:
+	case ROI_ReverbInputProcessing_Gain:
+	case ROI_ReverbInputProcessing_LevelMeter:
+	case ROI_ReverbInputProcessing_EqEnable:
+	case ROI_Device_Clear:
+	case ROI_Scene_Previous:
+	case ROI_Scene_Next:
+	case ROI_Scene_Recall:
+	case ROI_Scene_SceneIndex:
+	case ROI_Scene_SceneName:
+	case ROI_Scene_SceneComment:
+	case ROI_RemoteProtocolBridge_SoundObjectSelect:
+	case ROI_RemoteProtocolBridge_UIElementIndexSelect:
+	default:
+		return false;
+	}
+
+	// assemble the addressing string
+	String addressString = GetADMMessageDomainString() + GetADMMessageTypeString(AMT_Object) + String(msgData._addrVal._first) + GetADMObjectTypeString(objType);
+	
+	return SendAddressedMessage(addressString, admConvertedMsgData);
 }
 
 /**
