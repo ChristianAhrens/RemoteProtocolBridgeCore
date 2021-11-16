@@ -211,10 +211,13 @@ void ADMOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, cons
 			WriteToObjectCache(channel, AOT_Gain, message[0].getFloat32());
 			break;
 		case AOT_CartesianCoords:
-			if (message[0].getInt32() == 1) // switch to cartesian coordinates - we take this as opportunity to sync current polar data to cartesian once
-				SyncCachedPolarToCartesianValues(channel);
-			if (message[0].getInt32() == 0) // switch to cartesian coordinates - we take this as opportunity to sync current cartesian data to polar once
-				SyncCachedCartesianToPolarValues(channel);
+			if (SetExpectedCoordinateSystem(message[0].getInt32() == 1))
+			{
+				if (message[0].getInt32() == 1) // switch to cartesian coordinates - we take this as opportunity to sync current polar data to cartesian once
+					SyncCachedPolarToCartesianValues(channel);
+				else if (message[0].getInt32() == 0) // switch to polar coordinates - we take this as opportunity to sync current cartesian data to polar once
+					SyncCachedCartesianToPolarValues(channel);
+			}
 			break;
 		case AOT_Invalid:
 		default:
@@ -437,8 +440,6 @@ const juce::NormalisableRange<float> ADMOSCProtocolProcessor::GetADMObjectRange(
 */
 bool ADMOSCProtocolProcessor::WriteToObjectCache(const ChannelId& channel, const ADMObjectType& objType, float objValue, bool syncPolarAndCartesian)
 {
-	DBG(String(__FUNCTION__) + " ch" + String(channel) + " objT" + String(objType) + " val " + String(objValue));
-
 	m_objectValueCache[channel][objType] = objValue;
 
 	if (syncPolarAndCartesian)
@@ -485,8 +486,6 @@ bool ADMOSCProtocolProcessor::WriteToObjectCache(const ChannelId& channel, const
 		if (objTypeCoordSystem != commonCoordinateSystem)
 			commonCoordinateSystem = ADMOSCProtocolProcessor::CoodinateSystem::CS_Invalid;
 
-		DBG(String(__FUNCTION__) + " ch" + String(channel) + " objT" + String(objType) + " val " + String(objValue));
-
 		m_objectValueCache[channel][objType] = objValue;
 	}
 
@@ -516,6 +515,27 @@ bool ADMOSCProtocolProcessor::WriteToObjectCache(const ChannelId& channel, const
 float ADMOSCProtocolProcessor::ReadFromObjectCache(const ChannelId& channel, const ADMObjectType& objType)
 {
 	return m_objectValueCache[channel][objType];
+}
+
+/**
+ * Method to set the expected coordinate system member field to cartesian or polar.
+ * @param	cartesian	Bool indicator if member field shall be set to cartesian (true) or polar (false).
+ * @return	True if the parameter value was successfully set. False if the member field was already configured the expected way before.
+ */
+bool ADMOSCProtocolProcessor::SetExpectedCoordinateSystem(bool cartesian)
+{
+	if (cartesian && m_expectedCoordinateSystem != CS_Cartesian)
+	{
+		m_expectedCoordinateSystem = CS_Cartesian;
+		return true;
+	}
+	else if (!cartesian && m_expectedCoordinateSystem != CS_Polar)
+	{
+		m_expectedCoordinateSystem = CS_Polar;
+		return true;
+	}
+	else
+		return false;
 }
 
 /**

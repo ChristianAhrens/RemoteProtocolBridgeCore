@@ -73,6 +73,7 @@ private:
 	bool WriteToObjectCache(const ChannelId& channel, const ADMObjectType& objType, float objValue, bool syncPolarAndCartesian = false);
 	bool WriteToObjectCache(const ChannelId& channel, const std::vector<ADMObjectType>& objTypes, const std::vector<float>& objValues, bool syncPolarAndCartesian = false);
 	float ReadFromObjectCache(const ChannelId& channel, const ADMObjectType& objType);
+	bool SetExpectedCoordinateSystem(bool cartesian);
 	bool SyncCachedPolarToCartesianValues(const ChannelId& channel);
 	bool SyncCachedCartesianToPolarValues(const ChannelId& channel);
 	bool CreateMessageDataFromObjectCache(const RemoteObjectIdentifier& id, const ChannelId& channel, RemoteObjectMessageData& addressing);
@@ -82,5 +83,6 @@ private:
 	MappingAreaId										m_mappingAreaId{ MAI_Invalid };	/**<	The DS100 mapping area to be used when converting
 																						 *		incoming coords into relative messages.
 																						 *		If this is MAI_Invalid, absolute messages will be generated. */
+	CoodinateSystem	m_expectedCoordinateSystem{ CoodinateSystem::CS_Invalid };
 
 };
