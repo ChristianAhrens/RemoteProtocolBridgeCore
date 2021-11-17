@@ -78,11 +78,15 @@ private:
 	bool SyncCachedCartesianToPolarValues(const ChannelId& channel);
 	bool CreateMessageDataFromObjectCache(const RemoteObjectIdentifier& id, const ChannelId& channel, RemoteObjectMessageData& addressing);
 
-	std::map<ChannelId, std::map<ADMObjectType, float>>	m_objectValueCache;				/**<	The cached object values, to be able to cross-calculate
-																						 *		between coordinate systems, even if only single-val message is received. */
-	MappingAreaId										m_mappingAreaId{ MAI_Invalid };	/**<	The DS100 mapping area to be used when converting
-																						 *		incoming coords into relative messages.
-																						 *		If this is MAI_Invalid, absolute messages will be generated. */
+	std::map<ChannelId, std::map<ADMObjectType, float>>	m_objectValueCache;				/**< The cached object values, to be able to cross-calculate
+																						 *	 between coordinate systems, even if only single-val message is received. */
+	MappingAreaId										m_mappingAreaId{ MAI_Invalid };	/**< The DS100 mapping area to be used when converting
+																						 *	 incoming coords into relative messages.
+																						 *	 If this is MAI_Invalid, absolute messages will be generated. */
+	bool												m_xAxisInverted{ false };		/**< Bool flag to indicate if the x-Axis values between adm and d&b world shall be inverted. */
+	bool												m_yAxisInverted{ false };		/**< Bool flag to indicate if the y-Axis values between adm and d&b world shall be inverted. */
+	bool												m_xyAxisSwapped{ false };		/**< Bool flag to indicate if the x/y-Axis values between adm and d&b world shall be swapped. */
+	bool												m_dataSendindDisabled{ false };	/**< Bool flag to indicate if incoming message send requests from bridging node shall be ignored. */
 	CoodinateSystem	m_expectedCoordinateSystem{ CoodinateSystem::CS_Invalid };
 
 };

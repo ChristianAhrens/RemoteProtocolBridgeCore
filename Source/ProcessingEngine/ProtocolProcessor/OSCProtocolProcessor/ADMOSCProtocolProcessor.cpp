@@ -52,10 +52,26 @@ bool ADMOSCProtocolProcessor::setStateXml(XmlElement* stateXml)
 	{
 		auto mappingAreaXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::MAPPINGAREA));
 		if (mappingAreaXmlElement)
-		{
 			m_mappingAreaId = static_cast<MappingAreaId>(mappingAreaXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::ID)));
+
+		auto xAxisInvertedXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::XINVERTED));
+		if (xAxisInvertedXmlElement)
+			m_xAxisInverted = static_cast<bool>(xAxisInvertedXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE)));
+
+		auto yAxisInvertedXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::YINVERTED));
+		if (yAxisInvertedXmlElement)
+			m_yAxisInverted = static_cast<bool>(yAxisInvertedXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE)));
+
+		auto xyAxisSwappedXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::XYSWAPPED));
+		if (xyAxisSwappedXmlElement)
+			m_xyAxisSwapped = static_cast<bool>(xyAxisSwappedXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE)));
+
+		auto dataSendingDisabledXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::DATASENDINGDISABLED));
+		if (dataSendingDisabledXmlElement)
+			m_dataSendindDisabled = static_cast<bool>(dataSendingDisabledXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE)));
+
+		if (mappingAreaXmlElement && xAxisInvertedXmlElement && yAxisInvertedXmlElement && xyAxisSwappedXmlElement && dataSendingDisabledXmlElement)
 			return true;
-		}
 		else
 			return false;
 	}
@@ -69,6 +85,9 @@ bool ADMOSCProtocolProcessor::setStateXml(XmlElement* stateXml)
  */
 bool ADMOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
 {
+	// do not send any values if the config forbids data sending
+	if (m_dataSendindDisabled)
+		return false;
 	// do not send any values if they relate to a mapping id differing from the one configured for this protocol
 	if (msgData._addrVal._second != m_mappingAreaId)
 		return false;
