@@ -56,19 +56,19 @@ bool ADMOSCProtocolProcessor::setStateXml(XmlElement* stateXml)
 
 		auto xAxisInvertedXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::XINVERTED));
 		if (xAxisInvertedXmlElement)
-			m_xAxisInverted = static_cast<bool>(xAxisInvertedXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE)));
+			m_xAxisInverted = 1 == xAxisInvertedXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE));
 
 		auto yAxisInvertedXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::YINVERTED));
 		if (yAxisInvertedXmlElement)
-			m_yAxisInverted = static_cast<bool>(yAxisInvertedXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE)));
+			m_yAxisInverted = 1 == yAxisInvertedXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE));
 
 		auto xyAxisSwappedXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::XYSWAPPED));
 		if (xyAxisSwappedXmlElement)
-			m_xyAxisSwapped = static_cast<bool>(xyAxisSwappedXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE)));
+			m_xyAxisSwapped = 1 == xyAxisSwappedXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE));
 
 		auto dataSendingDisabledXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::DATASENDINGDISABLED));
 		if (dataSendingDisabledXmlElement)
-			m_dataSendindDisabled = static_cast<bool>(dataSendingDisabledXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE)));
+			m_dataSendindDisabled = 1 == dataSendingDisabledXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE));
 
 		if (mappingAreaXmlElement && xAxisInvertedXmlElement && yAxisInvertedXmlElement && xyAxisSwappedXmlElement && dataSendingDisabledXmlElement)
 			return true;

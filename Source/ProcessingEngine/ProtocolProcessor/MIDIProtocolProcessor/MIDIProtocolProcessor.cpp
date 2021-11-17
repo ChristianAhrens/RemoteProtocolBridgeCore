@@ -229,7 +229,7 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 
 					if (assiCommandData.isNoteOffCommand() || assiCommandData.isNoteOnCommand())
 					{
-						m_intValueBuffer[0] = static_cast<bool>(GetValueCache().GetIntValue(RemoteObject(newObjectId, newMsgData._addrVal))) ? 0 : 1;
+						m_intValueBuffer[0] = (1 == GetValueCache().GetIntValue(RemoteObject(newObjectId, newMsgData._addrVal)) ? 0 : 1);
 					}
 					else
 					{
