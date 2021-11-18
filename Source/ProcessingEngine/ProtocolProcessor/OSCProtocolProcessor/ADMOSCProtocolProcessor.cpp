@@ -766,10 +766,14 @@ bool ADMOSCProtocolProcessor::CreateMessageDataFromObjectCache(const RemoteObjec
 			auto admXValue = ReadFromObjectCache(channel, AOT_YPos);
 			auto admYValue = ReadFromObjectCache(channel, AOT_XPos);
 			auto admZValue = ReadFromObjectCache(channel, AOT_ZPos);
-			
-			m_floatValueBuffer[0] = jmap(admRange.convertTo0to1(admXValue), valRange.getStart(), valRange.getEnd());
-			m_floatValueBuffer[1] = jmap(admRange.convertTo0to1(admYValue), valRange.getStart(), valRange.getEnd());
-			m_floatValueBuffer[2] = jmap(admRange.convertTo0to1(admZValue), valRange.getStart(), valRange.getEnd());
+
+			auto xValue = jmap(admRange.convertTo0to1(admXValue), valRange.getStart(), valRange.getEnd());
+			auto yValue = jmap(admRange.convertTo0to1(admYValue), valRange.getStart(), valRange.getEnd());
+			auto zValue = jmap(admRange.convertTo0to1(admZValue), valRange.getStart(), valRange.getEnd());
+
+			m_floatValueBuffer[0] = m_xyAxisSwapped ? yValue : xValue;
+			m_floatValueBuffer[1] = m_xyAxisSwapped ? xValue : yValue;
+			m_floatValueBuffer[2] = zValue;
 			
 			newMessageData._valCount = 3;
 			newMessageData._payload = m_floatValueBuffer;
@@ -779,9 +783,13 @@ bool ADMOSCProtocolProcessor::CreateMessageDataFromObjectCache(const RemoteObjec
 	case ROI_CoordinateMapping_SourcePosition_X:
 		{
 			auto admRange = GetADMObjectRange(AOT_XPos);
-			auto admValue = ReadFromObjectCache(channel, AOT_YPos);
+			auto admXValue = ReadFromObjectCache(channel, AOT_YPos);
+			auto admYValue = ReadFromObjectCache(channel, AOT_XPos);
 
-			m_floatValueBuffer[0] = jmap(admRange.convertTo0to1(admValue), valRange.getStart(), valRange.getEnd());
+			auto xValue = jmap(admRange.convertTo0to1(admXValue), valRange.getStart(), valRange.getEnd());
+			auto yValue = jmap(admRange.convertTo0to1(admYValue), valRange.getStart(), valRange.getEnd());
+
+			m_floatValueBuffer[0] = m_xyAxisSwapped ? yValue : xValue;
 
 			newMessageData._valCount = 1;
 			newMessageData._payload = m_floatValueBuffer;
@@ -790,10 +798,14 @@ bool ADMOSCProtocolProcessor::CreateMessageDataFromObjectCache(const RemoteObjec
 		return true;
 	case ROI_CoordinateMapping_SourcePosition_Y:
 		{
-			auto admRange = GetADMObjectRange(AOT_YPos);
-			auto admValue = ReadFromObjectCache(channel, AOT_XPos);
+			auto admRange = GetADMObjectRange(AOT_XPos);
+			auto admXValue = ReadFromObjectCache(channel, AOT_YPos);
+			auto admYValue = ReadFromObjectCache(channel, AOT_XPos);
 
-			m_floatValueBuffer[0] = jmap(admRange.convertTo0to1(admValue), valRange.getStart(), valRange.getEnd());
+			auto xValue = jmap(admRange.convertTo0to1(admXValue), valRange.getStart(), valRange.getEnd());
+			auto yValue = jmap(admRange.convertTo0to1(admYValue), valRange.getStart(), valRange.getEnd());
+
+			m_floatValueBuffer[0] = m_xyAxisSwapped ? xValue : yValue;
 
 			newMessageData._valCount = 1;
 			newMessageData._payload = m_floatValueBuffer;
@@ -806,9 +818,11 @@ bool ADMOSCProtocolProcessor::CreateMessageDataFromObjectCache(const RemoteObjec
 			auto admXValue = ReadFromObjectCache(channel, AOT_YPos);
 			auto admYValue = ReadFromObjectCache(channel, AOT_XPos);
 
+			auto xValue = jmap(admRange.convertTo0to1(admXValue), valRange.getStart(), valRange.getEnd());
+			auto yValue = jmap(admRange.convertTo0to1(admYValue), valRange.getStart(), valRange.getEnd());
 
-			m_floatValueBuffer[0] = jmap(admRange.convertTo0to1(admYValue), valRange.getStart(), valRange.getEnd());
-			m_floatValueBuffer[1] = jmap(admRange.convertTo0to1(admXValue), valRange.getStart(), valRange.getEnd()) ;
+			m_floatValueBuffer[0] = m_xyAxisSwapped ? yValue : xValue;
+			m_floatValueBuffer[1] = m_xyAxisSwapped ? xValue : yValue;
 
 			newMessageData._valCount = 2;
 			newMessageData._payload = m_floatValueBuffer;
