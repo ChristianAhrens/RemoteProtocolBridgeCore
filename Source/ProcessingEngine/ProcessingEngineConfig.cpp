@@ -53,6 +53,7 @@ std::map<RemoteObjectIdentifier, juce::Range<float>>	ProcessingEngineConfig::m_o
 	std::make_pair(ROI_Positioning_SourceSpread, juce::Range<float>(0.0f, 1.0f)),
 	std::make_pair(ROI_CoordinateMapping_SourcePosition_X, juce::Range<float>(0.0f, 1.0f)),
 	std::make_pair(ROI_CoordinateMapping_SourcePosition_Y, juce::Range<float>(0.0f, 1.0f)),
+	std::make_pair(ROI_CoordinateMapping_SourcePosition_XY, juce::Range<float>(0.0f, 1.0f)),
 	// MatrixInput ROIs
 	std::make_pair(ROI_MatrixInput_LevelMeterPreMute, juce::Range<float>(-120.0f, 24.0f)),
 	std::make_pair(ROI_MatrixInput_Gain, juce::Range<float>(-120.0f, 24.0f)),
@@ -1042,7 +1043,9 @@ String  ProcessingEngineConfig::ProtocolTypeToString(ProtocolType pt)
 	case PT_OSCProtocol:
 		return "OSC";
 	case PT_YamahaOSCProtocol:
-		return "YamahaOSC";
+		return "Yamaha";
+	case PT_ADMOSCProtocol:
+		return "ADM";
 	case PT_RTTrPMProtocol:
 		return "RTTrPM";
 	case PT_MidiProtocol:
@@ -1069,6 +1072,8 @@ ProtocolType  ProcessingEngineConfig::ProtocolTypeFromString(String type)
 		return PT_RTTrPMProtocol;
 	if (type == ProtocolTypeToString(PT_YamahaOSCProtocol))
 		return PT_YamahaOSCProtocol;
+	if (type == ProtocolTypeToString(PT_ADMOSCProtocol))
+		return PT_ADMOSCProtocol;
 
 	return PT_Invalid;
 }

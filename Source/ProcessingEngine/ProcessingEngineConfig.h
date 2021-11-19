@@ -74,6 +74,10 @@ public:
 		OUTPUTDEVICE,
 		DATAPRECISION,
 		FAILOVERTIME,
+		XINVERTED,
+		YINVERTED,
+		XYSWAPPED,
+		DATASENDINGDISABLED,
 	};
 	static String getTagName(TagID Id)
 	{
@@ -125,6 +129,14 @@ public:
 			return "DataPrecision";
 		case FAILOVERTIME:
 			return "FailoverTime";
+		case XINVERTED:
+			return "xInverted";
+		case YINVERTED:
+			return "yInverted";
+		case XYSWAPPED:
+			return "xySwapped";
+		case DATASENDINGDISABLED:
+			return "DataSendingDisabled";
 		default:
 			return "INVALID";
 		}
@@ -143,6 +155,7 @@ public:
 		ALLOWED,
 		AUTOSTART,
 		DEVICEIDENTIFIER,
+		STATE,
 	};
 	static String getAttributeName(AttributeID Id)
 	{
@@ -170,6 +183,8 @@ public:
 			return "Autostart";
 		case DEVICEIDENTIFIER:
 			return "DeviceIdentifier";
+		case STATE:
+			return "State";
 		default:
 			return "INVALID";
 		}
