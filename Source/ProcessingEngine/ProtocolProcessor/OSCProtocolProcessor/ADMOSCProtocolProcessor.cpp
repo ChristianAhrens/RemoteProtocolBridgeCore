@@ -958,10 +958,15 @@ float ADMOSCProtocolProcessor::NormalizeValueByRange(float value, const juce::Ra
  */
 float ADMOSCProtocolProcessor::MapNormalizedValueToRange(float normalizedValue, const juce::Range<float>& range, bool invert)
 {
-	jassert(normalizedValue >= 0.0f && normalizedValue <= 1.0f);
-
+	auto mappedValue = range.getStart() + normalizedValue * (range.getEnd() - range.getStart());
+	
 	if (invert)
-		normalizedValue = normalizedValue * -1.0f;
-
-	return range.getStart() + normalizedValue * (range.getEnd() - range.getStart());
+	{
+		auto invertedMappedValue = range.getStart() + (range.getEnd() - mappedValue);
+		return invertedMappedValue;
+	}
+	else
+	{
+		return mappedValue;
+	}
 }
