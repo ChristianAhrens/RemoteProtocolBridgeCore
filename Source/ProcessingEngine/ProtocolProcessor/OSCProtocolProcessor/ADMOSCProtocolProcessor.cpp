@@ -943,10 +943,7 @@ float ADMOSCProtocolProcessor::NormalizeValueByRange(float value, const juce::Ra
 	if (normalizationRange.isEmpty())
 		return 0.0f;
 
-	auto rangeStart = normalizationRange.getStart();
-	auto rangeEnd = normalizationRange.getEnd();
-
-	auto valueInRange = value - rangeStart;
+	auto valueInRange = value - normalizationRange.getStart();
 	auto normalizedInRangeValue = (valueInRange / normalizationRange.getLength());
 
 	return normalizedInRangeValue;
