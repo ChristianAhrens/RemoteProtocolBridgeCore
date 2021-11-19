@@ -95,6 +95,10 @@ bool ADMOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id,
 	if (msgData._addrVal._first <= INVALID_ADDRESS_VALUE)
 		return false;
 
+	ADMObjectType targetObjType = WriteMessageDataToObjectCache(Id, msgData);
+	if(targetObjType == ADMObjectType::AOT_Invalid)
+		return false;
+
 	// Send object config message to make sender aware of us sending only cartesian coordinate values
 	if (m_expectedCoordinateSystem != CS_Cartesian)
 	{
@@ -107,119 +111,65 @@ bool ADMOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id,
 		coordSysMsgData._valCount = 1;
 		coordSysMsgData._payload = intValue;
 		coordSysMsgData._payloadSize = sizeof(int);
-		SendAddressedMessage(addressString, coordSysMsgData);
+		if (!SendAddressedMessage(addressString, coordSysMsgData))
+			return false;
 	}
 
 	float floatValueSendBuffer[3] = { 0.0f, 0.0f, 0.0f };
-	ADMObjectType objType = ADMObjectType::AOT_Invalid;
+	ADMObjectType::AOT_Invalid;
 	RemoteObjectMessageData admConvertedMsgData;
 
-	switch (Id)
+	switch (targetObjType)
 	{
-	case ROI_CoordinateMapping_SourcePosition_X:
+	case ADMObjectType::AOT_XPos:
+	case ADMObjectType::AOT_YPos:
+	case ADMObjectType::AOT_Gain:
+	case ADMObjectType::AOT_Width:
 		{
-		objType = ADMObjectType::AOT_XPos;
+			floatValueSendBuffer[0] = ReadFromObjectCache(msgData._addrVal._first, targetObjType);
 
-		floatValueSendBuffer[0] = 0.0f;
-
-		admConvertedMsgData._valType = ROVT_FLOAT;
-		admConvertedMsgData._valCount = 1;
-		admConvertedMsgData._payload = floatValueSendBuffer;
-		admConvertedMsgData._payloadSize = sizeof(float);
+			admConvertedMsgData._valType = ROVT_FLOAT;
+			admConvertedMsgData._valCount = 1;
+			admConvertedMsgData._payload = floatValueSendBuffer;
+			admConvertedMsgData._payloadSize = sizeof(float);
 		}
 		break;
-	case ROI_CoordinateMapping_SourcePosition_Y:
+	case ADMObjectType::AOT_XYZPos:
 		{
-		objType = ADMObjectType::AOT_YPos;
+			floatValueSendBuffer[0] = ReadFromObjectCache(msgData._addrVal._first, ADMObjectType::AOT_XPos);
+			floatValueSendBuffer[1] = ReadFromObjectCache(msgData._addrVal._first, ADMObjectType::AOT_YPos);
+			floatValueSendBuffer[2] = ReadFromObjectCache(msgData._addrVal._first, ADMObjectType::AOT_ZPos);
 
-		floatValueSendBuffer[0] = 0.0f;
-
-		admConvertedMsgData._valType = ROVT_FLOAT;
-		admConvertedMsgData._valCount = 1;
-		admConvertedMsgData._payload = floatValueSendBuffer;
-		admConvertedMsgData._payloadSize = sizeof(float);
+			admConvertedMsgData._valType = ROVT_FLOAT;
+			admConvertedMsgData._valCount = 3;
+			admConvertedMsgData._payload = floatValueSendBuffer;
+			admConvertedMsgData._payloadSize = 3 * sizeof(float);
 		}
 		break;
-
-	case ROI_MatrixInput_Gain:
+	case ADMObjectType::AOT_AzimElevDist:
 		{
-		objType = ADMObjectType::AOT_Gain;
+			floatValueSendBuffer[0] = ReadFromObjectCache(msgData._addrVal._first, ADMObjectType::AOT_Azimuth);
+			floatValueSendBuffer[1] = ReadFromObjectCache(msgData._addrVal._first, ADMObjectType::AOT_Elevation);
+			floatValueSendBuffer[2] = ReadFromObjectCache(msgData._addrVal._first, ADMObjectType::AOT_Distance);
 
-		floatValueSendBuffer[0] = 0.0f;
-
-		admConvertedMsgData._valType = ROVT_FLOAT;
-		admConvertedMsgData._valCount = 1;
-		admConvertedMsgData._payload = floatValueSendBuffer;
-		admConvertedMsgData._payloadSize = sizeof(float);
+			admConvertedMsgData._valType = ROVT_FLOAT;
+			admConvertedMsgData._valCount = 3;
+			admConvertedMsgData._payload = floatValueSendBuffer;
+			admConvertedMsgData._payloadSize = 3 * sizeof(float);
 		}
 		break;
-	case ROI_Positioning_SourceSpread:
-		{
-		objType = ADMObjectType::AOT_Width;
-
-		floatValueSendBuffer[0] = 0.0f;
-
-		admConvertedMsgData._valType = ROVT_FLOAT;
-		admConvertedMsgData._valCount = 1;
-		admConvertedMsgData._payload = floatValueSendBuffer;
-		admConvertedMsgData._payloadSize = sizeof(float);
-		}
-		break;
-	case ROI_CoordinateMapping_SourcePosition:
-	case ROI_CoordinateMapping_SourcePosition_XY:
-	case ROI_HeartbeatPong:
-	case ROI_HeartbeatPing:
-	case ROI_Settings_DeviceName:
-	case ROI_Error_GnrlErr:
-	case ROI_Error_ErrorText:
-	case ROI_Status_StatusText:
-	case ROI_MatrixInput_Select:
-	case ROI_MatrixInput_Mute:
-	case ROI_MatrixInput_Delay:
-	case ROI_MatrixInput_DelayEnable:
-	case ROI_MatrixInput_EqEnable:
-	case ROI_MatrixInput_Polarity:
-	case ROI_MatrixInput_ChannelName:
-	case ROI_MatrixInput_LevelMeterPreMute:
-	case ROI_MatrixInput_LevelMeterPostMute:
-	case ROI_MatrixNode_Enable:
-	case ROI_MatrixNode_Gain:
-	case ROI_MatrixNode_DelayEnable:
-	case ROI_MatrixNode_Delay:
-	case ROI_MatrixOutput_Mute:
-	case ROI_MatrixOutput_Gain:
-	case ROI_MatrixOutput_Delay:
-	case ROI_MatrixOutput_DelayEnable:
-	case ROI_MatrixOutput_EqEnable:
-	case ROI_MatrixOutput_Polarity:
-	case ROI_MatrixOutput_ChannelName:
-	case ROI_MatrixOutput_LevelMeterPreMute:
-	case ROI_MatrixOutput_LevelMeterPostMute:
-	case ROI_Positioning_SourceDelayMode:
-	case ROI_MatrixSettings_ReverbRoomId:
-	case ROI_MatrixSettings_ReverbPredelayFactor:
-	case ROI_MatrixSettings_ReverbRearLevel:
-	case ROI_MatrixInput_ReverbSendGain:
-	case ROI_ReverbInput_Gain:
-	case ROI_ReverbInputProcessing_Mute:
-	case ROI_ReverbInputProcessing_Gain:
-	case ROI_ReverbInputProcessing_LevelMeter:
-	case ROI_ReverbInputProcessing_EqEnable:
-	case ROI_Device_Clear:
-	case ROI_Scene_Previous:
-	case ROI_Scene_Next:
-	case ROI_Scene_Recall:
-	case ROI_Scene_SceneIndex:
-	case ROI_Scene_SceneName:
-	case ROI_Scene_SceneComment:
-	case ROI_RemoteProtocolBridge_SoundObjectSelect:
-	case ROI_RemoteProtocolBridge_UIElementIndexSelect:
+	case ADMObjectType::AOT_Azimuth:
+	case ADMObjectType::AOT_CartesianCoords:
+	case ADMObjectType::AOT_Distance:
+	case ADMObjectType::AOT_Elevation:
+	case ADMObjectType::AOT_Invalid:
 	default:
+		jassertfalse; // unsupported object
 		return false;
 	}
 
 	// assemble the addressing string
-	String addressString = GetADMMessageDomainString() + GetADMMessageTypeString(AMT_Object) + String(msgData._addrVal._first) + GetADMObjectTypeString(objType);
+	String addressString = GetADMMessageDomainString() + GetADMMessageTypeString(AMT_Object) + String(msgData._addrVal._first) + GetADMObjectTypeString(targetObjType);
 	
 	return SendAddressedMessage(addressString, admConvertedMsgData);
 }
@@ -832,50 +782,50 @@ bool ADMOSCProtocolProcessor::CreateMessageDataFromObjectCache(const RemoteObjec
 			auto admXValue = ReadFromObjectCache(channel, AOT_YPos);
 			auto admYValue = ReadFromObjectCache(channel, AOT_XPos);
 
-			auto admNormXValue = NormalizeValueByRange(admXValue, admRange);
-			auto admNormYValue = NormalizeValueByRange(admYValue, admRange);
+auto admNormXValue = NormalizeValueByRange(admXValue, admRange);
+auto admNormYValue = NormalizeValueByRange(admYValue, admRange);
 
-			auto xValue = MapNormalizedValueToRange(admNormXValue, valRange, m_xAxisInverted);
-			auto yValue = MapNormalizedValueToRange(admNormYValue, valRange, m_yAxisInverted);
+auto xValue = MapNormalizedValueToRange(admNormXValue, valRange, m_xAxisInverted);
+auto yValue = MapNormalizedValueToRange(admNormYValue, valRange, m_yAxisInverted);
 
-			m_floatValueBuffer[0] = m_xyAxisSwapped ? yValue : xValue;
-			m_floatValueBuffer[1] = m_xyAxisSwapped ? xValue : yValue;
+m_floatValueBuffer[0] = m_xyAxisSwapped ? yValue : xValue;
+m_floatValueBuffer[1] = m_xyAxisSwapped ? xValue : yValue;
 
-			newMessageData._valCount = 2;
-			newMessageData._payload = m_floatValueBuffer;
-			newMessageData._payloadSize = 2 * sizeof(float);
+newMessageData._valCount = 2;
+newMessageData._payload = m_floatValueBuffer;
+newMessageData._payloadSize = 2 * sizeof(float);
 		}
 		return true;
 	case ROI_MatrixInput_Gain:
-		{
-			auto admRange = GetADMObjectRange(AOT_Gain);
+	{
+		auto admRange = GetADMObjectRange(AOT_Gain);
 
-			auto admValue = ReadFromObjectCache(channel, AOT_Gain);
+		auto admValue = ReadFromObjectCache(channel, AOT_Gain);
 
-			auto admNormValue = NormalizeValueByRange(admValue, admRange);
+		auto admNormValue = NormalizeValueByRange(admValue, admRange);
 
-			m_floatValueBuffer[0] = MapNormalizedValueToRange(admNormValue, valRange);
+		m_floatValueBuffer[0] = MapNormalizedValueToRange(admNormValue, valRange);
 
-			newMessageData._valCount = 1;
-			newMessageData._payload = m_floatValueBuffer;
-			newMessageData._payloadSize = 1 * sizeof(float);
-		}
-		return true;
+		newMessageData._valCount = 1;
+		newMessageData._payload = m_floatValueBuffer;
+		newMessageData._payloadSize = 1 * sizeof(float);
+	}
+	return true;
 	case ROI_Positioning_SourceSpread:
-		{
-			auto admRange = GetADMObjectRange(AOT_Width);
+	{
+		auto admRange = GetADMObjectRange(AOT_Width);
 
-			auto admValue = ReadFromObjectCache(channel, AOT_Width);
+		auto admValue = ReadFromObjectCache(channel, AOT_Width);
 
-			auto admNormValue = NormalizeValueByRange(admValue, admRange);
+		auto admNormValue = NormalizeValueByRange(admValue, admRange);
 
-			m_floatValueBuffer[0] = MapNormalizedValueToRange(admNormValue, valRange);
+		m_floatValueBuffer[0] = MapNormalizedValueToRange(admNormValue, valRange);
 
-			newMessageData._valCount = 1;
-			newMessageData._payload = m_floatValueBuffer;
-			newMessageData._payloadSize = 1 * sizeof(float);
-		}
-		return true;
+		newMessageData._valCount = 1;
+		newMessageData._payload = m_floatValueBuffer;
+		newMessageData._payloadSize = 1 * sizeof(float);
+	}
+	return true;
 	case ROI_HeartbeatPong:
 	case ROI_HeartbeatPing:
 	case ROI_Settings_DeviceName:
@@ -929,6 +879,129 @@ bool ADMOSCProtocolProcessor::CreateMessageDataFromObjectCache(const RemoteObjec
 	}
 
 	return false;
+}
+
+/**
+ * Method to write contents of a message data struct to internally cached ADM object values.
+ * @param	id				The remote object identification to write data struct contents to cache from.
+ * @param	messageData	The source message data struct.
+ * @return	The resulting targeted ADM specific object type. Invalid type on failure.
+ */
+ADMOSCProtocolProcessor::ADMObjectType ADMOSCProtocolProcessor::WriteMessageDataToObjectCache(const RemoteObjectIdentifier& id, const RemoteObjectMessageData& messageData)
+{
+	ADMObjectType resultingTargetObjType = ADMObjectType::AOT_Invalid;
+
+	// sanity checking first
+	const ChannelId& channel = messageData._addrVal._first;
+	if (channel == static_cast<ChannelId>(INVALID_ADDRESS_VALUE))
+		return resultingTargetObjType;
+	if (messageData._valCount != 1)
+		return resultingTargetObjType;
+	if (messageData._valType != ROVT_FLOAT)
+		return resultingTargetObjType;
+	if (messageData._payloadSize != sizeof(float))
+		return resultingTargetObjType;
+
+	auto remoteObjectRange = ProcessingEngineConfig::GetRemoteObjectRange(id);
+	auto remoteObjectValue = *static_cast<float*>(messageData._payload);
+	auto normalizedRemoteObjectValue = NormalizeValueByRange(remoteObjectValue, remoteObjectRange);
+
+	switch (id)
+	{
+	case ROI_CoordinateMapping_SourcePosition_X:
+		{
+			resultingTargetObjType = m_xyAxisSwapped ? ADMObjectType::AOT_XPos : ADMObjectType::AOT_YPos;
+
+			auto admRange = GetADMObjectRange(resultingTargetObjType);
+			auto admValue = MapNormalizedValueToRange(normalizedRemoteObjectValue, admRange, m_xyAxisSwapped ? m_yAxisInverted : m_xAxisInverted);
+
+			WriteToObjectCache(channel, resultingTargetObjType, admValue, true);
+		}
+		break;
+	case ROI_CoordinateMapping_SourcePosition_Y:
+		{
+			resultingTargetObjType = m_xyAxisSwapped ? ADMObjectType::AOT_YPos : ADMObjectType::AOT_XPos;
+
+			auto admRange = GetADMObjectRange(resultingTargetObjType);
+			auto admValue = MapNormalizedValueToRange(normalizedRemoteObjectValue, admRange, m_xyAxisSwapped ? m_xAxisInverted : m_yAxisInverted);
+
+			WriteToObjectCache(channel, resultingTargetObjType, admValue, true);
+		}
+		break;
+	case ROI_MatrixInput_Gain:
+		{
+			resultingTargetObjType = ADMObjectType::AOT_Gain;
+
+			auto admRange = GetADMObjectRange(resultingTargetObjType);
+			auto admValue = MapNormalizedValueToRange(normalizedRemoteObjectValue, admRange);
+
+			WriteToObjectCache(channel, resultingTargetObjType, admValue);
+		}
+		break;
+	case ROI_Positioning_SourceSpread:
+		{
+			resultingTargetObjType = ADMObjectType::AOT_Width;
+
+			auto admRange = GetADMObjectRange(resultingTargetObjType);
+			auto admValue = MapNormalizedValueToRange(normalizedRemoteObjectValue, admRange);
+
+			WriteToObjectCache(channel, resultingTargetObjType, admValue);
+		}
+		break;
+	case ROI_CoordinateMapping_SourcePosition:
+	case ROI_CoordinateMapping_SourcePosition_XY:
+	case ROI_HeartbeatPong:
+	case ROI_HeartbeatPing:
+	case ROI_Settings_DeviceName:
+	case ROI_Error_GnrlErr:
+	case ROI_Error_ErrorText:
+	case ROI_Status_StatusText:
+	case ROI_MatrixInput_Select:
+	case ROI_MatrixInput_Mute:
+	case ROI_MatrixInput_Delay:
+	case ROI_MatrixInput_DelayEnable:
+	case ROI_MatrixInput_EqEnable:
+	case ROI_MatrixInput_Polarity:
+	case ROI_MatrixInput_ChannelName:
+	case ROI_MatrixInput_LevelMeterPreMute:
+	case ROI_MatrixInput_LevelMeterPostMute:
+	case ROI_MatrixNode_Enable:
+	case ROI_MatrixNode_Gain:
+	case ROI_MatrixNode_DelayEnable:
+	case ROI_MatrixNode_Delay:
+	case ROI_MatrixOutput_Mute:
+	case ROI_MatrixOutput_Gain:
+	case ROI_MatrixOutput_Delay:
+	case ROI_MatrixOutput_DelayEnable:
+	case ROI_MatrixOutput_EqEnable:
+	case ROI_MatrixOutput_Polarity:
+	case ROI_MatrixOutput_ChannelName:
+	case ROI_MatrixOutput_LevelMeterPreMute:
+	case ROI_MatrixOutput_LevelMeterPostMute:
+	case ROI_Positioning_SourceDelayMode:
+	case ROI_MatrixSettings_ReverbRoomId:
+	case ROI_MatrixSettings_ReverbPredelayFactor:
+	case ROI_MatrixSettings_ReverbRearLevel:
+	case ROI_MatrixInput_ReverbSendGain:
+	case ROI_ReverbInput_Gain:
+	case ROI_ReverbInputProcessing_Mute:
+	case ROI_ReverbInputProcessing_Gain:
+	case ROI_ReverbInputProcessing_LevelMeter:
+	case ROI_ReverbInputProcessing_EqEnable:
+	case ROI_Device_Clear:
+	case ROI_Scene_Previous:
+	case ROI_Scene_Next:
+	case ROI_Scene_Recall:
+	case ROI_Scene_SceneIndex:
+	case ROI_Scene_SceneName:
+	case ROI_Scene_SceneComment:
+	case ROI_RemoteProtocolBridge_SoundObjectSelect:
+	case ROI_RemoteProtocolBridge_UIElementIndexSelect:
+	default:
+		break;
+	}
+
+	return resultingTargetObjType;
 }
 
 /**

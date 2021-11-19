@@ -77,6 +77,7 @@ private:
 	bool SyncCachedPolarToCartesianValues(const ChannelId& channel);
 	bool SyncCachedCartesianToPolarValues(const ChannelId& channel);
 	bool CreateMessageDataFromObjectCache(const RemoteObjectIdentifier& id, const ChannelId& channel, RemoteObjectMessageData& addressing);
+	ADMObjectType WriteMessageDataToObjectCache(const RemoteObjectIdentifier& id, const RemoteObjectMessageData& messageData);
 
 	float NormalizeValueByRange(float value, const juce::Range<float>& normalizationRange);
 	float MapNormalizedValueToRange(float normalizedValue, const juce::Range<float>& range, bool invert = false);
