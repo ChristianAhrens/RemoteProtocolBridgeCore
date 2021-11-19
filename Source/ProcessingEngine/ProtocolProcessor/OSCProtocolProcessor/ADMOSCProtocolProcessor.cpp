@@ -540,31 +540,31 @@ ADMOSCProtocolProcessor::ADMMessageType ADMOSCProtocolProcessor::GetObjectTypeMe
  * @param	objType	The type of ADM object to get the range for.
  * @return	The requested range. Invalid (0.0f<->0.0f) if not supported.
  */
-const juce::NormalisableRange<float> ADMOSCProtocolProcessor::GetADMObjectRange(const ADMObjectType& objType)
+const juce::Range<float> ADMOSCProtocolProcessor::GetADMObjectRange(const ADMObjectType& objType)
 {
 	switch (objType)
 	{
 	case AOT_Azimuth:
-		return juce::NormalisableRange<float>(-180.0f, 180.0f);
+		return juce::Range<float>(-180.0f, 180.0f);
 	case AOT_Elevation:
-		return juce::NormalisableRange<float>(-90.0f, 90.0f);
+		return juce::Range<float>(-90.0f, 90.0f);
 	case AOT_Distance:
-		return juce::NormalisableRange<float>(0.0f, 1.0f);
+		return juce::Range<float>(0.0f, 1.0f);
 	case AOT_XPos:
 	case AOT_YPos:
 	case AOT_ZPos:
-		return juce::NormalisableRange<float>(-1.0f, 1.0f);
+		return juce::Range<float>(-1.0f, 1.0f);
 	case AOT_Width:
-		return juce::NormalisableRange<float>(0.0f, 180.0f);
+		return juce::Range<float>(0.0f, 180.0f);
 	case AOT_Gain:
-		return juce::NormalisableRange<float>(0.0f, 1.0f);
+		return juce::Range<float>(0.0f, 1.0f);
 	case AOT_AzimElevDist:
 	case AOT_XYZPos:
 	case AOT_CartesianCoords:
 	case AOT_Invalid:
 	default:
 		jassertfalse;
-		return juce::NormalisableRange<float>(0.0f, 0.0f);
+		return juce::Range<float>(0.0f, 0.0f);
 	}
 }
 
@@ -763,13 +763,18 @@ bool ADMOSCProtocolProcessor::CreateMessageDataFromObjectCache(const RemoteObjec
 	case ROI_CoordinateMapping_SourcePosition:
 		{
 			auto admRange = GetADMObjectRange(AOT_XPos);
+
 			auto admXValue = ReadFromObjectCache(channel, AOT_YPos);
 			auto admYValue = ReadFromObjectCache(channel, AOT_XPos);
 			auto admZValue = ReadFromObjectCache(channel, AOT_ZPos);
 
-			auto xValue = jmap(admRange.convertTo0to1(admXValue), valRange.getStart(), valRange.getEnd());
-			auto yValue = jmap(admRange.convertTo0to1(admYValue), valRange.getStart(), valRange.getEnd());
-			auto zValue = jmap(admRange.convertTo0to1(admZValue), valRange.getStart(), valRange.getEnd());
+			auto admNormXValue = NormalizeValueByRange(admXValue, admRange);
+			auto admNormYValue = NormalizeValueByRange(admYValue, admRange);
+			auto admNormZValue = NormalizeValueByRange(admZValue, admRange);
+
+			auto xValue = MapNormalizedValueToRange(admNormXValue, valRange, m_xAxisInverted);
+			auto yValue = MapNormalizedValueToRange(admNormYValue, valRange, m_yAxisInverted);
+			auto zValue = MapNormalizedValueToRange(admNormZValue, valRange);
 
 			m_floatValueBuffer[0] = m_xyAxisSwapped ? yValue : xValue;
 			m_floatValueBuffer[1] = m_xyAxisSwapped ? xValue : yValue;
@@ -783,11 +788,15 @@ bool ADMOSCProtocolProcessor::CreateMessageDataFromObjectCache(const RemoteObjec
 	case ROI_CoordinateMapping_SourcePosition_X:
 		{
 			auto admRange = GetADMObjectRange(AOT_XPos);
+
 			auto admXValue = ReadFromObjectCache(channel, AOT_YPos);
 			auto admYValue = ReadFromObjectCache(channel, AOT_XPos);
 
-			auto xValue = jmap(admRange.convertTo0to1(admXValue), valRange.getStart(), valRange.getEnd());
-			auto yValue = jmap(admRange.convertTo0to1(admYValue), valRange.getStart(), valRange.getEnd());
+			auto admNormXValue = NormalizeValueByRange(admXValue, admRange);
+			auto admNormYValue = NormalizeValueByRange(admYValue, admRange);
+
+			auto xValue = MapNormalizedValueToRange(admNormXValue, valRange, m_xAxisInverted);
+			auto yValue = MapNormalizedValueToRange(admNormYValue, valRange, m_yAxisInverted);
 
 			m_floatValueBuffer[0] = m_xyAxisSwapped ? yValue : xValue;
 
@@ -799,11 +808,15 @@ bool ADMOSCProtocolProcessor::CreateMessageDataFromObjectCache(const RemoteObjec
 	case ROI_CoordinateMapping_SourcePosition_Y:
 		{
 			auto admRange = GetADMObjectRange(AOT_XPos);
+
 			auto admXValue = ReadFromObjectCache(channel, AOT_YPos);
 			auto admYValue = ReadFromObjectCache(channel, AOT_XPos);
 
-			auto xValue = jmap(admRange.convertTo0to1(admXValue), valRange.getStart(), valRange.getEnd());
-			auto yValue = jmap(admRange.convertTo0to1(admYValue), valRange.getStart(), valRange.getEnd());
+			auto admNormXValue = NormalizeValueByRange(admXValue, admRange);
+			auto admNormYValue = NormalizeValueByRange(admYValue, admRange);
+
+			auto xValue = MapNormalizedValueToRange(admNormXValue, valRange, m_xAxisInverted);
+			auto yValue = MapNormalizedValueToRange(admNormYValue, valRange, m_yAxisInverted);
 
 			m_floatValueBuffer[0] = m_xyAxisSwapped ? xValue : yValue;
 
@@ -815,11 +828,15 @@ bool ADMOSCProtocolProcessor::CreateMessageDataFromObjectCache(const RemoteObjec
 	case ROI_CoordinateMapping_SourcePosition_XY:
 		{
 			auto admRange = GetADMObjectRange(AOT_XPos);
+
 			auto admXValue = ReadFromObjectCache(channel, AOT_YPos);
 			auto admYValue = ReadFromObjectCache(channel, AOT_XPos);
 
-			auto xValue = jmap(admRange.convertTo0to1(admXValue), valRange.getStart(), valRange.getEnd());
-			auto yValue = jmap(admRange.convertTo0to1(admYValue), valRange.getStart(), valRange.getEnd());
+			auto admNormXValue = NormalizeValueByRange(admXValue, admRange);
+			auto admNormYValue = NormalizeValueByRange(admYValue, admRange);
+
+			auto xValue = MapNormalizedValueToRange(admNormXValue, valRange, m_xAxisInverted);
+			auto yValue = MapNormalizedValueToRange(admNormYValue, valRange, m_yAxisInverted);
 
 			m_floatValueBuffer[0] = m_xyAxisSwapped ? yValue : xValue;
 			m_floatValueBuffer[1] = m_xyAxisSwapped ? xValue : yValue;
@@ -832,9 +849,12 @@ bool ADMOSCProtocolProcessor::CreateMessageDataFromObjectCache(const RemoteObjec
 	case ROI_MatrixInput_Gain:
 		{
 			auto admRange = GetADMObjectRange(AOT_Gain);
+
 			auto admValue = ReadFromObjectCache(channel, AOT_Gain);
 
-			m_floatValueBuffer[0] = jmap(admRange.convertTo0to1(admValue), valRange.getStart(), valRange.getEnd());
+			auto admNormValue = NormalizeValueByRange(admValue, admRange);
+
+			m_floatValueBuffer[0] = MapNormalizedValueToRange(admNormValue, valRange);
 
 			newMessageData._valCount = 1;
 			newMessageData._payload = m_floatValueBuffer;
@@ -844,9 +864,12 @@ bool ADMOSCProtocolProcessor::CreateMessageDataFromObjectCache(const RemoteObjec
 	case ROI_Positioning_SourceSpread:
 		{
 			auto admRange = GetADMObjectRange(AOT_Width);
+
 			auto admValue = ReadFromObjectCache(channel, AOT_Width);
 
-			m_floatValueBuffer[0] = jmap(admRange.convertTo0to1(admValue), valRange.getStart(), valRange.getEnd());
+			auto admNormValue = NormalizeValueByRange(admValue, admRange);
+
+			m_floatValueBuffer[0] = MapNormalizedValueToRange(admNormValue, valRange);
 
 			newMessageData._valCount = 1;
 			newMessageData._payload = m_floatValueBuffer;
@@ -906,4 +929,42 @@ bool ADMOSCProtocolProcessor::CreateMessageDataFromObjectCache(const RemoteObjec
 	}
 
 	return false;
+}
+
+/**
+ * Helper method to normalize a given value to a given range without clipping
+ * @param	value				The value to normalize
+ * @param	normalizationRange	The range to normalize the value to
+ * @return	The normalized value.
+ */
+float ADMOSCProtocolProcessor::NormalizeValueByRange(float value, const juce::Range<float>& normalizationRange)
+{
+	jassert(!normalizationRange.isEmpty());
+	if (normalizationRange.isEmpty())
+		return 0.0f;
+
+	auto rangeStart = normalizationRange.getStart();
+	auto rangeEnd = normalizationRange.getEnd();
+
+	auto valueInRange = value - rangeStart;
+	auto normalizedInRangeValue = (valueInRange / normalizationRange.getLength());
+
+	return normalizedInRangeValue;
+}
+
+/**
+ * Helper method to map a normalized 0-1 value to a given range and optionally invert it.
+ * @param	normalizedValue		The normalized 0-1 value to map to extrude to the given range.
+ * @param	range				The range to map the value to.
+ * @param	invert				Bool indicator if the value shall be inverted in addition to mapping to range.
+ * @return	The mapped and optionally inverted value.
+ */
+float ADMOSCProtocolProcessor::MapNormalizedValueToRange(float normalizedValue, const juce::Range<float>& range, bool invert)
+{
+	jassert(normalizedValue >= 0.0f && normalizedValue <= 1.0f);
+
+	if (invert)
+		normalizedValue = normalizedValue * -1.0f;
+
+	return range.getStart() + normalizedValue * (range.getEnd() - range.getStart());
 }

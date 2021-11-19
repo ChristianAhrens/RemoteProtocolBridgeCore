@@ -63,7 +63,7 @@ public:
 	static String GetADMObjectTypeString(const ADMOSCProtocolProcessor::ADMObjectType& objType);
 	static ADMOSCProtocolProcessor::CoodinateSystem GetObjectTypeCoordinateSystem(const ADMOSCProtocolProcessor::ADMObjectType& objType);
 	static ADMOSCProtocolProcessor::ADMMessageType GetObjectTypeMessageType(const ADMOSCProtocolProcessor::ADMObjectType& objType);
-	static const juce::NormalisableRange<float> GetADMObjectRange(const ADMObjectType& objType);
+	static const juce::Range<float> GetADMObjectRange(const ADMObjectType& objType);
 
 	ADMOSCProtocolProcessor::ADMObjectType GetADMObjectType(const String& typeString);
 
@@ -77,6 +77,9 @@ private:
 	bool SyncCachedPolarToCartesianValues(const ChannelId& channel);
 	bool SyncCachedCartesianToPolarValues(const ChannelId& channel);
 	bool CreateMessageDataFromObjectCache(const RemoteObjectIdentifier& id, const ChannelId& channel, RemoteObjectMessageData& addressing);
+
+	float NormalizeValueByRange(float value, const juce::Range<float>& normalizationRange);
+	float MapNormalizedValueToRange(float normalizedValue, const juce::Range<float>& range, bool invert = false);
 
 	std::map<ChannelId, std::map<ADMObjectType, float>>	m_objectValueCache;				/**< The cached object values, to be able to cross-calculate
 																						 *	 between coordinate systems, even if only single-val message is received. */
