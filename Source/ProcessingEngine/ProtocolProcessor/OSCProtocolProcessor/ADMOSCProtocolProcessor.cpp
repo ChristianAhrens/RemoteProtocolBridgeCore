@@ -116,7 +116,6 @@ bool ADMOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id,
 	}
 
 	float floatValueSendBuffer[3] = { 0.0f, 0.0f, 0.0f };
-	ADMObjectType::AOT_Invalid;
 	RemoteObjectMessageData admConvertedMsgData;
 
 	switch (targetObjType)
@@ -351,7 +350,7 @@ String ADMOSCProtocolProcessor::GetADMMessageTypeString(const ADMMessageType& ms
 		return "config/obj/1/";
 	case AMT_Object:
 		return "obj/";
-	case AOT_Invalid:
+	case AMT_Invalid:
 	default:
 		jassertfalse;
 		return "";
@@ -640,7 +639,6 @@ bool ADMOSCProtocolProcessor::SyncCachedPolarToCartesianValues(const ChannelId& 
 	auto admAzimuth = ReadFromObjectCache(channel, AOT_Azimuth);
 	auto admElevation = ReadFromObjectCache(channel, AOT_Elevation);
 	auto admDistance = ReadFromObjectCache(channel, AOT_Distance);
-	auto admOrigin = juce::Vector3D<float>(0.0f, 0.0f, 0.0f);
 
 	/********************* Conversion *********************/
 	auto admPos = juce::Vector3D<float>(0.0f, 0.0f, 0.0f);
@@ -671,7 +669,6 @@ bool ADMOSCProtocolProcessor::SyncCachedCartesianToPolarValues(const ChannelId& 
 {
 	/******************** Read values *********************/
 	auto admPos = juce::Vector3D<float>(ReadFromObjectCache(channel, AOT_XPos), ReadFromObjectCache(channel, AOT_YPos), ReadFromObjectCache(channel, AOT_ZPos));
-	auto admOrigin = juce::Vector3D<float>(0.0f, 0.0f, 0.0f);
 
 	/********************* Conversion *********************/
 	auto admAzimuth = 0.0f;
