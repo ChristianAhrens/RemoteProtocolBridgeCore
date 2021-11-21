@@ -96,7 +96,12 @@ bool DS100_DeviceSimulation::setStateXml(XmlElement* stateXml)
 			// matrix input related remote objects
 			ROI_MatrixOutput_LevelMeterPostMute,
 			ROI_MatrixOutput_Gain,
-			ROI_MatrixOutput_Mute };
+			ROI_MatrixOutput_Mute,
+			// naming related remote objects
+			ROI_MatrixInput_ChannelName,
+			ROI_MatrixOutput_ChannelName,
+			ROI_Settings_DeviceName
+		};
 	}
 	InitDataValues();
 
@@ -157,6 +162,24 @@ bool DS100_DeviceSimulation::OnReceivedMessageFromProtocol(ProtocolId PId, Remot
 }
 
 /**
+ * Helper to identify remote objects that do not change their value after initially being set on startup.
+ * @param	Id	The remote object to check.
+ * @return	True if the given remote object does not change its value after initialization.
+ */
+bool DS100_DeviceSimulation::IsStaticValueRemoteObject(const RemoteObjectIdentifier Id)
+{
+	switch (Id)
+	{
+	case ROI_MatrixInput_ChannelName:
+	case ROI_MatrixOutput_ChannelName:
+	case ROI_Settings_DeviceName:
+		return true;
+	default:
+		return false;
+	}
+}
+
+/**
  * Helper method to detect if incoming message is an osc message adressing a valid object without
  * actual data value (meaning a reply with the current data value of the object is expected).
  *
@@ -182,6 +205,9 @@ bool DS100_DeviceSimulation::IsDataRequestPollMessage(const RemoteObjectIdentifi
 	case ROI_MatrixOutput_LevelMeterPostMute:
 	case ROI_MatrixOutput_Gain:
 	case ROI_MatrixOutput_Mute:
+	case ROI_MatrixInput_ChannelName:
+	case ROI_MatrixOutput_ChannelName:
+	case ROI_Settings_DeviceName:
 		remoteObjectRequiresReply = true;
 		break;
 	case ROI_HeartbeatPong:
@@ -304,9 +330,9 @@ bool DS100_DeviceSimulation::ReplyToDataRequest(const ProtocolId PId, const Remo
 		return false;
 
 	auto dataReplyId = Id;
-	auto& dataReplyValue = m_currentValues.at(Id).at(adressing);
+	auto& dataReplyValue = m_currentValues.at(dataReplyId).at(adressing);
 
-	switch (Id)
+	switch (dataReplyId)
 	{
 	case ROI_HeartbeatPing:
 		jassert(dataReplyValue._valType == ROVT_NONE);
@@ -337,15 +363,23 @@ bool DS100_DeviceSimulation::ReplyToDataRequest(const ProtocolId PId, const Remo
 		jassert(dataReplyValue._valType == ROVT_INT);
 		jassert(dataReplyValue._addrVal == adressing);
 		break;
+	case ROI_MatrixInput_ChannelName:
+		jassert(dataReplyValue._valType == ROVT_STRING);
+		jassert(dataReplyValue._addrVal == adressing);
+		break;
+	case ROI_MatrixOutput_ChannelName:
+		jassert(dataReplyValue._valType == ROVT_STRING);
+		jassert(dataReplyValue._addrVal == adressing);
+		break;
+	case ROI_Settings_DeviceName:
+		jassert(dataReplyValue._valType == ROVT_STRING);
+		jassert(dataReplyValue._addrVal == adressing);
+		break;
 	case ROI_HeartbeatPong:
 	case ROI_Invalid:
 	default:
 		return false;
 	}
-
-#ifdef DEBUG
-	PrintDataInfo("Sending", std::make_pair(dataReplyId, dataReplyValue));
-#endif
 
 	return parentNode->SendMessageTo(PId, dataReplyId, dataReplyValue);
 }
@@ -371,6 +405,21 @@ void DS100_DeviceSimulation::InitDataValues()
 		ScopedLock l(m_currentValLock);
 		m_currentValues[ROI_HeartbeatPing].insert(std::make_pair(emptyReplyMessageData._addrVal, emptyReplyMessageData));
 		m_currentValues[ROI_HeartbeatPong].insert(std::make_pair(emptyReplyMessageData._addrVal, emptyReplyMessageData));
+	}
+
+	RemoteObjectMessageData deviceNameReplyMessageData;
+	{
+		std::string deviceName = "DS100_DeviceSimulation";
+		deviceNameReplyMessageData._payload = new char[deviceName.size()];
+		deviceNameReplyMessageData._payloadSize = static_cast<std::uint32_t>(deviceName.size());
+		deviceNameReplyMessageData._payloadOwned = true;
+		deviceName.copy(static_cast<char*>(deviceNameReplyMessageData._payload), deviceNameReplyMessageData._payloadSize);
+		deviceNameReplyMessageData._valCount = static_cast<std::uint16_t>(deviceName.size());
+		deviceNameReplyMessageData._valType = ROVT_STRING;
+		deviceNameReplyMessageData._addrVal._first = INVALID_ADDRESS_VALUE;
+		deviceNameReplyMessageData._addrVal._second = INVALID_ADDRESS_VALUE;
+		ScopedLock l(m_currentValLock);
+		m_currentValues[ROI_Settings_DeviceName].insert(std::make_pair(deviceNameReplyMessageData._addrVal, deviceNameReplyMessageData));
 	}
 
 	for (auto const& roi : m_simulatedRemoteObjects)
@@ -454,6 +503,30 @@ void DS100_DeviceSimulation::InitDataValues()
 					remoteValue._payloadOwned = true;
 					static_cast<int*>(remoteValue._payload)[0] = 0;
 					remoteValue._payloadSize = sizeof(int);
+					break;
+				case ROI_MatrixInput_ChannelName:
+					{
+						auto matrixInputName = std::string("MatrixInput") + std::to_string(channel);
+						remoteValue._valCount = static_cast<std::uint16_t>(matrixInputName.size());
+						remoteValue._valType = ROVT_STRING;
+						jassert(remoteValue._payload == nullptr);
+						remoteValue._payload = new char[matrixInputName.size()];
+						remoteValue._payloadOwned = true;
+						matrixInputName.copy(static_cast<char*>(remoteValue._payload), remoteValue._payloadSize);
+						remoteValue._payloadSize = static_cast<std::uint32_t>(matrixInputName.size()) * sizeof(char);
+					}
+					break;
+				case ROI_MatrixOutput_ChannelName:
+					{
+						auto matrixOutputName = std::string("MatrixOutput") + std::to_string(channel);
+						remoteValue._valCount = static_cast<std::uint16_t>(matrixOutputName.size());
+						remoteValue._valType = ROVT_STRING;
+						jassert(remoteValue._payload == nullptr);
+						remoteValue._payload = new char[matrixOutputName.size()];
+						remoteValue._payloadOwned = true;
+						matrixOutputName.copy(static_cast<char*>(remoteValue._payload), remoteValue._payloadSize);
+						remoteValue._payloadSize = static_cast<std::uint32_t>(matrixOutputName.size()) * sizeof(char);
+					}
 					break;
 				case ROI_HeartbeatPing:
 				case ROI_HeartbeatPong:
@@ -592,6 +665,9 @@ void DS100_DeviceSimulation::UpdateDataValues()
 	// iterate through all simulation relevant remote object ids to update simulation value updates
 	for (auto const& roi : m_simulatedRemoteObjects)
 	{
+		if (IsStaticValueRemoteObject(roi))
+			continue;
+
 		ScopedLock l(m_currentValLock);
 		jassert(m_currentValues.count(roi) > 0);
 		auto& remoteAddressValueMap = m_currentValues.at(roi);
@@ -689,10 +765,6 @@ void DS100_DeviceSimulation::UpdateDataValues()
 				default:
 					break;
 				}
-
-#ifdef DEBUG
-				PrintDataInfo("Updating", std::make_pair(roi, remoteValue));
-#endif
 			}
 		}
 	}

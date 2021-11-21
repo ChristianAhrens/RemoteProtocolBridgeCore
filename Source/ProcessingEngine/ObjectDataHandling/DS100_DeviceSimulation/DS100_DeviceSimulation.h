@@ -115,6 +115,7 @@ public:
 	void notifyListeners();
 
 private:
+	bool IsStaticValueRemoteObject(const RemoteObjectIdentifier Id);
 	bool IsDataRequestPollMessage(const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData);
 	bool ReplyToDataRequest(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectAddressing adressing);
 
