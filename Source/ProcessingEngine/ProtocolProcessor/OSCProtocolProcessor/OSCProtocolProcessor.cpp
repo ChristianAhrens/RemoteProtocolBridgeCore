@@ -794,6 +794,7 @@ void OSCProtocolProcessor::createStringMessageData(const OSCMessage& messageInpu
 			m_stringValueBuffer = messageInput[0].getString();
 
 		RemoteObjectMessageData tempMessageData;
+		tempMessageData._addrVal = newMessageData._addrVal;
 		tempMessageData._valType = ROVT_STRING;
 		tempMessageData._valCount = static_cast<std::uint16_t>(m_stringValueBuffer.getCharPointer().sizeInBytes());
 		tempMessageData._payload = m_stringValueBuffer.getCharPointer().getAddress();
