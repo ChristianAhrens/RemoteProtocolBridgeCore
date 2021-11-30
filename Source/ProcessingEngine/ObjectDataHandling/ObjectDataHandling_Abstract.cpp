@@ -75,6 +75,19 @@ bool ObjectDataHandling_Abstract::setStateXml(XmlElement* stateXml)
 {
 	if (!stateXml || stateXml->getTagName() != ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::OBJECTHANDLING))
 		return false;
+
+	auto reactMoniProtosXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::REACTMONIPROTOS));
+	if (reactMoniProtosXmlElement)
+	{
+		StringArray reactMoniProtoIds;
+		reactMoniProtoIds.addTokens(reactMoniProtosXmlElement->getAllSubText(), ", ", "");
+		for (auto const& protocolIdStr : reactMoniProtoIds)
+		{
+			auto protocolId = protocolIdStr.getIntValue();
+			if (protocolId != INVALID_ADDRESS_VALUE)
+				m_protocolsWithReactionMonitoring.push_back(protocolId);
+		}
+	}
 	
 	startTimer(static_cast<int>(m_protocolReactionTimeout));
 
@@ -124,6 +137,7 @@ void ObjectDataHandling_Abstract::ClearProtocolIds()
 
 	ScopedLock	tsAccessLock(m_protocolReactionTSLock);
 	m_protocolReactionTSMap.clear();
+	m_protocolsWithReactionMonitoring.clear();
 }
 
 /**
@@ -274,6 +288,9 @@ void ObjectDataHandling_Abstract::timerCallback()
 	for (auto const& id : GetProtocolAIds())
 	{
 		ScopedLock	tsAccessLock(m_protocolReactionTSLock);
+		// if a definition of protocols to handle regarding their online state exists but the incoming protocol is not part of them, continue
+		if (!m_protocolsWithReactionMonitoring.empty() && (std::find(m_protocolsWithReactionMonitoring.begin(), m_protocolsWithReactionMonitoring.end(), id) == m_protocolsWithReactionMonitoring.end()))
+			continue;
 		// if the protocol is not present in map, continue
 		if (m_protocolReactionTSMap.count(id) <= 0)
 			continue;
@@ -284,6 +301,9 @@ void ObjectDataHandling_Abstract::timerCallback()
 	for (auto const& id : GetProtocolBIds())
 	{
 		ScopedLock	tsAccessLock(m_protocolReactionTSLock);
+		// if a definition of protocols to handle regarding their online state exists but the incoming protocol is not part of them, continue
+		if (!m_protocolsWithReactionMonitoring.empty() && (std::find(m_protocolsWithReactionMonitoring.begin(), m_protocolsWithReactionMonitoring.end(), id) == m_protocolsWithReactionMonitoring.end()))
+			continue;
 		// if the protocol is not present in map, continue
 		if (m_protocolReactionTSMap.count(id) <= 0)
 			continue;

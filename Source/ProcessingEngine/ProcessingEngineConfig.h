@@ -78,6 +78,7 @@ public:
 		YINVERTED,
 		XYSWAPPED,
 		DATASENDINGDISABLED,
+		REACTMONIPROTOS,
 	};
 	static String getTagName(TagID Id)
 	{
@@ -137,6 +138,8 @@ public:
 			return "xySwapped";
 		case DATASENDINGDISABLED:
 			return "DataSendingDisabled";
+		case REACTMONIPROTOS:
+			return "ReactionMonitoredProtocols";
 		default:
 			return "INVALID";
 		}

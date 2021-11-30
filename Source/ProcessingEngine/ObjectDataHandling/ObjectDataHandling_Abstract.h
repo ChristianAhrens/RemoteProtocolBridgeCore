@@ -135,9 +135,10 @@ private:
 	std::vector<ProtocolId>				m_protocolAIds;		/**< Id list of protocols of type A that is active for the node and this handling module therefor. */
 	std::vector<ProtocolId>				m_protocolBIds;		/**< Id list of protocols of type B that is active for the node and this handling module therefor. */
 
-	CriticalSection						m_protocolReactionTSLock;	/**< Threadsafety measure, since timestamps are written from node processing thread while others might access them from event loop. */
-	std::map<ProtocolId, double>		m_protocolReactionTSMap;	/**< Map of protocols and their last-seen-active TimeStamps. */
-	double								m_protocolReactionTimeout;	/**< Timeout in ms when a protocol is regarded as down. */
+	std::vector<ProtocolId>				m_protocolsWithReactionMonitoring;	/**< List of protocols that shall be taken into account when processing reativeness (empty means all incoming are processed). */
+	CriticalSection						m_protocolReactionTSLock;			/**< Threadsafety measure, since timestamps are written from node processing thread while others might access them from event loop. */
+	std::map<ProtocolId, double>		m_protocolReactionTSMap;			/**< Map of protocols and their last-seen-active TimeStamps. */
+	double								m_protocolReactionTimeout;			/**< Timeout in ms when a protocol is regarded as down. */
 
 	std::vector<StateListener*>					m_stateListeners;			/**< The list of objects that are registered to be notified on internal status changes. */
 	std::map<ProtocolId, ObjectHandlingState>	m_currentStateMap;
