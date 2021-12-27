@@ -870,6 +870,7 @@ newMessageData._payloadSize = 2 * sizeof(float);
 	case ROI_Scene_SceneComment:
 	case ROI_RemoteProtocolBridge_SoundObjectSelect:
 	case ROI_RemoteProtocolBridge_UIElementIndexSelect:
+	case ROI_RemoteProtocolBridge_GetAllKnownValues:
 	default:
 		jassertfalse;
 		break;
@@ -994,6 +995,7 @@ ADMOSCProtocolProcessor::ADMObjectType ADMOSCProtocolProcessor::WriteMessageData
 	case ROI_Scene_SceneComment:
 	case ROI_RemoteProtocolBridge_SoundObjectSelect:
 	case ROI_RemoteProtocolBridge_UIElementIndexSelect:
+	case ROI_RemoteProtocolBridge_GetAllKnownValues:
 	default:
 		break;
 	}

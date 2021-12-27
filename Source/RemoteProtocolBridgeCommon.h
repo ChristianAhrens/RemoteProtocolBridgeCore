@@ -179,6 +179,7 @@ enum RemoteObjectIdentifier
 	ROI_Scene_Recall,
 	ROI_RemoteProtocolBridge_SoundObjectSelect,
 	ROI_RemoteProtocolBridge_UIElementIndexSelect,
+	ROI_RemoteProtocolBridge_GetAllKnownValues,
 };
 
 /**

@@ -773,6 +773,8 @@ String ProcessingEngineConfig::GetObjectDescription(RemoteObjectIdentifier Id)
 		return "RPB Sound Object Select";
 	case ROI_RemoteProtocolBridge_UIElementIndexSelect:
 		return "RPB UI Element Select";
+	case ROI_RemoteProtocolBridge_GetAllKnownValues:
+		return "RPB get all known values";
 	case ROI_Invalid:
 	default:
 		jassertfalse;
@@ -903,6 +905,8 @@ String ProcessingEngineConfig::GetObjectShortDescription(RemoteObjectIdentifier 
 		return "RPB Obj. Sel.";
 	case ROI_RemoteProtocolBridge_UIElementIndexSelect:
 		return "RPB UI Elm. Sel.";
+	case ROI_RemoteProtocolBridge_GetAllKnownValues:
+		return "RPB get vals";
 	case ROI_Invalid:
 	default:
 		jassertfalse;
@@ -975,6 +979,7 @@ bool ProcessingEngineConfig::IsChannelAddressingObject(RemoteObjectIdentifier ob
 	case ROI_Scene_SceneName:
 	case ROI_Scene_SceneComment:
 	case ROI_RemoteProtocolBridge_UIElementIndexSelect:
+	case ROI_RemoteProtocolBridge_GetAllKnownValues:
 	default:
 		return false;
 	}

@@ -46,6 +46,9 @@ protected:
 
 	float GetPrecision();
 	void SetPrecision(float precision);
+
+	bool IsCachedValuesQuery(const RemoteObjectIdentifier Id);
+	bool SendValueCacheToProtocol(const ProtocolId PId);
 	
 private:
 	std::map<RemoteObjectIdentifier, std::map<RemoteObjectAddressing, RemoteObjectMessageData>>	m_currentValues;	/**< Hash of current value data to use to compare to incoming data regarding value changes. */

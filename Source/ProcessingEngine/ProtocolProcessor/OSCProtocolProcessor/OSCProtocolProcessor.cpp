@@ -465,6 +465,8 @@ void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const S
 			newObjectId = ROI_RemoteProtocolBridge_SoundObjectSelect;
 		else if (addressString.startsWith(GetRemoteObjectString(ROI_RemoteProtocolBridge_UIElementIndexSelect)))
 			newObjectId = ROI_RemoteProtocolBridge_UIElementIndexSelect;
+		else if (addressString.startsWith(GetRemoteObjectString(ROI_RemoteProtocolBridge_GetAllKnownValues)))
+			newObjectId = ROI_RemoteProtocolBridge_GetAllKnownValues;
 		else
 			newObjectId = ROI_Invalid;
 
@@ -558,6 +560,7 @@ void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const S
 		case ROI_Device_Clear:
 		case ROI_Scene_Previous:
 		case ROI_Scene_Next:
+		case ROI_RemoteProtocolBridge_GetAllKnownValues:
 			break;
 		default:
 			jassertfalse;
@@ -694,6 +697,8 @@ String OSCProtocolProcessor::GetRemoteObjectString(RemoteObjectIdentifier id)
 		return "/RemoteProtocolBridge/SoundObjectSelect";
 	case ROI_RemoteProtocolBridge_UIElementIndexSelect:
 		return "/RemoteProtocolBridge/UIElementIndexSelect";
+	case ROI_RemoteProtocolBridge_GetAllKnownValues:
+		return "/RemoteProtocolBridge/cachedValues";
 	default:
 		return "";
 	}
