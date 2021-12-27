@@ -289,9 +289,9 @@ bool Forward_only_valueChanges::SendValueCacheToProtocol(const ProtocolId PId)
 	if (!parentNode)
 		return false;
 
-	if (std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) == GetProtocolAIds().end())
-		return false;
-	if (std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) == GetProtocolBIds().end())
+	auto isProtocolA = (std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) == GetProtocolAIds().end());
+	auto isProtocolB = (std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) == GetProtocolBIds().end());
+	if (!isProtocolA && !isProtocolB)
 		return false;
 
 	auto sendSuccess = true;
