@@ -510,7 +510,8 @@ void ProcessingEngineNode::run()
 
 			// perform internal bridging forwarding of message - synchronous
 			auto isBridgingObject = (protocolMessage._Id < ROI_BridgingMAX);
-			if (m_dataHandling && isBridgingObject)
+			auto isOHMCtrlObject = (protocolMessage._Id == ROI_RemoteProtocolBridge_GetAllKnownValues);
+			if (m_dataHandling && (isBridgingObject || isOHMCtrlObject))
 				m_dataHandling->OnReceivedMessageFromProtocol(protocolMessage._senderProtocolId, protocolMessage._Id, protocolMessage._msgData);
 		}
 	}

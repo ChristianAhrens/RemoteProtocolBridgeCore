@@ -111,6 +111,11 @@ bool Mirror_dualA_withValFilter::setStateXml(XmlElement* stateXml)
  */
 bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier Id, RemoteObjectMessageData& msgData)
 {
+	// a valid parent node is required to be able to do anything with the received message
+	auto parentNode = ObjectDataHandling_Abstract::GetParentNode();
+	if (!parentNode)
+		return false;
+
 	// do some sanity checks on this instances configuration parameters and the given message data origin id
 	auto mirrorConfigValid = (GetProtocolAIds().size() == 2);
 	auto isProtocolTypeA = (std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) != GetProtocolAIds().end());
@@ -122,10 +127,8 @@ bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(ProtocolId PId, R
 
 	UpdateOnlineState(PId);
 
-	// a valid parent node is required to be able to do anything with the received message
-	auto parentNode = ObjectDataHandling_Abstract::GetParentNode();
-	if (!parentNode)
-		return false;
+	if (IsCachedValuesQuery(Id))
+		return SendValueCacheToProtocol(PId);
 
 	// check the incoming data regarding value change to then forward and if required mirror it to other protocols
 	if (IsChangedDataValue(Id, msgData._addrVal, msgData))

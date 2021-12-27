@@ -83,6 +83,9 @@ bool Forward_only_valueChanges::OnReceivedMessageFromProtocol(ProtocolId PId, Re
 	
 	UpdateOnlineState(PId);
 
+	if (IsCachedValuesQuery(Id))
+		return SendValueCacheToProtocol(PId);
+
 	if (!IsChangedDataValue(Id, msgData._addrVal, msgData))
 		return false;
 
@@ -263,4 +266,42 @@ float Forward_only_valueChanges::GetPrecision()
 void Forward_only_valueChanges::SetPrecision(float precision)
 {
 	m_precision = precision;
+}
+
+/**
+ * Checks if a given remote object id is a query for value cache contents.
+ * @param	Id	The remote object identifier that might be a query for value cache contents
+ * @return	True if the roi is such a query
+ */
+bool Forward_only_valueChanges::IsCachedValuesQuery(const RemoteObjectIdentifier Id)
+{
+	return (ROI_RemoteProtocolBridge_GetAllKnownValues == Id);
+}
+
+/**
+ * Sends the contents of internal value cache to the specified protocol via parent listener.
+ * @param	PId	The id of the protocol to send the value cache contents to.
+ * @param	Bool on success, false if some error occured (params invalid, sending failed...)
+ */
+bool Forward_only_valueChanges::SendValueCacheToProtocol(const ProtocolId PId)
+{
+	const ProcessingEngineNode* parentNode = ObjectDataHandling_Abstract::GetParentNode();
+	if (!parentNode)
+		return false;
+
+	auto isProtocolA = (std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) == GetProtocolAIds().end());
+	auto isProtocolB = (std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) == GetProtocolBIds().end());
+	if (!isProtocolA && !isProtocolB)
+		return false;
+
+	auto sendSuccess = true;
+	for (auto const& cachedValue : m_currentValues)
+	{
+		for (auto const& cachedValueObject : cachedValue.second)
+		{
+			sendSuccess = sendSuccess && parentNode->SendMessageTo(PId, cachedValue.first, cachedValueObject.second);
+		}
+	}
+
+	return sendSuccess;
 }
