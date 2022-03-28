@@ -358,10 +358,31 @@ bool MIDIProtocolProcessor::setStateXml(XmlElement* stateXml)
 			auto assiMapXmlElement = stateXml->getChildByName(ProcessingEngineConfig::GetObjectDescription(roi).removeCharacters(" "));
 			if (assiMapXmlElement)
 			{
-				auto assiMapHexStringTextXmlElement = assiMapXmlElement->getFirstChildElement();
-				if (assiMapHexStringTextXmlElement && assiMapHexStringTextXmlElement->isTextElement())
+				if (assiMapXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::MULTIVALUE)) == 1)
 				{
-					m_midiAssiMap[roi].deserializeFromHexString(assiMapHexStringTextXmlElement->getText());
+					// read multivalue elements
+					for (auto assiMapSubXmlElement : assiMapXmlElement->getChildIterator())
+					{
+						auto value = assiMapSubXmlElement->getStringAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::VALUE));
+						auto assiMapSubHexStringTextXmlElement = assiMapSubXmlElement->getFirstChildElement();
+						if (assiMapSubHexStringTextXmlElement && assiMapSubHexStringTextXmlElement->isTextElement())
+						{
+							auto midiAssi = JUCEAppBasics::MidiCommandRangeAssignment();
+							if (midiAssi.deserializeFromHexString(assiMapSubHexStringTextXmlElement->getText()))
+								m_midiAssiWithValueMap[roi][midiAssi] = value.toStdString();
+						}
+					}
+				}
+				else
+				{
+					// read single value elements
+					auto assiMapHexStringTextXmlElement = assiMapXmlElement->getFirstChildElement();
+					if (assiMapHexStringTextXmlElement && assiMapHexStringTextXmlElement->isTextElement())
+					{
+						auto midiAssi = JUCEAppBasics::MidiCommandRangeAssignment();
+						if (midiAssi.deserializeFromHexString(assiMapHexStringTextXmlElement->getText()))
+							m_midiAssiMap[roi] = midiAssi;
+					}
 				}
 			}
 		}

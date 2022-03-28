@@ -79,6 +79,7 @@ public:
 		XYSWAPPED,
 		DATASENDINGDISABLED,
 		REACTMONIPROTOS,
+		VALTOCMDASSI,
 	};
 	static String getTagName(TagID Id)
 	{
@@ -140,6 +141,8 @@ public:
 			return "DataSendingDisabled";
 		case REACTMONIPROTOS:
 			return "ReactionMonitoredProtocols";
+		case VALTOCMDASSI:
+			return "ValToCmdAssi";
 		default:
 			return "INVALID";
 		}
@@ -159,6 +162,8 @@ public:
 		AUTOSTART,
 		DEVICEIDENTIFIER,
 		STATE,
+		VALUE,
+		MULTIVALUE,
 	};
 	static String getAttributeName(AttributeID Id)
 	{
@@ -188,6 +193,10 @@ public:
 			return "DeviceIdentifier";
 		case STATE:
 			return "State";
+		case VALUE:
+			return "Value";
+		case MULTIVALUE:
+			return "MultiValue";
 		default:
 			return "INVALID";
 		}

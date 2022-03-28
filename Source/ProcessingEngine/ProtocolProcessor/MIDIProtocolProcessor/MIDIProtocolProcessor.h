@@ -93,16 +93,18 @@ private:
 		ROI_MatrixInput_Gain, 
 		ROI_MatrixInput_Mute, 
 		ROI_MatrixOutput_Gain, 
-		ROI_MatrixOutput_Mute };
+		ROI_MatrixOutput_Mute,
+		ROI_Scene_Recall};
 
-	std::map<RemoteObjectIdentifier, JUCEAppBasics::MidiCommandRangeAssignment>	m_midiAssiMap;
-	String																		m_midiInputIdentifier;
-	String																		m_midiOutputIdentifier;
+	std::map<RemoteObjectIdentifier, JUCEAppBasics::MidiCommandRangeAssignment>							m_midiAssiMap;
+	std::map<RemoteObjectIdentifier, std::map<JUCEAppBasics::MidiCommandRangeAssignment, std::string>>	m_midiAssiWithValueMap;
+	String																								m_midiInputIdentifier;
+	String																								m_midiOutputIdentifier;
 
-	std::map<RemoteObjectIdentifier, std::map<RemoteObjectAddressing, double>>	m_addressedObjectOutputDeafStampMap;
-	const double																m_outputDeafTimeMs{ 300 };
+	std::map<RemoteObjectIdentifier, std::map<RemoteObjectAddressing, double>>							m_addressedObjectOutputDeafStampMap;
+	const double																						m_outputDeafTimeMs{ 300 };
 
-	float																		m_floatValueBuffer[3] = { 0.0f, 0.0f, 0.0f };
-	int																			m_intValueBuffer[2] = { 0, 0 };
-	String																		m_stringValueBuffer;
+	float																								m_floatValueBuffer[3] = { 0.0f, 0.0f, 0.0f };
+	int																									m_intValueBuffer[2] = { 0, 0 };
+	String																								m_stringValueBuffer;
 };
