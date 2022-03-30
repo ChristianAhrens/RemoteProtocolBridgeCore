@@ -69,6 +69,9 @@ private:
 		juce::String source;
 	};
 
+	bool IsMidiMessageMatchingCommandAssignment(const JUCEAppBasics::MidiCommandRangeAssignment& assiCommandData, const juce::MidiMessage& midiMessage);
+	int GetMidiValueFromCommand(const JUCEAppBasics::MidiCommandRangeAssignment& assiCommandData, const juce::MidiMessage& midiMessage);
+
 	void processMidiMessage(const juce::MidiMessage& midiMessage, const String& sourceName);
 	bool activateMidiInput(const String& midiInputIdentifier);
 	bool activateMidiOutput(const String& midiOutputIdentifier);

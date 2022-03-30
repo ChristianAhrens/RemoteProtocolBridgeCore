@@ -71,6 +71,41 @@ void MIDIProtocolProcessor::handleMessage(const Message& msg)
 		processMidiMessage(callbackMessage->message, callbackMessage->source);
 }
 
+bool MIDIProtocolProcessor::IsMidiMessageMatchingCommandAssignment(const JUCEAppBasics::MidiCommandRangeAssignment& assiCommandData, const juce::MidiMessage& midiMessage)
+{
+	bool midiMessageMatchesCommandAssignment = true;
+	if (!assiCommandData.isMatchingCommandType(midiMessage))
+		midiMessageMatchesCommandAssignment = false;
+	else if (assiCommandData.isCommandRangeAssignment() && !assiCommandData.isMatchingCommandRange(midiMessage))
+		midiMessageMatchesCommandAssignment = false;
+	else if (assiCommandData.isValueRangeAssignment() && !assiCommandData.isMatchingValueRange(midiMessage))
+		midiMessageMatchesCommandAssignment = false;
+	else if (assiCommandData.isValueRangeAssignment() && !assiCommandData.isCommandRangeAssignment() && !assiCommandData.isMatchingCommand(midiMessage))
+		midiMessageMatchesCommandAssignment = false;
+
+	return midiMessageMatchesCommandAssignment;
+}
+
+int MIDIProtocolProcessor::GetMidiValueFromCommand(const JUCEAppBasics::MidiCommandRangeAssignment& assiCommandData, const juce::MidiMessage& midiMessage)
+{
+	if ((assiCommandData.isNoteOnCommand() || assiCommandData.isNoteOffCommand()) && midiMessage.isNoteOnOrOff())
+		return midiMessage.getNoteNumber();
+	else if (assiCommandData.isAftertouchCommand() && midiMessage.isAftertouch())
+		return midiMessage.getAfterTouchValue();
+	else if (assiCommandData.isChannelPressureCommand() && midiMessage.isChannelPressure())
+		return midiMessage.getChannelPressureValue();
+	else if (assiCommandData.isControllerCommand() && midiMessage.isController())
+		return midiMessage.getControllerValue();
+	else if (assiCommandData.isPitchCommand() && midiMessage.isPitchWheel())
+		return midiMessage.getPitchWheelValue();
+	else if (assiCommandData.isProgramChangeCommand() && midiMessage.isProgramChange())
+		return midiMessage.getProgramChangeNumber();
+	else if (assiCommandData.isChannelPressureCommand() && midiMessage.isChannelPressure())
+		return midiMessage.getChannelPressureValue();
+
+	return -1;
+}
+
 /**
  * Method to do the actual processing of incoming midi data to internal remote objects.
  * @param midiMessage	The message to process.
@@ -95,17 +130,7 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 	for (auto const& assignmentMapping : m_midiAssiMap)
 	{
 		auto& assiCommandData = assignmentMapping.second;
-		auto midiMessageMatchesCommandAssignment = true;
-		if (!assiCommandData.isMatchingCommandType(midiMessage))
-			midiMessageMatchesCommandAssignment = false;
-		else if (assiCommandData.isCommandRangeAssignment() && !assiCommandData.isMatchingCommandRange(midiMessage))
-			midiMessageMatchesCommandAssignment = false;
-		else if (assiCommandData.isValueRangeAssignment() && !assiCommandData.isMatchingValueRange(midiMessage))
-			midiMessageMatchesCommandAssignment = false;
-		else if (assiCommandData.isValueRangeAssignment() && !assiCommandData.isCommandRangeAssignment() && !assiCommandData.isMatchingCommand(midiMessage))
-			midiMessageMatchesCommandAssignment = false;
-
-		if (midiMessageMatchesCommandAssignment)
+		if (IsMidiMessageMatchingCommandAssignment(assiCommandData, midiMessage))
 		{
 			newObjectId = assignmentMapping.first;
 			newMsgData._addrVal._second = static_cast<RecordId>(ProcessingEngineConfig::IsRecordAddressingObject(newObjectId) ? m_mappingAreaId : INVALID_ADDRESS_VALUE);
@@ -115,21 +140,7 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 			auto commandRangeMatch = assiCommandData.isMatchingCommandRange(midiMessage);
 
 			// get the new value from midi message. this depends on the message command type.
-			auto midiValue = -1;
-			if ((assiCommandData.isNoteOnCommand() || assiCommandData.isNoteOffCommand()) && midiMessage.isNoteOnOrOff())
-				midiValue = midiMessage.getNoteNumber();
-			else if (assiCommandData.isAftertouchCommand() && midiMessage.isAftertouch())
-				midiValue = midiMessage.getAfterTouchValue();
-			else if (assiCommandData.isChannelPressureCommand() && midiMessage.isChannelPressure())
-				midiValue = midiMessage.getChannelPressureValue();
-			else if (assiCommandData.isControllerCommand() && midiMessage.isController())
-				midiValue = midiMessage.getControllerValue();
-			else if (assiCommandData.isPitchCommand() && midiMessage.isPitchWheel())
-				midiValue = midiMessage.getPitchWheelValue();
-			else if (assiCommandData.isProgramChangeCommand() && midiMessage.isProgramChange())
-				midiValue = midiMessage.getProgramChangeNumber();
-			else if (assiCommandData.isChannelPressureCommand() && midiMessage.isChannelPressure())
-				midiValue = midiMessage.getChannelPressureValue();
+			auto midiValue = GetMidiValueFromCommand(assiCommandData, midiMessage);
 
 			// map the incoming value to the correct remote object range. this varies between the different objects.
 			switch (newObjectId)
@@ -315,6 +326,73 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 			forwardAndDeafProofMessage(newObjectId, newMsgData);
 
 			return;
+		}
+	}
+
+	// iterate through the available midi to value assignments to find a match for the midimessage
+	for (auto const& valueAssignmentMapping : m_midiAssiWithValueMap)
+	{
+		auto& roi = valueAssignmentMapping.first;
+		for (auto const& commandToValueMapping : valueAssignmentMapping.second)
+		{
+			auto& assiCommandData = commandToValueMapping.first;
+			auto& assiValue = commandToValueMapping.second;
+
+			auto midiCommandData = JUCEAppBasics::MidiCommandRangeAssignment(midiMessage);
+
+			if (IsMidiMessageMatchingCommandAssignment(assiCommandData, midiMessage))
+			{
+				newObjectId = roi;
+				newMsgData._addrVal._second = static_cast<RecordId>(ProcessingEngineConfig::IsRecordAddressingObject(newObjectId) ? m_mappingAreaId : INVALID_ADDRESS_VALUE);
+
+				auto isMessageToBeBridged = false;
+
+				// map the incoming value to the correct remote object range. this varies between the different objects.
+				switch (newObjectId)
+				{
+				case ROI_Scene_Recall:
+					{
+						if (assiCommandData.getCommandRange().isEmpty() && assiCommandData.getValueRange().isEmpty())
+						{
+							if (assiCommandData.getCommandValue() == midiCommandData.getCommandValue())
+							{
+								auto majorMinorString = StringArray();
+								majorMinorString.addTokens(String(assiValue), ".", "");
+								if (majorMinorString.size() == 2)
+								{
+									m_intValueBuffer[0] = majorMinorString[0].getIntValue();
+									m_intValueBuffer[1] = majorMinorString[1].getIntValue();
+
+									newMsgData._valType = ROVT_INT;
+									newMsgData._valCount = 2;
+									newMsgData._payload = &m_intValueBuffer;
+									newMsgData._payloadSize = 2 * sizeof(int);
+
+									isMessageToBeBridged = true;
+								}
+							}
+						}
+					}
+					break;
+				default:
+					break;
+				}
+
+				if (isMessageToBeBridged)
+				{
+					// If the received message targets a muted object, return without further processing
+					if (IsRemoteObjectMuted(RemoteObject(newObjectId, newMsgData._addrVal)))
+						return;
+
+					// Insert the new object and value to local cache
+					GetValueCache().SetValue(RemoteObject(newObjectId, newMsgData._addrVal), newMsgData);
+
+					// finally send the collected data struct to parent node for further handling
+					forwardAndDeafProofMessage(newObjectId, newMsgData);
+
+					return;
+				}
+			}
 		}
 	}
 }
