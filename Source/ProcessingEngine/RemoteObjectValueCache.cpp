@@ -124,14 +124,14 @@ void RemoteObjectValueCache::DbgPrintCacheContent()
 			{
 				auto p = static_cast<int*>(val.second._payload);
 				for (auto i = 0; i < val.second._valCount; i++)
-					valString = String(*(p + i)) + ";";
+					valString += String(*(p + i)) + ";";
 			}
 			break;
 		case ROVT_FLOAT:
 			{
 			auto p = static_cast<float*>(val.second._payload);
 			for (auto i = 0; i < val.second._valCount; i++)
-				valString = String(*(p + i)) + ";";
+				valString += String(*(p + i)) + ";";
 			}
 			break;
 		default:
