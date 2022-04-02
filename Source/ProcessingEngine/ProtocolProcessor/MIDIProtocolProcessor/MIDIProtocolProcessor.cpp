@@ -446,7 +446,8 @@ bool MIDIProtocolProcessor::setStateXml(XmlElement* stateXml)
 						if (assiMapSubHexStringTextXmlElement && assiMapSubHexStringTextXmlElement->isTextElement())
 						{
 							auto midiAssi = JUCEAppBasics::MidiCommandRangeAssignment();
-							if (midiAssi.deserializeFromHexString(assiMapSubHexStringTextXmlElement->getText()))
+							auto midiAssiStr = assiMapSubHexStringTextXmlElement->getText();
+							if (midiAssiStr.isNotEmpty() && midiAssi.deserializeFromHexString(midiAssiStr))
 								m_midiAssiWithValueMap[roi][midiAssi] = value.toStdString();
 						}
 					}
@@ -458,7 +459,8 @@ bool MIDIProtocolProcessor::setStateXml(XmlElement* stateXml)
 					if (assiMapHexStringTextXmlElement && assiMapHexStringTextXmlElement->isTextElement())
 					{
 						auto midiAssi = JUCEAppBasics::MidiCommandRangeAssignment();
-						if (midiAssi.deserializeFromHexString(assiMapHexStringTextXmlElement->getText()))
+						auto midiAssiStr = assiMapHexStringTextXmlElement->getText();
+						if (midiAssiStr.isNotEmpty() && midiAssi.deserializeFromHexString(midiAssiStr))
 							m_midiAssiMap[roi] = midiAssi;
 					}
 				}
