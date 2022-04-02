@@ -88,6 +88,7 @@ private:
     CriticalSection m_connectionParamsLock;
     bool            m_autodetectClientConnection{ false };
     bool            m_clientConnectionParamsChanged{ false };
+	bool			m_dataSendindDisabled{ false };	/**< Bool flag to indicate if incoming message send requests from bridging node shall be ignored. */
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OSCProtocolProcessor)
 };

@@ -117,6 +117,10 @@ bool OSCProtocolProcessor::setStateXml(XmlElement *stateXml)
 		return false;
 	else
 	{
+		auto dataSendingDisabledXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::DATASENDINGDISABLED));
+		if (dataSendingDisabledXmlElement)
+			m_dataSendindDisabled = 1 == dataSendingDisabledXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE));
+
         if (GetIpAddress().empty())
             m_autodetectClientConnection = true;
 
@@ -185,7 +189,11 @@ bool OSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, co
  * @return	True on success, false on failure
  */
 bool OSCProtocolProcessor::SendAddressedMessage(const String& addressString, const RemoteObjectMessageData& msgData)
-{
+{	
+	// do not send any values if the config forbids data sending
+	if (m_dataSendindDisabled)
+		return false;
+
 	// if the protocol is not running, we cannot send anything
 	if (!m_IsRunning)
 		return false;
