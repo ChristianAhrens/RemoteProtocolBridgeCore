@@ -55,17 +55,17 @@ void RTTrPMHeader::readData(std::vector<unsigned char>& data, int& readPos)
 
 	if((m_intSignature == BigEndianInt) && (m_floatSignature == BigEndianFloat))
 	{
-		std::copy(readIter, readIter + 2, (uint16_t*)&m_version);
+		std::copy(readIter, readIter + 2, (std::uint16_t*)&m_version);
 		readIter += 2;
-		std::copy(readIter, readIter + 4, (uint32_t*)&m_packetID);	   
+		std::copy(readIter, readIter + 4, (std::uint32_t*)&m_packetID);	   
 		readIter += 4;
-		std::copy(readIter, readIter + 1, (uint8_t*)&m_packetFormat);   
+		std::copy(readIter, readIter + 1, (std::uint8_t*)&m_packetFormat);   
 		readIter += 1;
-		std::copy(readIter, readIter + 2, (uint16_t*)&m_packetSize);  
+		std::copy(readIter, readIter + 2, (std::uint16_t*)&m_packetSize);  
 		readIter += 2;
-		std::copy(readIter, readIter + 4, (uint32_t*)&m_context);	   
+		std::copy(readIter, readIter + 4, (std::uint32_t*)&m_context);	   
 		readIter += 4;
-		std::copy(readIter, readIter + 1, (uint8_t*)&m_numModules);	   
+		std::copy(readIter, readIter + 1, (std::uint8_t*)&m_numModules);	   
 		readIter += 1;
 
 		readPos += 14;
@@ -104,7 +104,7 @@ RTTrPMHeader::PacketModuleSignature RTTrPMHeader::GetFloatSignature() const
 *
 * @return	Header version
 */
-uint16_t RTTrPMHeader::GetVersion() const
+std::uint16_t RTTrPMHeader::GetVersion() const
 {
 	return m_version;
 }
@@ -114,7 +114,7 @@ uint16_t RTTrPMHeader::GetVersion() const
 *
 * @return	Id of the packet
 */
-uint32_t RTTrPMHeader::GetPacketID() const
+std::uint32_t RTTrPMHeader::GetPacketID() const
 {
 	return m_packetID;
 }
@@ -134,7 +134,7 @@ RTTrPMHeader::PacketModuleFormat RTTrPMHeader::GetPacketFormat() const
 *
 * @return	Size of the packet
 */
-uint16_t RTTrPMHeader::GetPacketSize() const
+std::uint16_t RTTrPMHeader::GetPacketSize() const
 {
 	return m_packetSize;
 }
@@ -145,7 +145,7 @@ uint16_t RTTrPMHeader::GetPacketSize() const
 *
 * @return	User context
 */
-uint32_t RTTrPMHeader::GetContext() const
+std::uint32_t RTTrPMHeader::GetContext() const
 {
 	return m_context;
 }
@@ -155,7 +155,7 @@ uint32_t RTTrPMHeader::GetContext() const
 *
 * @return	Number of trackable modules
 */
-uint8_t RTTrPMHeader::GetNumberOfModules() const
+std::uint8_t RTTrPMHeader::GetNumberOfModules() const
 { 
 	return m_numModules; 
 }

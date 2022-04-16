@@ -34,6 +34,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "SenderAwareOSCReceiver.h"
 
+#include <climits>
+
 
 namespace SenderAwareOSC
 {

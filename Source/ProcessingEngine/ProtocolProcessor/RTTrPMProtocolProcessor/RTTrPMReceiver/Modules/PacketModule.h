@@ -19,6 +19,7 @@
 #pragma once
 
 #include <vector>
+#include <cstdint>
 
 
 // **************************************************************
@@ -30,7 +31,7 @@
 class PacketModule
 {
 public:
-	typedef uint8_t	PacketModuleType;
+	typedef std::uint8_t	PacketModuleType;
 	static constexpr PacketModuleType Invalid								= 0x00;
 	static constexpr PacketModuleType WithTimestamp							= 0x51;
 	static constexpr PacketModuleType WithoutTimestamp						= 0x01;
@@ -56,5 +57,5 @@ public:
 
 private:
 	PacketModuleType	m_moduleType{ Invalid };	//	Type of the packet module
-	uint16_t			m_moduleSize{ 0 };	//	Size of the module
+	std::uint16_t			m_moduleSize{ 0 };	//	Size of the module
 };
