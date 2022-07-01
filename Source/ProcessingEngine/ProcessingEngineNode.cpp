@@ -189,6 +189,16 @@ bool ProcessingEngineNode::Stop()
 }
 
 /**
+ * Gets the current running state bool value.
+ *
+ * @return	True if internal processing is running. False if not.
+ */
+bool ProcessingEngineNode::IsRunning()
+{
+	return m_nodeRunning;
+}
+
+/**
  *
  */
 std::unique_ptr<XmlElement> ProcessingEngineNode::createStateXml()

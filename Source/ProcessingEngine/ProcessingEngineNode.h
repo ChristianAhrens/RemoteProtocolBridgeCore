@@ -182,6 +182,7 @@ public:
 
 	bool Start();
 	bool Stop();
+	bool IsRunning();
 
 	//==============================================================================
 	virtual std::unique_ptr<XmlElement> createStateXml() override;
