@@ -720,7 +720,7 @@ String OSCProtocolProcessor::GetRemoteObjectString(RemoteObjectIdentifier id)
 void OSCProtocolProcessor::SetIpAddress(const std::string& ipAddress)
 {
 	if (!ipAddress.empty())
-		SetIpAddress(ipAddress);
+		NetworkProtocolProcessorBase::SetIpAddress(ipAddress);
 	else
 		m_autodetectClientConnection = true;
 }
