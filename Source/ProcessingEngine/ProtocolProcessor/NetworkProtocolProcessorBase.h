@@ -40,7 +40,7 @@ public:
 
 protected:
 	const std::string& GetIpAddress();
-	void SetIpAddress(const std::string& ipAddress);
+	virtual void SetIpAddress(const std::string& ipAddress);
 	std::int32_t GetClientPort();
 	void SetClientPort(std::int32_t clientPort);
 	std::int32_t GetHostPort();

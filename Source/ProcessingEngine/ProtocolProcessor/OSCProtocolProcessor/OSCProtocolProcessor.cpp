@@ -290,7 +290,7 @@ void OSCProtocolProcessor::oscBundleReceived(const OSCBundle &bundle, const Stri
 #ifdef LOG_IGNORED_OSC_MESSAGES
 		DBG("NId"+String(m_parentNodeId) 
 			+ " PId"+String(m_protocolProcessorId) + ": ignore unexpected OSC bundle from " 
-			+ senderIPAddress + " (" + m_ipAddress + " expected)");
+			+ senderIPAddress + " (" + GetIpAddress() + " expected)");
 #endif
 		return;
 	}
@@ -710,6 +710,19 @@ String OSCProtocolProcessor::GetRemoteObjectString(RemoteObjectIdentifier id)
 	default:
 		return "";
 	}
+}
+
+/**
+ * Reimplemented setter for the internal ip address string member,
+ * to allow empty ip string as indication to use auto client detection feature.
+ * @param	ipAddress	The value to set for internal ip address string member.
+ */
+void OSCProtocolProcessor::SetIpAddress(const std::string& ipAddress)
+{
+	if (!ipAddress.empty())
+		SetIpAddress(ipAddress);
+	else
+		m_autodetectClientConnection = true;
 }
 
 /**
