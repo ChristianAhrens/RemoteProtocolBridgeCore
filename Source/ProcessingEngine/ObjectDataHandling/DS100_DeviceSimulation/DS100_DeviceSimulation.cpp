@@ -124,6 +124,8 @@ bool DS100_DeviceSimulation::OnReceivedMessageFromProtocol(ProtocolId PId, Remot
 	auto parentNode = ObjectDataHandling_Abstract::GetParentNode();
 	if (parentNode)
 	{
+		UpdateOnlineState(PId);
+
 		if (IsDataRequestPollMessage(Id, msgData))
 		{
 			return ReplyToDataRequest(PId, Id, msgData._addrVal);
