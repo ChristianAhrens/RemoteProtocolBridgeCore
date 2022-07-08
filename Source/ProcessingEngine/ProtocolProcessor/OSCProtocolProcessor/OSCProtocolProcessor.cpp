@@ -169,7 +169,6 @@ bool OSCProtocolProcessor::connectSenderIfRequired()
  */
 bool OSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
 {
-
 	String addressString = GetRemoteObjectString(Id);
 
 	if (msgData._addrVal._second != INVALID_ADDRESS_VALUE)
@@ -199,6 +198,9 @@ bool OSCProtocolProcessor::SendAddressedMessage(const String& addressString, con
 		return false;
 
 	if (!connectSenderIfRequired())
+		return false;
+
+	if (!IsSenderConnected())
 		return false;
 
 	bool sendSuccess = false;
@@ -710,6 +712,14 @@ String OSCProtocolProcessor::GetRemoteObjectString(RemoteObjectIdentifier id)
 	default:
 		return "";
 	}
+}
+
+/**
+ * Getter for the protected oscsender connected state member.
+ */
+bool OSCProtocolProcessor::IsSenderConnected()
+{
+	return m_oscSenderConnected;
 }
 
 /**

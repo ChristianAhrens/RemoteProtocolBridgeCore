@@ -67,6 +67,8 @@ public:
 	virtual void oscBundleReceived(const OSCBundle &bundle, const String& senderIPAddress, const int& senderPort) override;
 	virtual void oscMessageReceived(const OSCMessage &message, const String& senderIPAddress, const int& senderPort) override;
 
+	bool IsSenderConnected();
+
 protected:
 	void SetIpAddress(const std::string& ipAddress) override;
 
