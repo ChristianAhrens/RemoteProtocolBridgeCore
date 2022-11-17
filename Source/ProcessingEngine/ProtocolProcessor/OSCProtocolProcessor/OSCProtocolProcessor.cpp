@@ -477,6 +477,12 @@ void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const S
 			newObjectId = ROI_RemoteProtocolBridge_UIElementIndexSelect;
 		else if (addressString.startsWith(GetRemoteObjectString(ROI_RemoteProtocolBridge_GetAllKnownValues)))
 			newObjectId = ROI_RemoteProtocolBridge_GetAllKnownValues;
+		else if (addressString.startsWith(GetRemoteObjectString(ROI_RemoteProtocolBridge_SoundObjectGroupSelect)))
+			newObjectId = ROI_RemoteProtocolBridge_SoundObjectGroupSelect;
+		else if (addressString.startsWith(GetRemoteObjectString(ROI_RemoteProtocolBridge_MatrixInputGroupSelect)))
+			newObjectId = ROI_RemoteProtocolBridge_MatrixInputGroupSelect;
+		else if (addressString.startsWith(GetRemoteObjectString(ROI_RemoteProtocolBridge_MatrixOutputGroupSelect)))
+			newObjectId = ROI_RemoteProtocolBridge_MatrixOutputGroupSelect;
 		else
 			newObjectId = ROI_Invalid;
 
@@ -528,6 +534,9 @@ void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const S
 		case ROI_Scene_Recall:
 		case ROI_RemoteProtocolBridge_SoundObjectSelect:
 		case ROI_RemoteProtocolBridge_UIElementIndexSelect:
+		case ROI_RemoteProtocolBridge_SoundObjectGroupSelect:
+		case ROI_RemoteProtocolBridge_MatrixInputGroupSelect:
+		case ROI_RemoteProtocolBridge_MatrixOutputGroupSelect:
 			createIntMessageData(message, newMsgData);
 			break;
 		case ROI_MatrixInput_Gain:
@@ -709,6 +718,12 @@ String OSCProtocolProcessor::GetRemoteObjectString(RemoteObjectIdentifier id)
 		return "/RemoteProtocolBridge/UIElementIndexSelect";
 	case ROI_RemoteProtocolBridge_GetAllKnownValues:
 		return "/RemoteProtocolBridge/cachedValues";
+	case ROI_RemoteProtocolBridge_SoundObjectGroupSelect:
+		return "/RemoteProtocolBridge/SoundObjectSelectionSelect";
+	case ROI_RemoteProtocolBridge_MatrixInputGroupSelect:
+		return "/RemoteProtocolBridge/MatrixInputSelectionSelect";
+	case ROI_RemoteProtocolBridge_MatrixOutputGroupSelect:
+		return "/RemoteProtocolBridge/MatrixOutputSelectionSelect";
 	default:
 		return "";
 	}

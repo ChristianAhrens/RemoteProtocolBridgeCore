@@ -180,6 +180,9 @@ enum RemoteObjectIdentifier
 	ROI_RemoteProtocolBridge_SoundObjectSelect,
 	ROI_RemoteProtocolBridge_UIElementIndexSelect,
 	ROI_RemoteProtocolBridge_GetAllKnownValues,
+	ROI_RemoteProtocolBridge_SoundObjectGroupSelect,
+	ROI_RemoteProtocolBridge_MatrixInputGroupSelect,
+	ROI_RemoteProtocolBridge_MatrixOutputGroupSelect,
 };
 
 /**

@@ -46,7 +46,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * to still be able to modify and update it during runtime, should this be required.
  */
 std::map<RemoteObjectIdentifier, juce::Range<float>>	ProcessingEngineConfig::m_objectRanges = {
-	std::make_pair(ROI_RemoteProtocolBridge_SoundObjectSelect, juce::Range<float>(0.0f, 1.0f)),
 	// Soundobject ROIs
 	std::make_pair(ROI_Positioning_SourceDelayMode, juce::Range<float>(0.0f, 2.0f)),
 	std::make_pair(ROI_MatrixInput_ReverbSendGain, juce::Range<float>(-120.0f, 24.0f)),
@@ -775,6 +774,12 @@ String ProcessingEngineConfig::GetObjectDescription(RemoteObjectIdentifier Id)
 		return "RPB UI Element Select";
 	case ROI_RemoteProtocolBridge_GetAllKnownValues:
 		return "RPB get all known values";
+	case ROI_RemoteProtocolBridge_SoundObjectGroupSelect:
+		return "RPB SO Selection Select";
+	case ROI_RemoteProtocolBridge_MatrixInputGroupSelect:
+		return "RPB MI Selection Select";
+	case ROI_RemoteProtocolBridge_MatrixOutputGroupSelect:
+		return "RPB MO Selection Select";
 	case ROI_Invalid:
 	default:
 		jassertfalse;
@@ -907,6 +912,12 @@ String ProcessingEngineConfig::GetObjectShortDescription(RemoteObjectIdentifier 
 		return "RPB UI Elm. Sel.";
 	case ROI_RemoteProtocolBridge_GetAllKnownValues:
 		return "RPB get vals";
+	case ROI_RemoteProtocolBridge_SoundObjectGroupSelect:
+		return "RPB SO Sel. Sel.";
+	case ROI_RemoteProtocolBridge_MatrixInputGroupSelect:
+		return "RPB MI Sel. Sel.";
+	case ROI_RemoteProtocolBridge_MatrixOutputGroupSelect:
+		return "RPB MO Sel. Sel.";
 	case ROI_Invalid:
 	default:
 		jassertfalse;
@@ -963,6 +974,9 @@ bool ProcessingEngineConfig::IsChannelAddressingObject(RemoteObjectIdentifier ob
 	case ROI_MatrixInput_ChannelName:
 	case ROI_MatrixOutput_ChannelName:
 	case ROI_RemoteProtocolBridge_SoundObjectSelect:
+	case ROI_RemoteProtocolBridge_SoundObjectGroupSelect:
+	case ROI_RemoteProtocolBridge_MatrixInputGroupSelect:
+	case ROI_RemoteProtocolBridge_MatrixOutputGroupSelect:
 		return true;
 	case ROI_Settings_DeviceName:
 	case ROI_Error_GnrlErr:

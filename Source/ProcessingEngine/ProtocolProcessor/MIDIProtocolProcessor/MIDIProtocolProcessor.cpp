@@ -148,6 +148,55 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 			case ROI_MatrixInput_Select:
 			case ROI_RemoteProtocolBridge_SoundObjectSelect:
 				{
+					// buffer current note number to be able to compare against incoming value
+					auto previousSelectedChannel = m_currentSelectedChannel;
+
+					// derive the current note number from message
+					if (assiCommandData.isCommandRangeAssignment())
+					{
+						auto commandValueRange = juce::Range<int>(
+							static_cast<int>(JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCommandData.getCommandRange().getStart())),
+							static_cast<int>(JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCommandData.getCommandRange().getEnd())));
+						m_currentSelectedChannel = commandRangeMatch ? 1 + commandValue - commandValueRange.getStart() : INVALID_ADDRESS_VALUE;
+					}
+					else
+						m_currentSelectedChannel = commandValue - assiCommandData.getCommandValue();
+
+					// prepare remote object
+					newMsgData._addrVal._first = m_currentSelectedChannel;
+					newMsgData._valType = ROVT_INT;
+					newMsgData._valCount = 1;
+					newMsgData._payloadSize = sizeof(int);
+
+					// if current note has change, send deselect for previous number first
+					if (previousSelectedChannel > INVALID_ADDRESS_VALUE)
+					{
+						int offValue = 0;
+						newMsgData._addrVal._first = previousSelectedChannel;
+						newMsgData._payload = &offValue;
+						forwardAndDeafProofMessage(newObjectId, newMsgData);
+					}
+
+					// send select for newly selected channel
+					if (previousSelectedChannel != m_currentSelectedChannel &&
+						m_currentSelectedChannel > INVALID_ADDRESS_VALUE)
+					{
+						int onValue = 1;
+						newMsgData._addrVal._first = m_currentSelectedChannel;
+						newMsgData._payload = &onValue;
+						forwardAndDeafProofMessage(newObjectId, newMsgData);
+					}
+					// or mark that currently none is selected (e.g. second press of a note to deselect current)
+					else
+					{
+						m_currentSelectedChannel = -1;
+					}
+
+					return; // intentionally, since source select handling is special case (skip channel mute check and final generic object listener callback)
+				}
+				break;
+			case ROI_RemoteProtocolBridge_SoundObjectGroupSelect:
+				{
 				// buffer current note number to be able to compare against incoming value
 				auto previousSelectedChannel = m_currentSelectedChannel;
 
@@ -167,15 +216,6 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 				newMsgData._valType = ROVT_INT;
 				newMsgData._valCount = 1;
 				newMsgData._payloadSize = sizeof(int);
-
-				// if current note has change, send deselect for previous number first
-				if (previousSelectedChannel > INVALID_ADDRESS_VALUE)
-				{
-					int offValue = 0;
-					newMsgData._addrVal._first = previousSelectedChannel;
-					newMsgData._payload = &offValue;
-					forwardAndDeafProofMessage(newObjectId, newMsgData);
-				}
 
 				// send select for newly selected channel
 				if (previousSelectedChannel != m_currentSelectedChannel &&

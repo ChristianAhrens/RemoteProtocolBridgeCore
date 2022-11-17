@@ -191,6 +191,9 @@ void YmhOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, cons
 	case ROI_RemoteProtocolBridge_SoundObjectSelect:
 	case ROI_RemoteProtocolBridge_UIElementIndexSelect:
 	case ROI_RemoteProtocolBridge_GetAllKnownValues:
+	case ROI_RemoteProtocolBridge_SoundObjectGroupSelect:
+	case ROI_RemoteProtocolBridge_MatrixInputGroupSelect:
+	case ROI_RemoteProtocolBridge_MatrixOutputGroupSelect:
 	case ROI_MatrixInput_Gain:
 	case ROI_MatrixInput_Delay:
 	case ROI_MatrixInput_LevelMeterPreMute:
@@ -314,6 +317,9 @@ String YmhOSCProtocolProcessor::GetRemoteObjectParameterTypeString(RemoteObjectI
 	case ROI_RemoteProtocolBridge_SoundObjectSelect:
 	case ROI_RemoteProtocolBridge_UIElementIndexSelect:
 	case ROI_RemoteProtocolBridge_GetAllKnownValues:
+	case ROI_RemoteProtocolBridge_SoundObjectGroupSelect:
+	case ROI_RemoteProtocolBridge_MatrixInputGroupSelect:
+	case ROI_RemoteProtocolBridge_MatrixOutputGroupSelect:
 	default:
 		jassertfalse;
 		return "";

@@ -871,6 +871,9 @@ newMessageData._payloadSize = 2 * sizeof(float);
 	case ROI_RemoteProtocolBridge_SoundObjectSelect:
 	case ROI_RemoteProtocolBridge_UIElementIndexSelect:
 	case ROI_RemoteProtocolBridge_GetAllKnownValues:
+	case ROI_RemoteProtocolBridge_SoundObjectGroupSelect:
+	case ROI_RemoteProtocolBridge_MatrixInputGroupSelect:
+	case ROI_RemoteProtocolBridge_MatrixOutputGroupSelect:
 	default:
 		jassertfalse;
 		break;
@@ -996,6 +999,9 @@ ADMOSCProtocolProcessor::ADMObjectType ADMOSCProtocolProcessor::WriteMessageData
 	case ROI_RemoteProtocolBridge_SoundObjectSelect:
 	case ROI_RemoteProtocolBridge_UIElementIndexSelect:
 	case ROI_RemoteProtocolBridge_GetAllKnownValues:
+	case ROI_RemoteProtocolBridge_SoundObjectGroupSelect:
+	case ROI_RemoteProtocolBridge_MatrixInputGroupSelect:
+	case ROI_RemoteProtocolBridge_MatrixOutputGroupSelect:
 	default:
 		break;
 	}
