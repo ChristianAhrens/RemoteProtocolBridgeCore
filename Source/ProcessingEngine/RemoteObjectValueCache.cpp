@@ -107,9 +107,9 @@ void RemoteObjectValueCache::SetValue(const RemoteObject& ro, const RemoteObject
 {
 	m_cachedValues[ro].payloadCopy(valueData);
 
-#ifdef DEBUG
-	DbgPrintCacheContent();
-#endif
+//#ifdef DEBUG
+//	DbgPrintCacheContent();
+//#endif
 }
 
 #ifdef DEBUG

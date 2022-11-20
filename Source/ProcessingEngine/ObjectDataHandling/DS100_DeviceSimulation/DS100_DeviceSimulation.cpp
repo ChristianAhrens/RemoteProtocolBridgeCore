@@ -541,9 +541,9 @@ void DS100_DeviceSimulation::InitDataValues()
 					break;
 				}
 
-#ifdef DEBUG
-				PrintDataInfo("Initializing", std::make_pair(roi, remoteValue));
-#endif
+//#ifdef DEBUG
+//				PrintDataInfo("Initializing", std::make_pair(roi, remoteValue));
+//#endif
 			}
 		}
 	}
