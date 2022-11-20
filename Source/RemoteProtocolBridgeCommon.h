@@ -172,11 +172,11 @@ enum RemoteObjectIdentifier
 	ROI_Scene_SceneIndex,
 	ROI_Scene_SceneName,
 	ROI_Scene_SceneComment,
-	ROI_BridgingMAX,								/**< Value to mark max enum iteration scope. ROIs greater than this can/will not be bridged.*/
-	ROI_Device_Clear,
 	ROI_Scene_Previous,
 	ROI_Scene_Next,
 	ROI_Scene_Recall,
+	ROI_BridgingMAX,								/**< Value to mark max enum iteration scope. ROIs greater than this can/will not be bridged.*/
+	ROI_Device_Clear,
 	ROI_RemoteProtocolBridge_SoundObjectSelect,
 	ROI_RemoteProtocolBridge_UIElementIndexSelect,
 	ROI_RemoteProtocolBridge_GetAllKnownValues,

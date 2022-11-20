@@ -324,6 +324,16 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 				newMsgData._payloadSize = sizeof(float);
 				}
 				break;
+			case ROI_Scene_Next:
+			case ROI_Scene_Previous:
+				{
+					// scene next/prev has no data and is just a triggering ROI
+					newMsgData._valType = ROVT_NONE;
+					newMsgData._valCount = 0;
+					newMsgData._payload = nullptr;
+					newMsgData._payloadSize = 0;
+				}
+				break;
 			case ROI_Positioning_SourceSpread:
 			case ROI_CoordinateMapping_SourcePosition_X:
 			case ROI_CoordinateMapping_SourcePosition_Y:

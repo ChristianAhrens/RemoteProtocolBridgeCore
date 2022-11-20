@@ -99,6 +99,8 @@ private:
 		ROI_MatrixInput_Mute, 
 		ROI_MatrixOutput_Gain, 
 		ROI_MatrixOutput_Mute,
+		ROI_Scene_Next,
+		ROI_Scene_Previous,
 		ROI_Scene_Recall};
 
 	std::map<RemoteObjectIdentifier, JUCEAppBasics::MidiCommandRangeAssignment>							m_midiAssiMap;
