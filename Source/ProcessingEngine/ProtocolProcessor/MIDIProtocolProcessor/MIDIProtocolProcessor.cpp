@@ -71,19 +71,40 @@ void MIDIProtocolProcessor::handleMessage(const Message& msg)
 		processMidiMessage(callbackMessage->message, callbackMessage->source);
 }
 
+/**
+ * Method to verify if a given midi message matches a command assignment.
+ * The matching is done against the different assignment types 
+ * - 1:1 command
+ * - range of commands
+ * - range of values
+ * - range of values and commands
+ * 
+ * @param	assiCommandData		The comannd assignment to test the midimessage against
+ * @param	midiMessgae			The midimessage to match against the command assignment
+ * @return	True if the match is positive, false if no match.
+ */
 bool MIDIProtocolProcessor::IsMidiMessageMatchingCommandAssignment(const JUCEAppBasics::MidiCommandRangeAssignment& assiCommandData, const juce::MidiMessage& midiMessage)
 {
-	bool midiMessageMatchesCommandAssignment = true;
-	if (!assiCommandData.isMatchingCommandType(midiMessage))
-		midiMessageMatchesCommandAssignment = false;
-	else if (assiCommandData.isCommandRangeAssignment() && !assiCommandData.isMatchingCommandRange(midiMessage))
-		midiMessageMatchesCommandAssignment = false;
-	else if (assiCommandData.isValueRangeAssignment() && !assiCommandData.isMatchingValueRange(midiMessage))
-		midiMessageMatchesCommandAssignment = false;
-	else if (assiCommandData.isValueRangeAssignment() && !assiCommandData.isCommandRangeAssignment() && !assiCommandData.isMatchingCommand(midiMessage))
-		midiMessageMatchesCommandAssignment = false;
+	auto isCmdTriggerAssi = assiCommandData.isCommandTriggerAssignment();
+	auto isValNCmdRangeAssi = assiCommandData.isValueRangeAssignment() && assiCommandData.isCommandRangeAssignment();
+	auto isCmdRangeAssi = assiCommandData.isCommandRangeAssignment() && !isValNCmdRangeAssi;
+	auto isValRangeAssi = assiCommandData.isValueRangeAssignment() && !isValNCmdRangeAssi;
 
-	return midiMessageMatchesCommandAssignment;
+	auto matchesCommand = assiCommandData.isMatchingCommand(midiMessage);
+	auto matchesCommandRange = assiCommandData.isMatchingCommandRange(midiMessage);
+	auto matchesValueRange = assiCommandData.isMatchingValueRange(midiMessage);
+
+	auto matchesAssignment = false;
+	if (isCmdTriggerAssi)
+		matchesAssignment = matchesCommand;
+	else if (isCmdRangeAssi)
+		matchesAssignment = matchesCommandRange;
+	else if (isValRangeAssi)
+		matchesAssignment = matchesValueRange && matchesCommand;
+	else if (isValNCmdRangeAssi)
+		matchesAssignment = matchesCommandRange && matchesValueRange;
+
+	return matchesAssignment;
 }
 
 int MIDIProtocolProcessor::GetMidiValueFromCommand(const JUCEAppBasics::MidiCommandRangeAssignment& assiCommandData, const juce::MidiMessage& midiMessage)
@@ -159,6 +180,10 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 							static_cast<int>(JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCommandData.getCommandRange().getEnd())));
 						m_currentSelectedChannel = commandRangeMatch ? 1 + commandValue - commandValueRange.getStart() : INVALID_ADDRESS_VALUE;
 					}
+					else if (assiCommandData.isValueRangeAssignment())
+					{
+						jassertfalse; //not supported
+					}
 					else
 						m_currentSelectedChannel = commandValue - assiCommandData.getCommandValue();
 
@@ -207,6 +232,10 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 						static_cast<int>(JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCommandData.getCommandRange().getStart())),
 						static_cast<int>(JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCommandData.getCommandRange().getEnd())));
 					m_currentSelectedChannel = commandRangeMatch ? 1 + commandValue - commandValueRange.getStart() : INVALID_ADDRESS_VALUE;
+				}
+				else if (assiCommandData.isValueRangeAssignment())
+				{
+					jassertfalse; //not supported
 				}
 				else
 					m_currentSelectedChannel = commandValue - assiCommandData.getCommandValue();
@@ -262,6 +291,8 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 
 					newMsgData._addrVal._first = m_currentSelectedChannel;
 				}
+				else
+					jassertfalse; //not supported
 
 				newMsgData._valType = ROVT_INT;
 				newMsgData._valCount = 1;
@@ -273,21 +304,26 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 			case ROI_MatrixOutput_Mute:
 				// mute can have values 0, 1
 				{
+				if (assiCommandData.isValueRangeAssignment())
+					jassertfalse; // not supported
+
 				if (assiCommandData.isCommandRangeAssignment())
 				{
 					auto assiCommandStartValue = JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCommandData.getCommandRange().getStart());
 					newMsgData._addrVal._first = commandRangeMatch ? 1 + commandValue - assiCommandStartValue : INVALID_ADDRESS_VALUE;
+				}
+				else if (assiCommandData.isCommandTriggerAssignment())
+					newMsgData._addrVal._first = m_currentSelectedChannel;
 
-					if (assiCommandData.isNoteOffCommand() || assiCommandData.isNoteOnCommand())
-					{
-						m_intValueBuffer[0] = (1 == GetValueCache().GetIntValue(RemoteObject(newObjectId, newMsgData._addrVal)) ? 0 : 1);
-					}
-					else
-					{
-						auto assiCommandValue = JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCommandData.getCommandRange().getStart());
-						m_intValueBuffer[0] = jlimit(static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getStart()), static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getEnd()),
-							static_cast<int>(0 + (commandValue - assiCommandValue)));
-					}
+				if (assiCommandData.isNoteOffCommand() || assiCommandData.isNoteOnCommand())
+				{
+					m_intValueBuffer[0] = (1 == GetValueCache().GetIntValue(RemoteObject(newObjectId, newMsgData._addrVal)) ? 0 : 1);
+				}
+				else
+				{
+					auto assiCommandValue = JUCEAppBasics::MidiCommandRangeAssignment::getCommandValue(assiCommandData.getCommandRange().getStart());
+					m_intValueBuffer[0] = jlimit(static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getStart()), static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(newObjectId).getEnd()),
+						static_cast<int>(0 + (commandValue - assiCommandValue)));
 				}
 
 				newMsgData._valType = ROVT_INT;
@@ -326,8 +362,8 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 				break;
 			case ROI_Scene_Next:
 			case ROI_Scene_Previous:
+				// scene next/prev has no data and is just a triggering ROI
 				{
-					// scene next/prev has no data and is just a triggering ROI
 					newMsgData._valType = ROVT_NONE;
 					newMsgData._valCount = 0;
 					newMsgData._payload = nullptr;
