@@ -80,6 +80,7 @@ public:
 		DATASENDINGDISABLED,
 		REACTMONIPROTOS,
 		VALTOCMDASSI,
+		XYMESSAGECOMBINED,
 	};
 	static String getTagName(TagID Id)
 	{
@@ -143,6 +144,8 @@ public:
 			return "ReactionMonitoredProtocols";
 		case VALTOCMDASSI:
 			return "ValToCmdAssi";
+		case XYMESSAGECOMBINED:
+			return "xyMessageCombined";
 		default:
 			return "INVALID";
 		}
