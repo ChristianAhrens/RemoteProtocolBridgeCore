@@ -39,6 +39,18 @@ ADMOSCProtocolProcessor::~ADMOSCProtocolProcessor()
 }
 
 /**
+ * Overloaded method to stop to reset the coordinate system type announcement marker
+ * and forward the call to base implementation.
+ * @return	The return value of underlying base class implementation
+ */
+bool ADMOSCProtocolProcessor::Stop()
+{
+	m_expectedCoordinateSystem = CS_Invalid;
+
+	return OSCProtocolProcessor::Stop();
+}
+
+/**
  * Sets the xml configuration for the protocol processor object.
  *
  * @param stateXml	The XmlElement containing configuration for this protocol processor instance
@@ -70,7 +82,11 @@ bool ADMOSCProtocolProcessor::setStateXml(XmlElement* stateXml)
 		if (dataSendingDisabledXmlElement)
 			m_dataSendindDisabled = 1 == dataSendingDisabledXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE));
 
-		if (mappingAreaXmlElement && xAxisInvertedXmlElement && yAxisInvertedXmlElement && xyAxisSwappedXmlElement && dataSendingDisabledXmlElement)
+		auto xyMessageCombinedXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::XYMESSAGECOMBINED));
+		if (xyMessageCombinedXmlElement)
+			m_xyMessageCombined = 1 == xyMessageCombinedXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE));
+
+		if (mappingAreaXmlElement && xAxisInvertedXmlElement && yAxisInvertedXmlElement && xyAxisSwappedXmlElement && dataSendingDisabledXmlElement && xyMessageCombinedXmlElement)
 			return true;
 		else
 			return false;
@@ -102,6 +118,8 @@ bool ADMOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id,
 	// Send object config message to make sender aware of us sending only cartesian coordinate values
 	if (m_expectedCoordinateSystem != CS_Cartesian)
 	{
+		m_expectedCoordinateSystem = CS_Cartesian; // set correct expected coord sys to avoid continuing announcement with every send
+
 		String addressString = GetADMMessageDomainString() + GetADMMessageTypeString(AMT_ObjectConfig) + GetADMObjectTypeString(AOT_CartesianCoords);
 
 		int intValue[1] = { 1 };
@@ -122,6 +140,22 @@ bool ADMOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id,
 	{
 	case ADMObjectType::AOT_XPos:
 	case ADMObjectType::AOT_YPos:
+		if (m_xyMessageCombined)
+		{
+			floatValueSendBuffer[0] = ReadFromObjectCache(msgData._addrVal._first, ADMObjectType::AOT_XPos);
+			floatValueSendBuffer[1] = ReadFromObjectCache(msgData._addrVal._first, ADMObjectType::AOT_YPos);
+
+			admConvertedMsgData._valType = ROVT_FLOAT;
+			admConvertedMsgData._valCount = 2;
+			admConvertedMsgData._payload = floatValueSendBuffer;
+			admConvertedMsgData._payloadSize = 2 * sizeof(float);
+
+			break;
+		}
+		else
+		{
+			// do nothing to fallback to single float sending below
+		}
 	case ADMObjectType::AOT_Gain:
 	case ADMObjectType::AOT_Width:
 		{
@@ -779,50 +813,50 @@ bool ADMOSCProtocolProcessor::CreateMessageDataFromObjectCache(const RemoteObjec
 			auto admXValue = ReadFromObjectCache(channel, AOT_YPos);
 			auto admYValue = ReadFromObjectCache(channel, AOT_XPos);
 
-auto admNormXValue = NormalizeValueByRange(admXValue, admRange);
-auto admNormYValue = NormalizeValueByRange(admYValue, admRange);
+			auto admNormXValue = NormalizeValueByRange(admXValue, admRange);
+			auto admNormYValue = NormalizeValueByRange(admYValue, admRange);
 
-auto xValue = MapNormalizedValueToRange(admNormXValue, valRange, m_xAxisInverted);
-auto yValue = MapNormalizedValueToRange(admNormYValue, valRange, m_yAxisInverted);
+			auto xValue = MapNormalizedValueToRange(admNormXValue, valRange, m_xAxisInverted);
+			auto yValue = MapNormalizedValueToRange(admNormYValue, valRange, m_yAxisInverted);
 
-m_floatValueBuffer[0] = m_xyAxisSwapped ? yValue : xValue;
-m_floatValueBuffer[1] = m_xyAxisSwapped ? xValue : yValue;
+			m_floatValueBuffer[0] = m_xyAxisSwapped ? yValue : xValue;
+			m_floatValueBuffer[1] = m_xyAxisSwapped ? xValue : yValue;
 
-newMessageData._valCount = 2;
-newMessageData._payload = m_floatValueBuffer;
-newMessageData._payloadSize = 2 * sizeof(float);
+			newMessageData._valCount = 2;
+			newMessageData._payload = m_floatValueBuffer;
+			newMessageData._payloadSize = 2 * sizeof(float);
 		}
 		return true;
 	case ROI_MatrixInput_Gain:
-	{
-		auto admRange = GetADMObjectRange(AOT_Gain);
+		{
+			auto admRange = GetADMObjectRange(AOT_Gain);
 
-		auto admValue = ReadFromObjectCache(channel, AOT_Gain);
+			auto admValue = ReadFromObjectCache(channel, AOT_Gain);
 
-		auto admNormValue = NormalizeValueByRange(admValue, admRange);
+			auto admNormValue = NormalizeValueByRange(admValue, admRange);
 
-		m_floatValueBuffer[0] = MapNormalizedValueToRange(admNormValue, valRange);
+			m_floatValueBuffer[0] = MapNormalizedValueToRange(admNormValue, valRange);
 
-		newMessageData._valCount = 1;
-		newMessageData._payload = m_floatValueBuffer;
-		newMessageData._payloadSize = 1 * sizeof(float);
-	}
-	return true;
+			newMessageData._valCount = 1;
+			newMessageData._payload = m_floatValueBuffer;
+			newMessageData._payloadSize = 1 * sizeof(float);
+		}
+		return true;
 	case ROI_Positioning_SourceSpread:
-	{
-		auto admRange = GetADMObjectRange(AOT_Width);
+		{
+			auto admRange = GetADMObjectRange(AOT_Width);
 
-		auto admValue = ReadFromObjectCache(channel, AOT_Width);
+			auto admValue = ReadFromObjectCache(channel, AOT_Width);
 
-		auto admNormValue = NormalizeValueByRange(admValue, admRange);
+			auto admNormValue = NormalizeValueByRange(admValue, admRange);
 
-		m_floatValueBuffer[0] = MapNormalizedValueToRange(admNormValue, valRange);
+			m_floatValueBuffer[0] = MapNormalizedValueToRange(admNormValue, valRange);
 
-		newMessageData._valCount = 1;
-		newMessageData._payload = m_floatValueBuffer;
-		newMessageData._payloadSize = 1 * sizeof(float);
-	}
-	return true;
+			newMessageData._valCount = 1;
+			newMessageData._payload = m_floatValueBuffer;
+			newMessageData._payloadSize = 1 * sizeof(float);
+		}
+		return true;
 	case ROI_HeartbeatPong:
 	case ROI_HeartbeatPing:
 	case ROI_Settings_DeviceName:

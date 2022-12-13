@@ -56,6 +56,8 @@ public:
 
 	bool setStateXml(XmlElement* stateXml) override;
 
+	bool Stop() override;
+
 	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData) override;
 
 	static String GetADMMessageDomainString();
@@ -84,13 +86,14 @@ private:
 
 	std::map<ChannelId, std::map<ADMObjectType, float>>	m_objectValueCache;				/**< The cached object values, to be able to cross-calculate
 																						 *	 between coordinate systems, even if only single-val message is received. */
-	MappingAreaId										m_mappingAreaId{ MAI_Invalid };	/**< The DS100 mapping area to be used when converting
-																						 *	 incoming coords into relative messages.
-																						 *	 If this is MAI_Invalid, absolute messages will be generated. */
-	bool												m_xAxisInverted{ false };		/**< Bool flag to indicate if the x-Axis values between adm and d&b world shall be inverted. */
-	bool												m_yAxisInverted{ false };		/**< Bool flag to indicate if the y-Axis values between adm and d&b world shall be inverted. */
-	bool												m_xyAxisSwapped{ false };		/**< Bool flag to indicate if the x/y-Axis values between adm and d&b world shall be swapped. */
-	bool												m_dataSendindDisabled{ false };	/**< Bool flag to indicate if incoming message send requests from bridging node shall be ignored. */
+	MappingAreaId	m_mappingAreaId{ MAI_Invalid };	/**< The DS100 mapping area to be used when converting
+													 *	 incoming coords into relative messages.
+													 *	 If this is MAI_Invalid, absolute messages will be generated. */
+	bool			m_xAxisInverted{ false };		/**< Bool flag to indicate if the x-Axis values between adm and d&b world shall be inverted. */
+	bool			m_yAxisInverted{ false };		/**< Bool flag to indicate if the y-Axis values between adm and d&b world shall be inverted. */
+	bool			m_xyAxisSwapped{ false };		/**< Bool flag to indicate if the x/y-Axis values between adm and d&b world shall be swapped. */
+	bool			m_dataSendindDisabled{ false };	/**< Bool flag to indicate if incoming message send requests from bridging node shall be ignored. */
+	bool			m_xyMessageCombined{ false };	/**< Bool flag to indicate if sending out changed xy parameter messages shall be done as single xy or separate x and y messages. */
 	CoodinateSystem	m_expectedCoordinateSystem{ CoodinateSystem::CS_Invalid };
 
 };
