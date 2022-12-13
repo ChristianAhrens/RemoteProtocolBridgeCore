@@ -39,6 +39,18 @@ ADMOSCProtocolProcessor::~ADMOSCProtocolProcessor()
 }
 
 /**
+ * Overloaded method to stop to reset the coordinate system type announcement marker
+ * and forward the call to base implementation.
+ * @return	The return value of underlying base class implementation
+ */
+bool ADMOSCProtocolProcessor::Stop()
+{
+	m_expectedCoordinateSystem = CS_Invalid;
+
+	return OSCProtocolProcessor::Stop();
+}
+
+/**
  * Sets the xml configuration for the protocol processor object.
  *
  * @param stateXml	The XmlElement containing configuration for this protocol processor instance
@@ -106,6 +118,8 @@ bool ADMOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id,
 	// Send object config message to make sender aware of us sending only cartesian coordinate values
 	if (m_expectedCoordinateSystem != CS_Cartesian)
 	{
+		m_expectedCoordinateSystem = CS_Cartesian; // set correct expected coord sys to avoid continuing announcement with every send
+
 		String addressString = GetADMMessageDomainString() + GetADMMessageTypeString(AMT_ObjectConfig) + GetADMObjectTypeString(AOT_CartesianCoords);
 
 		int intValue[1] = { 1 };

@@ -56,6 +56,8 @@ public:
 
 	bool setStateXml(XmlElement* stateXml) override;
 
+	bool Stop() override;
+
 	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData) override;
 
 	static String GetADMMessageDomainString();
