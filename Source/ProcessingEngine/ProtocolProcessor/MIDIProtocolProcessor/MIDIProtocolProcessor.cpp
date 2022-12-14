@@ -147,6 +147,8 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 	newMsgData._payload = 0;
 	newMsgData._payloadSize = 0;
 
+	int value = -1;
+
 	// iterate through the available assignments to find a match for the midimessage
 	for (auto const& assignmentMapping : m_midiAssiMap)
 	{
@@ -196,9 +198,9 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 					// if current note has change, send deselect for previous number first
 					if (previousSelectedChannel > INVALID_ADDRESS_VALUE)
 					{
-						int offValue = 0;
+						value = 0;
 						newMsgData._addrVal._first = previousSelectedChannel;
-						newMsgData._payload = &offValue;
+						newMsgData._payload = static_cast<void*>(&value);
 						forwardAndDeafProofMessage(newObjectId, newMsgData);
 					}
 
@@ -206,9 +208,9 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 					if (previousSelectedChannel != m_currentSelectedChannel &&
 						m_currentSelectedChannel > INVALID_ADDRESS_VALUE)
 					{
-						int onValue = 1;
+						value = 1;
 						newMsgData._addrVal._first = m_currentSelectedChannel;
-						newMsgData._payload = &onValue;
+						newMsgData._payload = static_cast<void*>(&value);
 						forwardAndDeafProofMessage(newObjectId, newMsgData);
 					}
 					// or mark that currently none is selected (e.g. second press of a note to deselect current)
@@ -250,9 +252,9 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 				if (previousSelectedChannel != m_currentSelectedChannel &&
 					m_currentSelectedChannel > INVALID_ADDRESS_VALUE)
 				{
-					int onValue = 1;
+					value = 1;
 					newMsgData._addrVal._first = m_currentSelectedChannel;
-					newMsgData._payload = &onValue;
+					newMsgData._payload = static_cast<void*>(&value);
 					forwardAndDeafProofMessage(newObjectId, newMsgData);
 				}
 				// or mark that currently none is selected (e.g. second press of a note to deselect current)
