@@ -41,9 +41,13 @@
  */
 ObjectDataHandling_Abstract::ObjectDataHandling_Abstract(ProcessingEngineNode* parentNode)
 {
+	m_parentNodeId = INVALID_ADDRESS_VALUE;
 	m_parentNode = parentNode;
 	m_mode = ObjectHandlingMode::OHM_Invalid;
 	m_protocolReactionTimeout = 1000;
+	
+	if (parentNode)
+		m_parentNodeId = parentNode->GetId();
 }
 
 /**

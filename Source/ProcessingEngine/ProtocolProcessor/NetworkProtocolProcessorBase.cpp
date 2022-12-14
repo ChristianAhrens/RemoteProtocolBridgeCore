@@ -30,6 +30,8 @@
 NetworkProtocolProcessorBase::NetworkProtocolProcessorBase(const NodeId& parentNodeId)
 	: ProtocolProcessorBase(parentNodeId)
 {
+	m_clientPort = 0;
+	m_hostPort = 0;
 }
 
 /**

@@ -66,6 +66,8 @@ ProtocolProcessorBase::ProtocolProcessorBase(const NodeId& parentNodeId)
 	m_IsRunning = false;
 	m_messageListener = nullptr;
 	m_activeRemoteObjectsInterval = ET_DefaultPollingRate;
+	m_protocolProcessorId = INVALID_ADDRESS_VALUE;
+	m_protocolProcessorRole = ProtocolRole::PR_Invalid;
 }
 
 /**

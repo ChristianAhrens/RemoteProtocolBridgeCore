@@ -67,6 +67,7 @@ ProcessingEngineNode::ProcessingEngineNode()
 {
 	m_dataHandling	= nullptr;
 	m_nodeRunning = false;
+	m_nodeId = INVALID_ADDRESS_VALUE;
 }
 
 /**
