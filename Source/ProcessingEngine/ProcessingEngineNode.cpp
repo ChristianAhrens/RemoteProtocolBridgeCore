@@ -63,11 +63,11 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * Constructor
  */
 ProcessingEngineNode::ProcessingEngineNode()
-	: Thread("ProcessingEngingNode_Thread")
+	: Thread("ProcessingEngingNode_Thread"),
+	  m_dataHandling(nullptr),
+	  m_nodeRunning(false),
+	  m_nodeId(0)
 {
-	m_dataHandling	= nullptr;
-	m_nodeRunning = false;
-	m_nodeId = INVALID_ADDRESS_VALUE;
 }
 
 /**

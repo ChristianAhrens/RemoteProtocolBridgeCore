@@ -40,12 +40,11 @@
  * @param parentNode	The objects' parent node that is used by derived objects to forward received message contents to.
  */
 ObjectDataHandling_Abstract::ObjectDataHandling_Abstract(ProcessingEngineNode* parentNode)
-{
-	m_parentNodeId = INVALID_ADDRESS_VALUE;
-	m_parentNode = parentNode;
-	m_mode = ObjectHandlingMode::OHM_Invalid;
-	m_protocolReactionTimeout = 1000;
-	
+	: m_parentNodeId(0),
+	  m_parentNode(parentNode),
+	  m_mode(ObjectHandlingMode::OHM_Invalid),
+	  m_protocolReactionTimeout(1000)
+{	
 	if (parentNode)
 		m_parentNodeId = parentNode->GetId();
 }

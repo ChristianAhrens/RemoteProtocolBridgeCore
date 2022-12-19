@@ -47,8 +47,8 @@ public:
 			{
 			}
 			SimulationUpdateMessage(const std::map<RemoteObjectAddressing, std::map<RemoteObjectIdentifier, std::vector<float>>>& currentSimValues)
+				: _simulationUpdateContent(currentSimValues)
 			{
-				_simulationUpdateContent = currentSimValues;
 			}
 
 			std::map<RemoteObjectAddressing, std::map<RemoteObjectIdentifier, std::vector<float>>>	_simulationUpdateContent;		/**< The payload of the message. */

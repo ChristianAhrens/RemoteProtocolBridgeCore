@@ -288,9 +288,9 @@ struct RemoteObject
 	 * Constructor to initialize with invalid values
 	 */
 	RemoteObject()
+		: _Id(ROI_Invalid),
+		  _Addr(RemoteObjectAddressing(static_cast<ChannelId>(INVALID_ADDRESS_VALUE), static_cast<RecordId>(INVALID_ADDRESS_VALUE)))
 	{
-		_Id = ROI_Invalid;
-		_Addr = RemoteObjectAddressing(static_cast<ChannelId>(INVALID_ADDRESS_VALUE), static_cast<RecordId>(INVALID_ADDRESS_VALUE));
 	};
 	/**
 	 * Copy Constructor
@@ -306,9 +306,9 @@ struct RemoteObject
 	 * @param Addr	Remote object addressing value to initialize with.
 	 */
 	RemoteObject(RemoteObjectIdentifier	Id, RemoteObjectAddressing Addr)
+		: _Id(Id),
+		  _Addr(Addr)
 	{
-		_Id = Id;
-		_Addr = Addr;
 	};
 	/**
 	 * Equality comparison operator overload
@@ -373,13 +373,13 @@ struct RemoteObjectMessageData
 	 * Constructor to initialize with invalid values
 	 */
 	RemoteObjectMessageData()
+		: _addrVal(RemoteObjectAddressing()),
+		  _valType(ROVT_NONE),
+		  _valCount(0),
+		  _payload(nullptr),
+		  _payloadSize(0),
+		  _payloadOwned(false)
 	{
-		_addrVal = RemoteObjectAddressing();
-		_valType = ROVT_NONE;
-		_valCount = 0;
-		_payload = nullptr;
-		_payloadSize = 0;
-		_payloadOwned = false;
 	};
 	/**
 	 * Copy Constructor
@@ -392,13 +392,13 @@ struct RemoteObjectMessageData
 	 * Constructor to initialize with parameter values
 	 */
 	RemoteObjectMessageData(RemoteObjectAddressing addrVal, RemoteObjectValueType valType, std::uint16_t valCount, void* payload, std::uint32_t payloadSize)
+		: _addrVal(addrVal),
+		  _valType(valType),
+		  _valCount(valCount),
+		  _payload(payload),
+		  _payloadSize(payloadSize),
+		  _payloadOwned(false)
 	{
-		_addrVal = addrVal;
-		_valType = valType;
-		_valCount = valCount;
-		_payload = payload;
-		_payloadSize = payloadSize;
-		_payloadOwned = false;
 	};
 	/**
 	 * Destructor

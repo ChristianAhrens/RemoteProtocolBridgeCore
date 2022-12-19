@@ -25,10 +25,11 @@
 * Constructor of the RTTrPMReceiver class
 * @param portNumber	The port to listen on for incoming data
 */
-RTTrPMReceiver::RTTrPMReceiver(int portNumber) : Thread("RTTrPM_Connection_Server")
+RTTrPMReceiver::RTTrPMReceiver(int portNumber)
+	: Thread("RTTrPM_Connection_Server"),
+	  m_listeningPort(portNumber)
 {
 	m_socket = std::make_unique<DatagramSocket>();
-	m_listeningPort = portNumber;
 }
 
 /**

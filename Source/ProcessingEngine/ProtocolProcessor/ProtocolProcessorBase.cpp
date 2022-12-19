@@ -60,14 +60,14 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * Constructor of abstract class ProtocolProcessorBase.
  */
 ProtocolProcessorBase::ProtocolProcessorBase(const NodeId& parentNodeId)
+	: m_parentNodeId(parentNodeId),
+	  m_type(ProtocolType::PT_Invalid),
+	  m_IsRunning(false),
+	  m_messageListener(nullptr),
+	  m_activeRemoteObjectsInterval(ET_DefaultPollingRate),
+	  m_protocolProcessorId(0),
+	  m_protocolProcessorRole(ProtocolRole::PR_Invalid)
 {
-	m_parentNodeId = parentNodeId;
-	m_type = ProtocolType::PT_Invalid;
-	m_IsRunning = false;
-	m_messageListener = nullptr;
-	m_activeRemoteObjectsInterval = ET_DefaultPollingRate;
-	m_protocolProcessorId = INVALID_ADDRESS_VALUE;
-	m_protocolProcessorRole = ProtocolRole::PR_Invalid;
 }
 
 /**
