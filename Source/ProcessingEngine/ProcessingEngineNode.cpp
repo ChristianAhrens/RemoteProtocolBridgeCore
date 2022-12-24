@@ -65,8 +65,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ProcessingEngineNode::ProcessingEngineNode()
 	: Thread("ProcessingEngingNode_Thread"),
 	  m_dataHandling(nullptr),
-	  m_nodeRunning(false),
-	  m_nodeId(0)
+      m_nodeId(0),
+	  m_nodeRunning(false)
 {
 }
 
