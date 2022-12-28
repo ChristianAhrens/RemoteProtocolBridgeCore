@@ -25,16 +25,19 @@ public:
 
 	bool setStateXml(XmlElement* stateXml) override;
 
-	bool Stop() override;
-
 	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData) override;
 
 	virtual void oscMessageReceived(const OSCMessage &message, const String& senderIPAddress, const int& senderPort) override;
+
+protected:
+	bool IsMatchingRemapping(const juce::String& remapPattern, const juce::String& oscStringToMatch);
 
 private:
 	float NormalizeValueByRange(float value, const juce::Range<float>& normalizationRange);
 	float MapNormalizedValueToRange(float normalizedValue, const juce::Range<float>& range, bool invert = false);
 
 	bool	m_dataSendindDisabled{ false };	/**< Bool flag to indicate if incoming message send requests from bridging node shall be ignored. */
+
+	std::map<RemoteObjectIdentifier, juce::String>	m_oscRemappings;
 
 };

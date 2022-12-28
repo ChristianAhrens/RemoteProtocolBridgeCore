@@ -31,18 +31,6 @@ RemapOSCProtocolProcessor::~RemapOSCProtocolProcessor()
 }
 
 /**
- * Overloaded method to stop to reset the coordinate system type announcement marker
- * and forward the call to base implementation.
- * @return	The return value of underlying base class implementation
- */
-bool RemapOSCProtocolProcessor::Stop()
-{
-	/*do something RemapOSC specific ?*/
-
-	return OSCProtocolProcessor::Stop();
-}
-
-/**
  * Sets the xml configuration for the protocol processor object.
  *
  * @param stateXml	The XmlElement containing configuration for this protocol processor instance
@@ -54,34 +42,39 @@ bool RemapOSCProtocolProcessor::setStateXml(XmlElement* stateXml)
 		return false;
 	else
 	{
-		//auto mappingAreaXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::MAPPINGAREA));
-		//if (mappingAreaXmlElement)
-		//	m_mappingAreaId = static_cast<MappingAreaId>(mappingAreaXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::ID)));
-		//
-		//auto xAxisInvertedXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::XINVERTED));
-		//if (xAxisInvertedXmlElement)
-		//	m_xAxisInverted = 1 == xAxisInvertedXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE));
-		//
-		//auto yAxisInvertedXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::YINVERTED));
-		//if (yAxisInvertedXmlElement)
-		//	m_yAxisInverted = 1 == yAxisInvertedXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE));
-		//
-		//auto xyAxisSwappedXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::XYSWAPPED));
-		//if (xyAxisSwappedXmlElement)
-		//	m_xyAxisSwapped = 1 == xyAxisSwappedXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE));
+		auto oscRemappingsXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::REMAPPINGS));
+		if (oscRemappingsXmlElement)
+		{
+			m_oscRemappings.clear();
+			auto oscRemappingXmlElement = oscRemappingsXmlElement->getFirstChildElement();
+			while (nullptr != oscRemappingXmlElement)
+			{
+				for (int i = ROI_Invalid + 1; i < ROI_BridgingMAX; ++i)
+				{
+					auto ROId = static_cast<RemoteObjectIdentifier>(i);
+					if (oscRemappingXmlElement->getTagName() == ProcessingEngineConfig::GetObjectDescription(ROId).removeCharacters(" "))
+					{
+						auto oscRemappingTextElement = oscRemappingXmlElement->getFirstChildElement();
+						if (oscRemappingTextElement && oscRemappingTextElement->isTextElement())
+						{
+							juce::String remapPattern = oscRemappingTextElement->getText();
+							m_oscRemappings.insert(std::make_pair(ROId, remapPattern));
+						}
+					}
+				}
+
+				oscRemappingXmlElement = oscRemappingXmlElement->getNextElement();
+			}
+		}
 		
 		auto dataSendingDisabledXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::DATASENDINGDISABLED));
 		if (dataSendingDisabledXmlElement)
 			m_dataSendindDisabled = 1 == dataSendingDisabledXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE));
 		
-		//auto xyMessageCombinedXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::XYMESSAGECOMBINED));
-		//if (xyMessageCombinedXmlElement)
-		//	m_xyMessageCombined = 1 == xyMessageCombinedXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE));
-		//
-		if (/*mappingAreaXmlElement && xAxisInvertedXmlElement && yAxisInvertedXmlElement && xyAxisSwappedXmlElement &&*/ dataSendingDisabledXmlElement /*&& xyMessageCombinedXmlElement*/ )
+		if (oscRemappingsXmlElement && dataSendingDisabledXmlElement)
 			return true;
-		//else
-		//	return false;
+		else
+			return false;
 	}
 }
 
@@ -112,7 +105,7 @@ bool RemapOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier I
  *
  * @param message			The received OSC message.
  * @param senderIPAddress	The ip the message originates from.
- * @param senderPort			The port this message was received on.
+ * @param senderPort		The port this message was received on.
  */
 void RemapOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, const juce::String& senderIPAddress, const int& senderPort)
 {
@@ -131,8 +124,20 @@ void RemapOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, co
 	if (!m_messageListener)
 		return;
 
+	RemoteObjectIdentifier newMsgId;
+	RemoteObjectMessageData newMsgData;
+
 	// Handle the incoming message contents.
 	String addressString = message.getAddressPattern().toString();
+
+	for (auto const& remapping : m_oscRemappings)
+	{
+		if (IsMatchingRemapping(remapping.second, addressString))
+		{
+			newMsgId = remapping.first;
+			break;
+		}
+	}
 
 	//// check if the osc message is actually one of ADM domain type
 	//if (!addressString.startsWith(GetADMMessageDomainString()))
@@ -260,6 +265,18 @@ void RemapOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, co
 	//	if (m_messageListener)
 	//		m_messageListener->OnProtocolMessageReceived(this, targetedObjectId, newMsgData);
 	//}
+}
+
+/**
+ * Protected helper to match a given osc string against a given remapping pattern
+ * (containing e.g. wildcard placeholders, blanks, etc.)
+ * @param	remapPattern	The pattern to match a given string against.
+ * @param	patternToMatch	The string to match against the pattern.
+ * @return	True if the matching was positive, false if not.
+ */
+bool RemapOSCProtocolProcessor::IsMatchingRemapping(const juce::String& remapPattern, const juce::String& oscStringToMatch)
+{
+	return false;
 }
 
 /**

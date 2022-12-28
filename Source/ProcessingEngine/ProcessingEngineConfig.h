@@ -81,6 +81,7 @@ public:
 		REACTMONIPROTOS,
 		VALTOCMDASSI,
 		XYMESSAGECOMBINED,
+		REMAPPINGS,
 	};
 	static String getTagName(TagID Id)
 	{
@@ -146,6 +147,8 @@ public:
 			return "ValToCmdAssi";
 		case XYMESSAGECOMBINED:
 			return "xyMessageCombined";
+		case REMAPPINGS:
+			return "Remappings";
 		default:
 			return "INVALID";
 		}

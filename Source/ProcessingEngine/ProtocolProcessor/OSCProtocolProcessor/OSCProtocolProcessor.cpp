@@ -341,12 +341,6 @@ void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const S
 	}
 
 	RemoteObjectMessageData newMsgData;
-	newMsgData._addrVal._first = INVALID_ADDRESS_VALUE;
-	newMsgData._addrVal._second = INVALID_ADDRESS_VALUE;
-	newMsgData._valType = ROVT_NONE;
-	newMsgData._valCount = 0;
-	newMsgData._payload = 0;
-	newMsgData._payloadSize = 0;
 
 	String addressString = message.getAddressPattern().toString();
 	// Check if the incoming message is a response to a sent "ping" heartbeat.
