@@ -29,12 +29,13 @@ public:
 
 	virtual void oscMessageReceived(const OSCMessage &message, const String& senderIPAddress, const int& senderPort) override;
 
+	static void DissectRemappingPattern(const juce::String& remapPattern, juce::String& startSection, juce::String& firstSparator, juce::String& middleSection, juce::String& secondSparator, juce::String& endSection);
+
 protected:
 	bool IsMatchingRemapping(const juce::String& remapPattern, const juce::String& oscStringToMatch);
+	bool ExtractAddressingFromRemapping(const juce::String& remapPattern, const juce::String& oscStringToExtractFrom, ChannelId channelId, RecordId recordId);
 
 private:
-	float NormalizeValueByRange(float value, const juce::Range<float>& normalizationRange);
-	float MapNormalizedValueToRange(float normalizedValue, const juce::Range<float>& range, bool invert = false);
 
 	bool	m_dataSendindDisabled{ false };	/**< Bool flag to indicate if incoming message send requests from bridging node shall be ignored. */
 

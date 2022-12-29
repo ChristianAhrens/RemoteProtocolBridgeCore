@@ -90,13 +90,24 @@ bool RemapOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier I
 	if (m_dataSendindDisabled)
 		return false;
 
-	float floatValueSendBuffer[3] = { 0.0f, 0.0f, 0.0f };
-	RemoteObjectMessageData remappedMsgData;
+	// we cannot send anything if no remapping for the given roi is configured
+	if (m_oscRemappings.count(Id) < 1)
+		return false;
 
 	// assemble the addressing string
-	String addressString;// = GetADMMessageDomainString() + GetADMMessageTypeString(AMT_Object) + String(msgData._addrVal._first) + GetADMObjectTypeString(targetObjType);
+	juce::String addressString = m_oscRemappings.at(Id);
+	if (addressString.contains(juce::StringRef("%1")))
+	{
+		addressString.replace("%1", "%i");
+		addressString = juce::String::formatted(addressString, msgData._addrVal._first);
+	}
+	if (addressString.contains(juce::StringRef("%2")))
+	{
+		addressString.replace("%2", "%i");
+		addressString = juce::String::formatted(addressString, msgData._addrVal._second);
+	}
 	
-	return SendAddressedMessage(addressString, remappedMsgData);
+	return SendAddressedMessage(addressString, msgData);
 }
 
 /**
@@ -124,197 +135,125 @@ void RemapOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, co
 	if (!m_messageListener)
 		return;
 
-	RemoteObjectIdentifier newMsgId;
+	RemoteObjectIdentifier newObjectId = ROI_Invalid;
+	ChannelId channelId = INVALID_ADDRESS_VALUE;
+	RecordId recordId = INVALID_ADDRESS_VALUE;
 	RemoteObjectMessageData newMsgData;
 
-	// Handle the incoming message contents.
-	String addressString = message.getAddressPattern().toString();
-
+	// Match the incoming message contents against known mappings and derive the associated remote obejct id accordingly.
+	auto addressString = message.getAddressPattern().toString();
 	for (auto const& remapping : m_oscRemappings)
 	{
 		if (IsMatchingRemapping(remapping.second, addressString))
 		{
-			newMsgId = remapping.first;
+			newObjectId = remapping.first;
+
+			ExtractAddressingFromRemapping(remapping.second, addressString, channelId, recordId);
+
 			break;
 		}
 	}
 
-	//// check if the osc message is actually one of ADM domain type
-	//if (!addressString.startsWith(GetADMMessageDomainString()))
-	//	return;
-	//else
-	//	addressString = addressString.fromFirstOccurrenceOf(GetADMMessageDomainString(), false, false);
-	//
-	//// check if the message is a object message (no handling of object config implemented)
-	//if (addressString.startsWith(GetADMMessageTypeString(AMT_ObjectConfig)))
-	//	return;
-	//
-	//// check if the message is a object message (no handling of object config implemented)
-	//if (!addressString.startsWith(GetADMMessageTypeString(AMT_Object)))
-	//	return;
-	//else
-	//{
-	//	// Determine which parameter was changed depending on the incoming message's address pattern.
-	//	auto admObjectType = GetADMObjectType(addressString.fromFirstOccurrenceOf(GetADMMessageTypeString(AMT_Object), false, false));
-	//
-	//	// process the admMessageType into an internal remoteobjectid for further handling
-	//	auto targetedObjectId = ROI_Invalid;
-	//	switch (admObjectType)
-	//	{
-	//	case AOT_Azimuth:
-	//	case AOT_Elevation:
-	//	case AOT_Distance:
-	//	case AOT_AzimElevDist:
-	//	case AOT_XPos:
-	//	case AOT_YPos:
-	//	case AOT_ZPos:
-	//	case AOT_XYZPos:
-	//		targetedObjectId = ROI_CoordinateMapping_SourcePosition_XY;
-	//		break;
-	//	case AOT_Width:
-	//		targetedObjectId = ROI_Positioning_SourceSpread;
-	//		break;
-	//	case AOT_Gain:
-	//		targetedObjectId = ROI_MatrixInput_Gain;
-	//		break;
-	//	case AOT_CartesianCoords:
-	//	case AOT_Invalid:
-	//	default:
-	//		jassertfalse;
-	//		break;
-	//	}
-	//
-	//	auto channel = static_cast<ChannelId>(INVALID_ADDRESS_VALUE);
-	//	auto record = static_cast<RecordId>(INVALID_ADDRESS_VALUE);
-	//
-	//	// get the channel info if the object is supposed to provide it
-	//	if (ProcessingEngineConfig::IsChannelAddressingObject(targetedObjectId))
-	//	{
-	//		// Parse the Channel ID
-	//		channel = static_cast<ChannelId>((addressString.fromLastOccurrenceOf(GetADMMessageTypeString(AMT_Object), false, true)).getIntValue());
-	//		jassert(channel > 0);
-	//		if (channel <= 0)
-	//			return;
-	//	}
-	//
-	//	// set the record info if the object needs it
-	//	if (ProcessingEngineConfig::IsRecordAddressingObject(targetedObjectId))
-	//		record = static_cast<RecordId>(m_mappingAreaId);
-	//
-	//	// assemble a remote object structure from the collected addressing data
-	//	auto remoteObject = RemoteObject(targetedObjectId, RemoteObjectAddressing(channel, record));
-	//	
-	//	// create the remote object to be forwarded to processing node for further processing
-	//	switch (admObjectType)
-	//	{
-	//	case AOT_Azimuth:
-	//		WriteToObjectCache(channel, AOT_Azimuth, message[0].getFloat32(), true);
-	//		break;
-	//	case AOT_Elevation:
-	//		WriteToObjectCache(channel, AOT_Elevation, message[0].getFloat32(), true);
-	//		break;
-	//	case AOT_Distance:
-	//		WriteToObjectCache(channel, AOT_Distance, message[0].getFloat32(), true);
-	//		break;
-	//	case AOT_AzimElevDist:
-	//		WriteToObjectCache(channel, std::vector<ADMObjectType>{AOT_Azimuth, AOT_Elevation, AOT_Distance}, std::vector<float>{message[0].getFloat32(), message[1].getFloat32(), message[2].getFloat32()}, true);
-	//		break;
-	//	case AOT_XPos:
-	//		WriteToObjectCache(channel, AOT_XPos, message[0].getFloat32(), true);
-	//		break;
-	//	case AOT_YPos:
-	//		WriteToObjectCache(channel, AOT_YPos, message[0].getFloat32(), true);
-	//		break;
-	//	case AOT_ZPos:
-	//		WriteToObjectCache(channel, AOT_ZPos, message[0].getFloat32(), true);
-	//		break;
-	//	case AOT_XYZPos:
-	//		WriteToObjectCache(channel, std::vector<ADMObjectType>{AOT_XPos, AOT_YPos, AOT_ZPos}, std::vector<float>{message[0].getFloat32(), message[1].getFloat32(), message[2].getFloat32()}, true);
-	//		break;
-	//	case AOT_Width:
-	//		WriteToObjectCache(channel, AOT_Width, message[0].getFloat32());
-	//		break;
-	//	case AOT_Gain:
-	//		WriteToObjectCache(channel, AOT_Gain, message[0].getFloat32());
-	//		break;
-	//	case AOT_CartesianCoords:
-	//		if (SetExpectedCoordinateSystem(message[0].getInt32() == 1))
-	//		{
-	//			if (message[0].getInt32() == 1) // switch to cartesian coordinates - we take this as opportunity to sync current polar data to cartesian once
-	//				SyncCachedPolarToCartesianValues(channel);
-	//			else if (message[0].getInt32() == 0) // switch to polar coordinates - we take this as opportunity to sync current cartesian data to polar once
-	//				SyncCachedCartesianToPolarValues(channel);
-	//		}
-	//		break;
-	//	case AOT_Invalid:
-	//	default:
-	//		jassertfalse;
-	//		break;
-	//	}
-	//
-	//	// If the received object is set to muted, return without further processing
-	//	if (IsRemoteObjectMuted(remoteObject))
-	//		return;
-	//
-	//	// create a new message in internally known format
-	//	auto newMsgData = RemoteObjectMessageData(remoteObject._Addr, ROVT_FLOAT, 0, nullptr, 0);
-	//	if (!CreateMessageDataFromObjectCache(remoteObject._Id, channel, newMsgData))
-	//		return;
-	//
-	//	// and provide that message to parent node
-	//	if (m_messageListener)
-	//		m_messageListener->OnProtocolMessageReceived(this, targetedObjectId, newMsgData);
-	//}
+	// if the incoming addressString could not be matched with any known mapping to remote object id, we cannot proceed
+	if (ROI_Invalid == newObjectId)
+		return;
+
+	// Special handling for ping/pong (empty msg contents in any case)
+	if (ROI_HeartbeatPong == newObjectId)
+		m_messageListener->OnProtocolMessageReceived(this, ROI_HeartbeatPong, newMsgData);
+	else if (ROI_HeartbeatPing == newObjectId)
+		m_messageListener->OnProtocolMessageReceived(this, ROI_HeartbeatPing, newMsgData);
+	else
+	{
+		if (!ProcessingEngineConfig::IsChannelAddressingObject(newObjectId))
+			channelId = INVALID_ADDRESS_VALUE;
+		if (!ProcessingEngineConfig::IsRecordAddressingObject(newObjectId))
+			recordId = INVALID_ADDRESS_VALUE;
+
+		// If the received channel (source) is set to muted, return without further processing
+		if (IsRemoteObjectMuted(RemoteObject(newObjectId, RemoteObjectAddressing(channelId, recordId))))
+			return;
+
+		newMsgData._addrVal._first = channelId;
+		newMsgData._addrVal._second = recordId;
+
+		createMessageData(message, newObjectId, newMsgData);
+
+		// provide the received message to parent node
+		if (m_messageListener)
+			m_messageListener->OnProtocolMessageReceived(this, newObjectId, newMsgData);
+	}
+}
+
+/**
+ * Static method to split the given remapPattern into three pieces, 
+ * based on the contained '%' ch/rec format placeholder characters.
+ * @param	remapPattern	The input string to dissect.
+ * @param	startSection	The first part of the string up until the first occurance of '%i'
+ * @param	firstSeparator	The first occuring '%i' string
+ * @param	middleSection	The middle part of the string, framed by the two '%i' (or just one)
+ * @param	secondSeparator	The second occuring '%i' string
+ * @param	endSection		The last part of the string from the last occurance of '%i' on.
+ */
+void RemapOSCProtocolProcessor::DissectRemappingPattern(const juce::String& remapPattern, juce::String& startSection, juce::String& firstSparator, juce::String& middleSection, juce::String& secondSparator, juce::String& endSection)
+{
+	startSection = remapPattern.upToFirstOccurrenceOf("%", false, false).substring(1);
+	firstSparator = remapPattern.fromFirstOccurrenceOf("%", true, false).substring(0, 2);
+	middleSection = remapPattern.fromFirstOccurrenceOf("%", false, false).substring(1).upToFirstOccurrenceOf("%", false, false).substring(1);
+	secondSparator = remapPattern.fromFirstOccurrenceOf("%", false, false).substring(1).fromFirstOccurrenceOf("%", true, false).substring(0, 2);
+	endSection = remapPattern.fromLastOccurrenceOf("%", false, false).substring(1);
 }
 
 /**
  * Protected helper to match a given osc string against a given remapping pattern
- * (containing e.g. wildcard placeholders, blanks, etc.)
+ * (containing one of, both or none of "%1" and "%2")
  * @param	remapPattern	The pattern to match a given string against.
  * @param	patternToMatch	The string to match against the pattern.
  * @return	True if the matching was positive, false if not.
  */
 bool RemapOSCProtocolProcessor::IsMatchingRemapping(const juce::String& remapPattern, const juce::String& oscStringToMatch)
 {
-	return false;
+	juce::String startSection, firstSparator, middleSection, secondSparator, endSection;
+	DissectRemappingPattern(remapPattern, startSection, firstSparator, middleSection, secondSparator, endSection);
+
+	return oscStringToMatch.startsWith(startSection) && oscStringToMatch.endsWith(endSection) && oscStringToMatch.contains(middleSection);
 }
 
 /**
- * Helper method to normalize a given value to a given range without clipping
- * @param	value				The value to normalize
- * @param	normalizationRange	The range to normalize the value to
- * @return	The normalized value.
+ * Protected helper to match a given osc string against a given remapping pattern
+ * (containing one of, both or none of "%1" and "%2")
+ * @param	remapPattern			The pattern to use as reference for extracting addressing values.
+ * @param	oscStringToExtractFrom	The string to extract addressing from.
+ * @return	True if the extraction delivered useful values, false if not.
  */
-float RemapOSCProtocolProcessor::NormalizeValueByRange(float value, const juce::Range<float>& normalizationRange)
+bool RemapOSCProtocolProcessor::ExtractAddressingFromRemapping(const juce::String& remapPattern, const juce::String& oscStringToExtractFrom, ChannelId channelId, RecordId recordId)
 {
-	jassert(!normalizationRange.isEmpty());
-	if (normalizationRange.isEmpty())
-		return 0.0f;
+	juce::String startSection, firstSparator, middleSection, secondSparator, endSection;
+	DissectRemappingPattern(remapPattern, startSection, firstSparator, middleSection, secondSparator, endSection);
 
-	auto valueInRange = value - normalizationRange.getStart();
-	auto normalizedInRangeValue = (valueInRange / normalizationRange.getLength());
+	auto middleSectionInclSeparators = oscStringToExtractFrom.substring(startSection.length(), oscStringToExtractFrom.length() - endSection.length());
+	juce::String firstSeparatorVal = middleSectionInclSeparators.upToFirstOccurrenceOf(middleSection, false, false);
+	juce::String secondSeparatorVal = middleSectionInclSeparators.fromFirstOccurrenceOf(middleSection, false, false);
 
-	return normalizedInRangeValue;
-}
-
-/**
- * Helper method to map a normalized 0-1 value to a given range and optionally invert it.
- * @param	normalizedValue		The normalized 0-1 value to map to extrude to the given range.
- * @param	range				The range to map the value to.
- * @param	invert				Bool indicator if the value shall be inverted in addition to mapping to range.
- * @return	The mapped and optionally inverted value.
- */
-float RemapOSCProtocolProcessor::MapNormalizedValueToRange(float normalizedValue, const juce::Range<float>& range, bool invert)
-{
-	auto mappedValue = range.getStart() + normalizedValue * (range.getEnd() - range.getStart());
-	
-	if (invert)
+	if (firstSparator == "%1" || secondSparator == "%2")
 	{
-		auto invertedMappedValue = range.getStart() + (range.getEnd() - mappedValue);
-		return invertedMappedValue;
+		channelId = static_cast<ChannelId>(firstSeparatorVal.getIntValue());
+		recordId = static_cast<RecordId>(secondSeparatorVal.getIntValue());
+
+		return true;
+	}
+	else if (firstSparator == "%2" || secondSparator == "%1")
+	{
+		recordId = static_cast<RecordId>(firstSeparatorVal.getIntValue());
+		channelId = static_cast<ChannelId>(secondSeparatorVal.getIntValue());
+
+		return true;
 	}
 	else
 	{
-		return mappedValue;
+		channelId = INVALID_ADDRESS_VALUE;
+		recordId = INVALID_ADDRESS_VALUE;
+
+		return false;
 	}
 }
