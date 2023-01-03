@@ -42,6 +42,7 @@ public:
 		AOT_Distance,			// "dist"
 		AOT_AzimElevDist,		// combined "aed"
 		AOT_Width,				// "w"
+		AOT_WidthDeg,			// "widthDeg"
 		AOT_XPos,				// "x"
 		AOT_YPos,				// "y"
 		AOT_ZPos,				// "z"

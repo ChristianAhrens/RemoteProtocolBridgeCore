@@ -409,7 +409,9 @@ String ADMOSCProtocolProcessor::GetADMObjectTypeString(const ADMObjectType& objT
 	case AOT_AzimElevDist:
 		return "/aed";
 	case AOT_Width:
-		return "/w";			
+		return "/w";
+	case AOT_WidthDeg:
+		return "/widthDeg";
 	case AOT_XPos:
 		return "/x";			
 	case AOT_YPos:
@@ -446,6 +448,8 @@ ADMOSCProtocolProcessor::ADMObjectType ADMOSCProtocolProcessor::GetADMObjectType
 		return AOT_AzimElevDist;
 	else if (typeString.endsWith(GetADMObjectTypeString(AOT_Width)))
 		return AOT_Width;
+	else if (typeString.endsWith(GetADMObjectTypeString(AOT_WidthDeg)))
+		return AOT_WidthDeg;
 	else if (typeString.endsWith(GetADMObjectTypeString(AOT_XPos)))
 		return AOT_XPos;
 	else if (typeString.endsWith(GetADMObjectTypeString(AOT_YPos)))
@@ -482,6 +486,7 @@ ADMOSCProtocolProcessor::CoodinateSystem ADMOSCProtocolProcessor::GetObjectTypeC
 	case AOT_XYZPos:
 		return ADMOSCProtocolProcessor::CoodinateSystem::CS_Cartesian;
 	case AOT_Width:
+	case AOT_WidthDeg:
 	case AOT_CartesianCoords:
 	case AOT_Gain:
 	case AOT_Invalid:
@@ -508,6 +513,7 @@ ADMOSCProtocolProcessor::ADMMessageType ADMOSCProtocolProcessor::GetObjectTypeMe
 	case AOT_ZPos:
 	case AOT_XYZPos:
 	case AOT_Width:
+	case AOT_WidthDeg:
 	case AOT_Gain:
 		return ADMOSCProtocolProcessor::ADMMessageType::AMT_Object;
 	case AOT_CartesianCoords:
@@ -538,6 +544,8 @@ const juce::Range<float> ADMOSCProtocolProcessor::GetADMObjectRange(const ADMObj
 	case AOT_ZPos:
 		return juce::Range<float>(-1.0f, 1.0f);
 	case AOT_Width:
+		return juce::Range<float>(0.0f, 1.0f);
+	case AOT_WidthDeg:
 		return juce::Range<float>(0.0f, 180.0f);
 	case AOT_Gain:
 		return juce::Range<float>(0.0f, 1.0f);
