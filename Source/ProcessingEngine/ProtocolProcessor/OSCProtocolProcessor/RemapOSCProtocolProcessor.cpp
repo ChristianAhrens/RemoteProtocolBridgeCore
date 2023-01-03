@@ -197,9 +197,9 @@ void RemapOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, co
  */
 void RemapOSCProtocolProcessor::DissectRemappingPattern(const juce::String& remapPattern, juce::String& startSection, juce::String& firstSparator, juce::String& middleSection, juce::String& secondSparator, juce::String& endSection)
 {
-	startSection = remapPattern.upToFirstOccurrenceOf("%", false, false).substring(1);
+	startSection = remapPattern.upToFirstOccurrenceOf("%", false, false);
 	firstSparator = remapPattern.fromFirstOccurrenceOf("%", true, false).substring(0, 2);
-	middleSection = remapPattern.fromFirstOccurrenceOf("%", false, false).substring(1).upToFirstOccurrenceOf("%", false, false).substring(1);
+	middleSection = remapPattern.fromFirstOccurrenceOf("%", false, false).upToFirstOccurrenceOf("%", false, false).substring(1);
 	secondSparator = remapPattern.fromFirstOccurrenceOf("%", false, false).substring(1).fromFirstOccurrenceOf("%", true, false).substring(0, 2);
 	endSection = remapPattern.fromLastOccurrenceOf("%", false, false).substring(1);
 }
@@ -215,8 +215,15 @@ bool RemapOSCProtocolProcessor::IsMatchingRemapping(const juce::String& remapPat
 {
 	juce::String startSection, firstSparator, middleSection, secondSparator, endSection;
 	DissectRemappingPattern(remapPattern, startSection, firstSparator, middleSection, secondSparator, endSection);
+#ifdef DEBUG
+	auto startMatch = oscStringToMatch.startsWith(startSection);
+	auto endMatch = oscStringToMatch.endsWith(endSection);
+	auto middleMatch = oscStringToMatch.contains(middleSection);
 
+	return startMatch && endMatch && middleMatch;
+#elif
 	return oscStringToMatch.startsWith(startSection) && oscStringToMatch.endsWith(endSection) && oscStringToMatch.contains(middleSection);
+#endif
 }
 
 /**
@@ -224,9 +231,11 @@ bool RemapOSCProtocolProcessor::IsMatchingRemapping(const juce::String& remapPat
  * (containing one of, both or none of "%1" and "%2")
  * @param	remapPattern			The pattern to use as reference for extracting addressing values.
  * @param	oscStringToExtractFrom	The string to extract addressing from.
+ * @param	channelId				The extracted channel addressing
+ * @param	recordId				The extracted record addressing
  * @return	True if the extraction delivered useful values, false if not.
  */
-bool RemapOSCProtocolProcessor::ExtractAddressingFromRemapping(const juce::String& remapPattern, const juce::String& oscStringToExtractFrom, ChannelId channelId, RecordId recordId)
+bool RemapOSCProtocolProcessor::ExtractAddressingFromRemapping(const juce::String& remapPattern, const juce::String& oscStringToExtractFrom, ChannelId& channelId, RecordId& recordId)
 {
 	juce::String startSection, firstSparator, middleSection, secondSparator, endSection;
 	DissectRemappingPattern(remapPattern, startSection, firstSparator, middleSection, secondSparator, endSection);
@@ -237,15 +246,29 @@ bool RemapOSCProtocolProcessor::ExtractAddressingFromRemapping(const juce::Strin
 
 	if (firstSparator == "%1" || secondSparator == "%2")
 	{
-		channelId = static_cast<ChannelId>(firstSeparatorVal.getIntValue());
-		recordId = static_cast<RecordId>(secondSeparatorVal.getIntValue());
+		if (firstSeparatorVal.isNotEmpty())
+			channelId = static_cast<ChannelId>(firstSeparatorVal.getIntValue());
+		else
+			channelId = INVALID_ADDRESS_VALUE;
+
+		if (secondSeparatorVal.isNotEmpty())
+			recordId = static_cast<RecordId>(secondSeparatorVal.getIntValue());
+		else
+			recordId = INVALID_ADDRESS_VALUE;
 
 		return true;
 	}
 	else if (firstSparator == "%2" || secondSparator == "%1")
 	{
-		recordId = static_cast<RecordId>(firstSeparatorVal.getIntValue());
-		channelId = static_cast<ChannelId>(secondSeparatorVal.getIntValue());
+		if (secondSeparatorVal.isNotEmpty())
+			channelId = static_cast<ChannelId>(secondSeparatorVal.getIntValue());
+		else
+			channelId = INVALID_ADDRESS_VALUE;
+
+		if (firstSeparatorVal.isNotEmpty())
+			recordId = static_cast<RecordId>(firstSeparatorVal.getIntValue());
+		else
+			recordId = INVALID_ADDRESS_VALUE;
 
 		return true;
 	}

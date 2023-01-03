@@ -33,7 +33,7 @@ public:
 
 protected:
 	bool IsMatchingRemapping(const juce::String& remapPattern, const juce::String& oscStringToMatch);
-	bool ExtractAddressingFromRemapping(const juce::String& remapPattern, const juce::String& oscStringToExtractFrom, ChannelId channelId, RecordId recordId);
+	bool ExtractAddressingFromRemapping(const juce::String& remapPattern, const juce::String& oscStringToExtractFrom, ChannelId& channelId, RecordId& recordId);
 
 private:
 
