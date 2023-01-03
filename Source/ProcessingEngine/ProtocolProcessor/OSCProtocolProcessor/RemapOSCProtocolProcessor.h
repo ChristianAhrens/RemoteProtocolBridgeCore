@@ -27,7 +27,7 @@ public:
 
 	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData) override;
 
-	virtual void oscMessageReceived(const OSCMessage &message, const String& senderIPAddress, const int& senderPort) override;
+	void oscMessageReceived(const OSCMessage &message, const String& senderIPAddress, const int& senderPort) override;
 
 	static void DissectRemappingPattern(const juce::String& remapPattern, juce::String& startSection, juce::String& firstSparator, juce::String& middleSection, juce::String& secondSparator, juce::String& endSection);
 

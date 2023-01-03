@@ -769,6 +769,7 @@ bool OSCProtocolProcessor::createFloatMessageData(const OSCMessage& messageInput
 	{
 		m_floatValueBuffer[0] = messageInput[0].getFloat32();
 
+		newMessageData._valType = ROVT_FLOAT;
 		newMessageData._valCount = 1;
 		newMessageData._payload = m_floatValueBuffer;
 		newMessageData._payloadSize = sizeof(float);
@@ -780,6 +781,7 @@ bool OSCProtocolProcessor::createFloatMessageData(const OSCMessage& messageInput
 		m_floatValueBuffer[0] = messageInput[0].getFloat32();
 		m_floatValueBuffer[1] = messageInput[1].getFloat32();
 
+		newMessageData._valType = ROVT_FLOAT;
 		newMessageData._valCount = 2;
 		newMessageData._payload = m_floatValueBuffer;
 		newMessageData._payloadSize = 2 * sizeof(float);
@@ -792,6 +794,7 @@ bool OSCProtocolProcessor::createFloatMessageData(const OSCMessage& messageInput
 		m_floatValueBuffer[1] = messageInput[1].getFloat32();
 		m_floatValueBuffer[2] = messageInput[2].getFloat32();
 
+		newMessageData._valType = ROVT_FLOAT;
 		newMessageData._valCount = 3;
 		newMessageData._payload = m_floatValueBuffer;
 		newMessageData._payloadSize = 3 * sizeof(float);
