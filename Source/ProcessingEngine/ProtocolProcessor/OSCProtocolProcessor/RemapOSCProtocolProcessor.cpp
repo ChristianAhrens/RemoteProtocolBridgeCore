@@ -113,11 +113,8 @@ bool RemapOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier r
 	auto remapRange = m_oscRemappings.at(roid).second;
 	if (!remapRange.isEmpty())
 	{
-		auto remapType = RemoteObjectValueType::ROVT_NONE; //todo
-		auto objectRange = ProcessingEngineConfig::GetRemoteObjectRange(roid);
-
 		RemoteObjectMessageData remappedData;
-		if (!MapMessageDataToTargetRangeAndType(msgData, ProcessingEngineConfig::GetRemoteObjectRange(roid), remapRange, remapType, remappedData))
+		if (!MapMessageDataToTargetRangeAndType(msgData, ProcessingEngineConfig::GetRemoteObjectRange(roid), remapRange, RemoteObjectValueType::ROVT_NONE, remappedData))
 			return false;
 		else
 			return SendAddressedMessage(addressString, remappedData);
@@ -258,7 +255,7 @@ bool RemapOSCProtocolProcessor::IsMatchingRemapping(const juce::String& remapPat
 	auto middleMatch = oscStringToMatch.contains(middleSection);
 
 	return startMatch && endMatch && middleMatch;
-#elif
+#else
 	return oscStringToMatch.startsWith(startSection) && oscStringToMatch.endsWith(endSection) && oscStringToMatch.contains(middleSection);
 #endif
 }
