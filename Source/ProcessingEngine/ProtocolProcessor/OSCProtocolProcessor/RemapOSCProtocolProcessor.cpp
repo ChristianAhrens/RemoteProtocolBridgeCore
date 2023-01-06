@@ -51,14 +51,16 @@ bool RemapOSCProtocolProcessor::setStateXml(XmlElement* stateXml)
 			{
 				for (int i = ROI_Invalid + 1; i < ROI_BridgingMAX; ++i)
 				{
-					auto ROId = static_cast<RemoteObjectIdentifier>(i);
-					if (oscRemappingXmlElement->getTagName() == ProcessingEngineConfig::GetObjectDescription(ROId).removeCharacters(" "))
+					auto roid = static_cast<RemoteObjectIdentifier>(i);
+					if (oscRemappingXmlElement->getTagName() == ProcessingEngineConfig::GetObjectDescription(roid).removeCharacters(" "))
 					{
 						auto oscRemappingTextElement = oscRemappingXmlElement->getFirstChildElement();
 						if (oscRemappingTextElement && oscRemappingTextElement->isTextElement())
 						{
-							juce::String remapPattern = oscRemappingTextElement->getText();
-							m_oscRemappings.insert(std::make_pair(ROId, remapPattern));
+							auto remapPattern = oscRemappingTextElement->getText();
+							auto minVal = static_cast<float>(oscRemappingXmlElement->getDoubleAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::MINVALUE)));
+							auto maxVal = static_cast<float>(oscRemappingXmlElement->getDoubleAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::MAXVALUE)));
+							m_oscRemappings.insert(std::make_pair(roid, std::make_pair(remapPattern, juce::Range<float>(minVal, maxVal))));
 						}
 					}
 				}
@@ -81,21 +83,21 @@ bool RemapOSCProtocolProcessor::setStateXml(XmlElement* stateXml)
 /**
  * Method to trigger sending of a message
  *
- * @param Id		The id of the object to send a message for
+ * @param roid		The id of the object to send a message for
  * @param msgData	The message payload and metadata
  */
-bool RemapOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
+bool RemapOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier roid, const RemoteObjectMessageData& msgData)
 {
 	// do not send any values if the config forbids data sending
 	if (m_dataSendindDisabled)
 		return false;
 
 	// we cannot send anything if no remapping for the given roi is configured
-	if (m_oscRemappings.count(Id) < 1)
+	if (m_oscRemappings.count(roid) < 1)
 		return false;
 
 	// assemble the addressing string
-	juce::String addressString = m_oscRemappings.at(Id);
+	auto addressString = m_oscRemappings.at(roid).first;
 	if (addressString.contains(juce::StringRef("%1")))
 	{
 		addressString.replace("%1", "%i");
@@ -106,8 +108,23 @@ bool RemapOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier I
 		addressString.replace("%2", "%i");
 		addressString = juce::String::formatted(addressString, msgData._addrVal._second);
 	}
-	
-	return SendAddressedMessage(addressString, msgData);
+
+	// map the value range to target range
+	auto remapRange = m_oscRemappings.at(roid).second;
+	if (!remapRange.isEmpty())
+	{
+		auto remapType = RemoteObjectValueType::ROVT_NONE; //todo
+		auto objectRange = ProcessingEngineConfig::GetRemoteObjectRange(roid);
+
+		RemoteObjectMessageData remappedData;
+		if (!MapMessageDataToTargetRangeAndType(msgData, ProcessingEngineConfig::GetRemoteObjectRange(roid), remapRange, remapType, remappedData))
+			return false;
+		else
+			return SendAddressedMessage(addressString, remappedData);
+	}
+	// or just send the data if no range is specified
+	else
+		return SendAddressedMessage(addressString, msgData);
 }
 
 /**
@@ -142,13 +159,16 @@ void RemapOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, co
 
 	// Match the incoming message contents against known mappings and derive the associated remote obejct id accordingly.
 	auto addressString = message.getAddressPattern().toString();
+	juce::Range<float>		valueRange;
 	for (auto const& remapping : m_oscRemappings)
 	{
-		if (IsMatchingRemapping(remapping.second, addressString))
+		if (IsMatchingRemapping(remapping.second.first, addressString))
 		{
 			newObjectId = remapping.first;
 
-			ExtractAddressingFromRemapping(remapping.second, addressString, channelId, recordId);
+			ExtractAddressingFromRemapping(remapping.second.first, addressString, channelId, recordId);
+
+			valueRange = remapping.second.second;
 
 			break;
 		}
@@ -177,7 +197,10 @@ void RemapOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, co
 		newMsgData._addrVal._first = channelId;
 		newMsgData._addrVal._second = recordId;
 
-		createMessageData(message, newObjectId, newMsgData);
+		if (valueRange.isEmpty())
+			createMessageData(message, newObjectId, newMsgData);
+		else
+			message; //todo
 
 		// provide the received message to parent node
 		if (m_messageListener)

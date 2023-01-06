@@ -259,3 +259,81 @@ void ProtocolProcessorBase::timerThreadCallback()
 		SendRemoteObjectMessage(obj._Id, msgData);
 	}
 }
+
+
+/**
+ * Helper method to normalize a given value to a given range without clipping
+ * @param	value				The value to normalize
+ * @param	normalizationRange	The range to normalize the value to
+ * @return	The normalized value.
+ */
+float ProtocolProcessorBase::NormalizeValueByRange(float value, const juce::Range<float>& normalizationRange)
+{
+	jassert(!normalizationRange.isEmpty());
+	if (normalizationRange.isEmpty())
+		return 0.0f;
+
+	auto valueInRange = value - normalizationRange.getStart();
+	auto normalizedInRangeValue = (valueInRange / normalizationRange.getLength());
+
+	return normalizedInRangeValue;
+}
+
+/**
+ * Helper method to map a normalized 0-1 value to a given range and optionally invert it.
+ * @param	normalizedValue		The normalized 0-1 value to map to extrude to the given range.
+ * @param	range				The range to map the value to.
+ * @param	invert				Bool indicator if the value shall be inverted in addition to mapping to range.
+ * @return	The mapped and optionally inverted value.
+ */
+float ProtocolProcessorBase::MapNormalizedValueToRange(float normalizedValue, const juce::Range<float>& range, bool invert)
+{
+	auto mappedValue = range.getStart() + normalizedValue * (range.getEnd() - range.getStart());
+
+	if (invert)
+	{
+		auto invertedMappedValue = range.getStart() + (range.getEnd() - mappedValue);
+		return invertedMappedValue;
+	}
+	else
+	{
+		return mappedValue;
+	}
+}
+
+/**
+ *
+ */
+bool ProtocolProcessorBase::MapMessageDataToTargetRangeAndType(const RemoteObjectMessageData& sourceData, const juce::Range<float>& sourceRange, const juce::Range<float>& targetRange, const RemoteObjectValueType targetType, RemoteObjectMessageData& targetData)
+{
+	auto normalizedObjValues = std::vector<float>();
+	auto valueCount = sourceData._valCount;
+
+	switch (sourceData._valType)
+	{
+	case ROVT_FLOAT:
+		jassert(sizeof(float) * valueCount == sourceData._payloadSize);
+		for (auto i = 0; i < valueCount; i++)
+		{
+			auto objectValue = static_cast<float*>(sourceData._payload)[i];
+			normalizedObjValues.push_back(NormalizeValueByRange(objectValue, sourceRange));
+		}
+		break;
+	case ROVT_INT:
+		jassert(sizeof(int) * valueCount == sourceData._payloadSize);
+		for (auto i = 0; i < valueCount; i++)
+		{
+			auto objectValue = static_cast<int*>(sourceData._payload)[i];
+			normalizedObjValues.push_back(NormalizeValueByRange(static_cast<float>(objectValue), sourceRange));
+		}
+		break;
+	case ROVT_NONE:
+	case ROVT_STRING:
+	default:
+		break;
+	}
+
+	//todo!!
+
+	return false;
+}

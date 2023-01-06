@@ -36,9 +36,8 @@ protected:
 	bool ExtractAddressingFromRemapping(const juce::String& remapPattern, const juce::String& oscStringToExtractFrom, ChannelId& channelId, RecordId& recordId);
 
 private:
-
 	bool	m_dataSendindDisabled{ false };	/**< Bool flag to indicate if incoming message send requests from bridging node shall be ignored. */
 
-	std::map<RemoteObjectIdentifier, juce::String>	m_oscRemappings;
+	std::map<RemoteObjectIdentifier, std::pair<juce::String, juce::Range<float>>>	m_oscRemappings;
 
 };
