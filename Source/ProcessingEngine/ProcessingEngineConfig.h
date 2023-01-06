@@ -81,6 +81,7 @@ public:
 		REACTMONIPROTOS,
 		VALTOCMDASSI,
 		XYMESSAGECOMBINED,
+		REMAPPINGS,
 	};
 	static String getTagName(TagID Id)
 	{
@@ -146,6 +147,8 @@ public:
 			return "ValToCmdAssi";
 		case XYMESSAGECOMBINED:
 			return "xyMessageCombined";
+		case REMAPPINGS:
+			return "Remappings";
 		default:
 			return "INVALID";
 		}
@@ -167,6 +170,8 @@ public:
 		STATE,
 		VALUE,
 		MULTIVALUE,
+		MINVALUE,
+		MAXVALUE,
 	};
 	static String getAttributeName(AttributeID Id)
 	{
@@ -200,6 +205,10 @@ public:
 			return "Value";
 		case MULTIVALUE:
 			return "MultiValue";
+		case MINVALUE:
+			return "MinValue";
+		case MAXVALUE:
+			return "MaxValue";
 		default:
 			return "INVALID";
 		}
