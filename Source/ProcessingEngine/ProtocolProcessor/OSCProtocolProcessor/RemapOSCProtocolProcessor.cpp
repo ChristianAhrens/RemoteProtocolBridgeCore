@@ -200,7 +200,21 @@ void RemapOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, co
 		if (valueRange.isEmpty())
 			createMessageData(message, newObjectId, newMsgData);
 		else
-			message; //todo
+		{
+			OSCMessage modMsg = message; // clone incoming const to be able to modify arguments
+			modMsg.clear();
+			for (auto const& arg : message)
+			{
+				if (arg.isFloat32())
+					modMsg.addFloat32(MapNormalizedValueToRange(NormalizeValueByRange(arg.getFloat32(), valueRange), ProcessingEngineConfig::GetRemoteObjectRange(newObjectId)));
+				else if (arg.isInt32())
+					modMsg.addFloat32(MapNormalizedValueToRange(NormalizeValueByRange(static_cast<float>(arg.getInt32()), valueRange), ProcessingEngineConfig::GetRemoteObjectRange(newObjectId)));
+				else
+					DBG(String(__FUNCTION__) + String(" value range based mapping is supported for float/int values only."));
+			}
+
+			createMessageData(modMsg, newObjectId, newMsgData);
+		}
 
 		// provide the received message to parent node
 		if (m_messageListener)

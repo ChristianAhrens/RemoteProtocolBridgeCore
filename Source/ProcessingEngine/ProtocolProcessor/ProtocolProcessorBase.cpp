@@ -302,26 +302,31 @@ float ProtocolProcessorBase::MapNormalizedValueToRange(float normalizedValue, co
 }
 
 /**
- *
+ * Helper to map a given MessageData struct with a given incoming range to another MessageData struct and range.
+ * @param	sourceData		The incoming MessageData struct
+ * @param	sourceRange		The value range the incoming message data values refer to
+ * @param	targetRange		The value range the outgoing message data values shall be mapped to
+ * @param	targetType		The dataType the outgoing message data values shall be of
+ * @param	targetData		The outgoing MessageData struct
+ * @return	True if mapping was successful. False if the target datatype was not supported for range-mapping. In the latter case, the targetData output will be empty.
  */
 bool ProtocolProcessorBase::MapMessageDataToTargetRangeAndType(const RemoteObjectMessageData& sourceData, const juce::Range<float>& sourceRange, const juce::Range<float>& targetRange, const RemoteObjectValueType targetType, RemoteObjectMessageData& targetData)
 {
+	// Normalize the incoming message data values against the incoming source range
 	auto normalizedObjValues = std::vector<float>();
-	auto valueCount = sourceData._valCount;
-
 	switch (sourceData._valType)
 	{
 	case ROVT_FLOAT:
-		jassert(sizeof(float) * valueCount == sourceData._payloadSize);
-		for (auto i = 0; i < valueCount; i++)
+		jassert(sizeof(float) * sourceData._valCount == sourceData._payloadSize);
+		for (auto i = 0; i < sourceData._valCount; i++)
 		{
 			auto objectValue = static_cast<float*>(sourceData._payload)[i];
 			normalizedObjValues.push_back(NormalizeValueByRange(objectValue, sourceRange));
 		}
 		break;
 	case ROVT_INT:
-		jassert(sizeof(int) * valueCount == sourceData._payloadSize);
-		for (auto i = 0; i < valueCount; i++)
+		jassert(sizeof(int) * sourceData._valCount == sourceData._payloadSize);
+		for (auto i = 0; i < sourceData._valCount; i++)
 		{
 			auto objectValue = static_cast<int*>(sourceData._payload)[i];
 			normalizedObjValues.push_back(NormalizeValueByRange(static_cast<float>(objectValue), sourceRange));
@@ -333,7 +338,40 @@ bool ProtocolProcessorBase::MapMessageDataToTargetRangeAndType(const RemoteObjec
 		break;
 	}
 
-	//todo!!
+	// map the normalized message data on the incoming target range
+	auto targetRangeMappedObjValues = std::vector<float>();
+	for (auto const& normalizedValue : normalizedObjValues)
+		targetRangeMappedObjValues.push_back(MapNormalizedValueToRange(normalizedValue, targetRange));
+
+	// dump the mapped data into outgoing message data struct
+	targetData = sourceData;
+	switch (targetType)
+	{
+	case ROVT_FLOAT:
+		targetData._valType = targetType;
+		targetData._valCount = static_cast<std::uint16_t>(targetRangeMappedObjValues.size());
+		targetData._payload = new float[targetData._valCount];
+		targetData._payloadSize = sizeof(float) * targetData._valCount;
+		for (auto i = 0; i < targetData._valCount; i++)
+			static_cast<float*>(targetData._payload)[i] = targetRangeMappedObjValues.at(i);
+		return true;
+	case ROVT_INT:
+		targetData._valType = targetType;
+		targetData._valCount = static_cast<std::uint16_t>(targetRangeMappedObjValues.size());
+		targetData._payload = new int[targetData._valCount];
+		targetData._payloadSize = sizeof(int) * targetData._valCount;
+		for (auto i = 0; i < targetData._valCount; i++)
+			static_cast<int*>(targetData._payload)[i] = static_cast<int>(targetRangeMappedObjValues.at(i));
+		return true;
+	case ROVT_NONE:
+	case ROVT_STRING:
+	default:
+		targetData._valType = ROVT_NONE;
+		targetData._valCount = 0;
+		targetData._payload = nullptr;
+		targetData._payloadSize = 0;
+		break;
+	}
 
 	return false;
 }
