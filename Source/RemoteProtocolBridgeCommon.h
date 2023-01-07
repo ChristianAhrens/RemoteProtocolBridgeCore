@@ -184,6 +184,7 @@ enum RemoteObjectIdentifier
 	ROI_RemoteProtocolBridge_SoundObjectGroupSelect,
 	ROI_RemoteProtocolBridge_MatrixInputGroupSelect,
 	ROI_RemoteProtocolBridge_MatrixOutputGroupSelect,
+	ROI_InvalidMAX
 };
 
 /**
