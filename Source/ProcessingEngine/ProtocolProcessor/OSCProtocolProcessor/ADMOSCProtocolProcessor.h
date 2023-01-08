@@ -82,9 +82,6 @@ private:
 	bool CreateMessageDataFromObjectCache(const RemoteObjectIdentifier& id, const ChannelId& channel, RemoteObjectMessageData& addressing);
 	ADMObjectType WriteMessageDataToObjectCache(const RemoteObjectIdentifier& id, const RemoteObjectMessageData& messageData);
 
-	float NormalizeValueByRange(float value, const juce::Range<float>& normalizationRange);
-	float MapNormalizedValueToRange(float normalizedValue, const juce::Range<float>& range, bool invert = false);
-
 	std::map<ChannelId, std::map<ADMObjectType, float>>	m_objectValueCache;				/**< The cached object values, to be able to cross-calculate
 																						 *	 between coordinate systems, even if only single-val message is received. */
 	MappingAreaId	m_mappingAreaId{ MAI_Invalid };	/**< The DS100 mapping area to be used when converting

@@ -55,6 +55,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ProtocolProcessor/MIDIProtocolProcessor/MIDIProtocolProcessor.h"
 #include "ProtocolProcessor/OSCProtocolProcessor/YmhOSCProtocolProcessor.h"
 #include "ProtocolProcessor/OSCProtocolProcessor/ADMOSCProtocolProcessor.h"
+#include "ProtocolProcessor/OSCProtocolProcessor/RemapOSCProtocolProcessor.h"
 
 // **************************************************************************************
 //    class ProcessingEngineNode
@@ -401,6 +402,8 @@ ProtocolProcessorBase *ProcessingEngineNode::CreateProtocolProcessor(ProtocolTyp
 			return new YmhOSCProtocolProcessor(m_nodeId, listenerPortNumber);
 		case PT_ADMOSCProtocol:
 			return new ADMOSCProtocolProcessor(m_nodeId, listenerPortNumber);
+		case PT_RemapOSCProtocol:
+			return new RemapOSCProtocolProcessor(m_nodeId, listenerPortNumber);
 		default:
 			return nullptr;
 	}

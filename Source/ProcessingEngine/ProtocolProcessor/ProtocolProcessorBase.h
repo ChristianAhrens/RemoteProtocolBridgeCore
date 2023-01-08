@@ -97,6 +97,11 @@ public:
 	bool IsRemoteObjectMuted(RemoteObject object);
 
 	//==============================================================================
+	static float NormalizeValueByRange(float value, const juce::Range<float>& normalizationRange);
+	static float MapNormalizedValueToRange(float normalizedValue, const juce::Range<float>& range, bool invert = false);
+	static bool MapMessageDataToTargetRangeAndType(const RemoteObjectMessageData& sourceData, const juce::Range<float>& sourceRange, const juce::Range<float>& targetRange, const RemoteObjectValueType targetType, RemoteObjectMessageData& targetData);
+
+	//==============================================================================
 	std::unique_ptr<XmlElement> createStateXml() override { return nullptr; };
 	virtual bool setStateXml(XmlElement* stateXml) override;								
 

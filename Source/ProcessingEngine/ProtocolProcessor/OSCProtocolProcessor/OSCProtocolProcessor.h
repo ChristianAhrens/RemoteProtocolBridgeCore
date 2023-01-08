@@ -72,9 +72,10 @@ public:
 protected:
 	void SetIpAddress(const std::string& ipAddress) override;
 
-	void createIntMessageData(const OSCMessage &messageInput, RemoteObjectMessageData &newMessageData);
-	void createFloatMessageData(const OSCMessage& messageInput, RemoteObjectMessageData& newMessageData);
-	void createStringMessageData(const OSCMessage& messageInput, RemoteObjectMessageData& newMessageData);
+	bool createMessageData(const OSCMessage& messageInput, const RemoteObjectIdentifier& objectId, RemoteObjectMessageData& newMessageData);
+	bool createIntMessageData(const OSCMessage& messageInput, RemoteObjectMessageData& newMessageData);
+	bool createFloatMessageData(const OSCMessage& messageInput, RemoteObjectMessageData& newMessageData);
+	bool createStringMessageData(const OSCMessage& messageInput, RemoteObjectMessageData& newMessageData);
     
     bool connectSenderIfRequired();
 

@@ -341,12 +341,6 @@ void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const S
 	}
 
 	RemoteObjectMessageData newMsgData;
-	newMsgData._addrVal._first = INVALID_ADDRESS_VALUE;
-	newMsgData._addrVal._second = INVALID_ADDRESS_VALUE;
-	newMsgData._valType = ROVT_NONE;
-	newMsgData._valCount = 0;
-	newMsgData._payload = 0;
-	newMsgData._payloadSize = 0;
 
 	String addressString = message.getAddressPattern().toString();
 	// Check if the incoming message is a response to a sent "ping" heartbeat.
@@ -513,78 +507,7 @@ void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const S
 		newMsgData._addrVal._second = recordId;
 		newMsgData._valType = ROVT_FLOAT;
 
-		switch (newObjectId)
-		{
-		case ROI_Error_GnrlErr:
-		case ROI_MatrixInput_Select:
-		case ROI_MatrixInput_Mute:
-		case ROI_MatrixInput_DelayEnable:
-		case ROI_MatrixInput_EqEnable:
-		case ROI_MatrixInput_Polarity:
-		case ROI_MatrixNode_Enable:
-		case ROI_MatrixNode_DelayEnable:
-		case ROI_MatrixOutput_Mute:
-		case ROI_MatrixOutput_DelayEnable:
-		case ROI_MatrixOutput_EqEnable:
-		case ROI_MatrixOutput_Polarity:
-		case ROI_Positioning_SourceDelayMode:
-		case ROI_MatrixSettings_ReverbRoomId:
-		case ROI_ReverbInputProcessing_Mute:
-		case ROI_ReverbInputProcessing_EqEnable:
-		case ROI_Scene_Recall:
-		case ROI_RemoteProtocolBridge_SoundObjectSelect:
-		case ROI_RemoteProtocolBridge_UIElementIndexSelect:
-		case ROI_RemoteProtocolBridge_SoundObjectGroupSelect:
-		case ROI_RemoteProtocolBridge_MatrixInputGroupSelect:
-		case ROI_RemoteProtocolBridge_MatrixOutputGroupSelect:
-			createIntMessageData(message, newMsgData);
-			break;
-		case ROI_MatrixInput_Gain:
-		case ROI_MatrixInput_Delay:
-		case ROI_MatrixInput_LevelMeterPreMute:
-		case ROI_MatrixInput_LevelMeterPostMute:
-		case ROI_MatrixNode_Gain:
-		case ROI_MatrixNode_Delay:
-		case ROI_MatrixOutput_Gain:
-		case ROI_MatrixOutput_Delay:
-		case ROI_MatrixOutput_LevelMeterPreMute:
-		case ROI_MatrixOutput_LevelMeterPostMute:
-		case ROI_Positioning_SourceSpread:
-		case ROI_Positioning_SourcePosition_XY:
-		case ROI_Positioning_SourcePosition_X:
-		case ROI_Positioning_SourcePosition_Y:
-		case ROI_Positioning_SourcePosition:
-		case ROI_MatrixSettings_ReverbPredelayFactor:
-		case ROI_MatrixSettings_ReverbRearLevel:
-		case ROI_MatrixInput_ReverbSendGain:
-		case ROI_ReverbInput_Gain:
-		case ROI_ReverbInputProcessing_Gain:
-		case ROI_ReverbInputProcessing_LevelMeter:
-		case ROI_CoordinateMapping_SourcePosition_XY:
-		case ROI_CoordinateMapping_SourcePosition_X:
-		case ROI_CoordinateMapping_SourcePosition_Y:
-		case ROI_CoordinateMapping_SourcePosition:
-			createFloatMessageData(message, newMsgData);
-			break;
-		case ROI_Scene_SceneIndex:
-		case ROI_Settings_DeviceName:
-		case ROI_Error_ErrorText:
-		case ROI_Status_StatusText:
-		case ROI_MatrixInput_ChannelName:
-		case ROI_MatrixOutput_ChannelName:
-		case ROI_Scene_SceneName:
-		case ROI_Scene_SceneComment:
-			createStringMessageData(message, newMsgData);
-			break;
-		case ROI_Device_Clear:
-		case ROI_Scene_Previous:
-		case ROI_Scene_Next:
-		case ROI_RemoteProtocolBridge_GetAllKnownValues:
-			break;
-		default:
-			jassertfalse;
-			break;
-		}
+		createMessageData(message, newObjectId, newMsgData);
 
 		// provide the received message to parent node
 		if (m_messageListener)
@@ -751,40 +674,135 @@ void OSCProtocolProcessor::SetIpAddress(const std::string& ipAddress)
 }
 
 /**
+ * Proxy helper method to process the given objectId and forward the call to the appropriate
+ * int/float/string method to have the remote object message data struct filled with data from an osc message.
+ * @param	messageInput	The osc input message to read from.
+ * @param	objectId		The object id that defines what data can be read from messageInput.
+ * @param	newMessageData	The message data struct to fill data into.
+ * @return	True on success, false on failure.
+ */
+bool OSCProtocolProcessor::createMessageData(const OSCMessage& messageInput, const RemoteObjectIdentifier& objectId, RemoteObjectMessageData& newMessageData)
+{
+	switch (objectId)
+	{
+		case ROI_Error_GnrlErr:
+		case ROI_MatrixInput_Select:
+		case ROI_MatrixInput_Mute:
+		case ROI_MatrixInput_DelayEnable:
+		case ROI_MatrixInput_EqEnable:
+		case ROI_MatrixInput_Polarity:
+		case ROI_MatrixNode_Enable:
+		case ROI_MatrixNode_DelayEnable:
+		case ROI_MatrixOutput_Mute:
+		case ROI_MatrixOutput_DelayEnable:
+		case ROI_MatrixOutput_EqEnable:
+		case ROI_MatrixOutput_Polarity:
+		case ROI_Positioning_SourceDelayMode:
+		case ROI_MatrixSettings_ReverbRoomId:
+		case ROI_ReverbInputProcessing_Mute:
+		case ROI_ReverbInputProcessing_EqEnable:
+		case ROI_Scene_Recall:
+		case ROI_RemoteProtocolBridge_SoundObjectSelect:
+		case ROI_RemoteProtocolBridge_UIElementIndexSelect:
+		case ROI_RemoteProtocolBridge_SoundObjectGroupSelect:
+		case ROI_RemoteProtocolBridge_MatrixInputGroupSelect:
+		case ROI_RemoteProtocolBridge_MatrixOutputGroupSelect:
+			return createIntMessageData(messageInput, newMessageData);
+		case ROI_MatrixInput_Gain:
+		case ROI_MatrixInput_Delay:
+		case ROI_MatrixInput_LevelMeterPreMute:
+		case ROI_MatrixInput_LevelMeterPostMute:
+		case ROI_MatrixNode_Gain:
+		case ROI_MatrixNode_Delay:
+		case ROI_MatrixOutput_Gain:
+		case ROI_MatrixOutput_Delay:
+		case ROI_MatrixOutput_LevelMeterPreMute:
+		case ROI_MatrixOutput_LevelMeterPostMute:
+		case ROI_Positioning_SourceSpread:
+		case ROI_Positioning_SourcePosition_XY:
+		case ROI_Positioning_SourcePosition_X:
+		case ROI_Positioning_SourcePosition_Y:
+		case ROI_Positioning_SourcePosition:
+		case ROI_MatrixSettings_ReverbPredelayFactor:
+		case ROI_MatrixSettings_ReverbRearLevel:
+		case ROI_MatrixInput_ReverbSendGain:
+		case ROI_ReverbInput_Gain:
+		case ROI_ReverbInputProcessing_Gain:
+		case ROI_ReverbInputProcessing_LevelMeter:
+		case ROI_CoordinateMapping_SourcePosition_XY:
+		case ROI_CoordinateMapping_SourcePosition_X:
+		case ROI_CoordinateMapping_SourcePosition_Y:
+		case ROI_CoordinateMapping_SourcePosition:
+			return createFloatMessageData(messageInput, newMessageData);
+		case ROI_Scene_SceneIndex:
+		case ROI_Settings_DeviceName:
+		case ROI_Error_ErrorText:
+		case ROI_Status_StatusText:
+		case ROI_MatrixInput_ChannelName:
+		case ROI_MatrixOutput_ChannelName:
+		case ROI_Scene_SceneName:
+		case ROI_Scene_SceneComment:
+			return createStringMessageData(messageInput, newMessageData);
+		case ROI_Device_Clear:
+		case ROI_Scene_Previous:
+		case ROI_Scene_Next:
+		case ROI_RemoteProtocolBridge_GetAllKnownValues:
+			break;
+		default:
+			jassertfalse;
+			break;
+	}
+
+	return false;
+}
+
+/**
  * Helper method to fill a new remote object message data struct with data from an osc message.
  * This method reads floats from osc message and fills it into the message data struct.
  * @param messageInput	The osc input message to read from.
  * @param newMessageData	The message data struct to fill data into.
+ * @return	True on success, false on failure.
  */
-void OSCProtocolProcessor::createFloatMessageData(const OSCMessage& messageInput, RemoteObjectMessageData& newMessageData)
+bool OSCProtocolProcessor::createFloatMessageData(const OSCMessage& messageInput, RemoteObjectMessageData& newMessageData)
 {
 	if (messageInput.size() == 1)
 	{
 		m_floatValueBuffer[0] = messageInput[0].getFloat32();
 
+		newMessageData._valType = ROVT_FLOAT;
 		newMessageData._valCount = 1;
 		newMessageData._payload = m_floatValueBuffer;
 		newMessageData._payloadSize = sizeof(float);
+
+		return true;
 	}
-	if (messageInput.size() == 2)
+	else if (messageInput.size() == 2)
 	{
 		m_floatValueBuffer[0] = messageInput[0].getFloat32();
 		m_floatValueBuffer[1] = messageInput[1].getFloat32();
 
+		newMessageData._valType = ROVT_FLOAT;
 		newMessageData._valCount = 2;
 		newMessageData._payload = m_floatValueBuffer;
 		newMessageData._payloadSize = 2 * sizeof(float);
+
+		return true;
 	}
-	if (messageInput.size() == 3)
+	else if (messageInput.size() == 3)
 	{
 		m_floatValueBuffer[0] = messageInput[0].getFloat32();
 		m_floatValueBuffer[1] = messageInput[1].getFloat32();
 		m_floatValueBuffer[2] = messageInput[2].getFloat32();
 
+		newMessageData._valType = ROVT_FLOAT;
 		newMessageData._valCount = 3;
 		newMessageData._payload = m_floatValueBuffer;
 		newMessageData._payloadSize = 3 * sizeof(float);
+
+		return true;
 	}
+	else
+		return false;
 }
 
 /**
@@ -792,8 +810,9 @@ void OSCProtocolProcessor::createFloatMessageData(const OSCMessage& messageInput
  * This method reads two ints from osc message and fills them into the message data struct.
  * @param messageInput	The osc input message to read from.
  * @param newMessageData	The message data struct to fill data into.
+ * @return	True on success, false on failure.
  */
-void OSCProtocolProcessor::createIntMessageData(const OSCMessage& messageInput, RemoteObjectMessageData& newMessageData)
+bool OSCProtocolProcessor::createIntMessageData(const OSCMessage& messageInput, RemoteObjectMessageData& newMessageData)
 {
 	if (messageInput.size() == 1)
 	{
@@ -808,6 +827,8 @@ void OSCProtocolProcessor::createIntMessageData(const OSCMessage& messageInput, 
 		newMessageData._valCount = 1;
 		newMessageData._payload = m_intValueBuffer;
 		newMessageData._payloadSize = sizeof(int);
+
+		return true;
 	}
 	else if (messageInput.size() == 2)
 	{
@@ -826,7 +847,11 @@ void OSCProtocolProcessor::createIntMessageData(const OSCMessage& messageInput, 
 		newMessageData._valCount = 2;
 		newMessageData._payload = m_intValueBuffer;
 		newMessageData._payloadSize = 2 * sizeof(int);
+
+		return true;
 	}
+	else
+		return false;
 }
 
 /**
@@ -834,8 +859,9 @@ void OSCProtocolProcessor::createIntMessageData(const OSCMessage& messageInput, 
  * This method reads a string from osc message and fills it into the message data struct.
  * @param messageInput	The osc input message to read from.
  * @param newMessageData	The message data struct to fill data into.
+ * @return	True on success, false on failure.
  */
-void OSCProtocolProcessor::createStringMessageData(const OSCMessage& messageInput, RemoteObjectMessageData& newMessageData)
+bool OSCProtocolProcessor::createStringMessageData(const OSCMessage& messageInput, RemoteObjectMessageData& newMessageData)
 {
 	if (messageInput.size() == 1)
 	{
@@ -851,7 +877,11 @@ void OSCProtocolProcessor::createStringMessageData(const OSCMessage& messageInpu
 		tempMessageData._payload = m_stringValueBuffer.getCharPointer().getAddress();
 		tempMessageData._payloadSize = static_cast<std::uint32_t>(m_stringValueBuffer.getCharPointer().sizeInBytes());
 		tempMessageData._payloadOwned = false;
-		
+
 		newMessageData.payloadCopy(tempMessageData);
+
+		return true;
 	}
+	else
+		return false;
 }
