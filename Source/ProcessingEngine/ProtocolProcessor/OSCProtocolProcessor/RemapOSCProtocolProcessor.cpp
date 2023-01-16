@@ -182,10 +182,19 @@ void RemapOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, co
 		m_messageListener->OnProtocolMessageReceived(this, ROI_HeartbeatPing, newMsgData);
 	else
 	{
+		// Invalidate channelid addressing if the object does not use channel info
 		if (!ProcessingEngineConfig::IsChannelAddressingObject(newObjectId))
 			channelId = INVALID_ADDRESS_VALUE;
+		// or set a valid default channelid if the object requires it but none was received
+		else if (channelId == INVALID_ADDRESS_VALUE)
+			channelId = 1;
+
+		// Invalidate recordid addressing if the object does not use record info
 		if (!ProcessingEngineConfig::IsRecordAddressingObject(newObjectId))
 			recordId = INVALID_ADDRESS_VALUE;
+		// or set a valid default recordid if the object requires it but none was received
+		else if (recordId == INVALID_ADDRESS_VALUE)
+			recordId = 1;
 
 		// If the received channel (source) is set to muted, return without further processing
 		if (IsRemoteObjectMuted(RemoteObject(newObjectId, RemoteObjectAddressing(channelId, recordId))))
