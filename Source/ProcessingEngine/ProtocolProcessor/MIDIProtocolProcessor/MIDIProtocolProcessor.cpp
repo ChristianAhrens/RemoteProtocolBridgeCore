@@ -537,6 +537,10 @@ bool MIDIProtocolProcessor::setStateXml(XmlElement* stateXml)
 							auto midiAssiStr = assiMapSubHexStringTextXmlElement->getText();
 							if (midiAssiStr.isNotEmpty() && midiAssi.deserializeFromHexString(midiAssiStr))
 								m_midiAssiWithValueMap[roi][midiAssi] = value.toStdString();
+							else if (value.isEmpty())
+								m_midiAssiWithValueMap[roi].erase(midiAssi);
+							else
+								m_midiAssiWithValueMap[roi].clear();
 						}
 					}
 				}
@@ -550,6 +554,8 @@ bool MIDIProtocolProcessor::setStateXml(XmlElement* stateXml)
 						auto midiAssiStr = assiMapHexStringTextXmlElement->getText();
 						if (midiAssiStr.isNotEmpty() && midiAssi.deserializeFromHexString(midiAssiStr))
 							m_midiAssiMap[roi] = midiAssi;
+						else
+							m_midiAssiMap[roi] = JUCEAppBasics::MidiCommandRangeAssignment();
 					}
 				}
 			}
