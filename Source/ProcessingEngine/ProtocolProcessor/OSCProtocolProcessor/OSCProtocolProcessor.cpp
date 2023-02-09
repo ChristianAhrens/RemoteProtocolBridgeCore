@@ -44,12 +44,13 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * Derived OSC remote protocol processing class
  */
 OSCProtocolProcessor::OSCProtocolProcessor(const NodeId& parentNodeId, int listenerPortNumber)
-	: NetworkProtocolProcessorBase(parentNodeId), m_oscReceiver(listenerPortNumber)
+	: NetworkProtocolProcessorBase(parentNodeId)
 {
 	m_type = ProtocolType::PT_OSCProtocol;
 
 	// OSCProtocolProcessor derives from OSCReceiver::RealtimeCallback
-	m_oscReceiver.addListener(this);
+	m_oscReceiver = std::make_unique<SenderAwareOSCReceiver>(listenerPortNumber);
+	m_oscReceiver->addListener(this);
 }
 
 /**
@@ -59,7 +60,8 @@ OSCProtocolProcessor::~OSCProtocolProcessor()
 {
 	Stop();
 
-	m_oscReceiver.removeListener(this);
+	if (m_oscReceiver)
+		m_oscReceiver->removeListener(this);
 }
 
 /**
@@ -74,7 +76,8 @@ bool OSCProtocolProcessor::Start()
 	// Connect both sender and receiver  
     successS = connectSenderIfRequired();
 
-	successR = m_oscReceiver.connect();
+	if (m_oscReceiver)
+		successR = m_oscReceiver->connect();
 	jassert(successR);
 
 	// start the send timer thread
@@ -99,7 +102,9 @@ bool OSCProtocolProcessor::Stop()
 	m_oscSenderConnected = !m_oscSender.disconnect();
 	jassert(!m_oscSenderConnected);
 
-	auto oscReceiverConnected = !m_oscReceiver.disconnect();
+	auto oscReceiverConnected = false;
+	if (m_oscReceiver)
+		oscReceiverConnected = !m_oscReceiver->disconnect();
 	jassert(!oscReceiverConnected);
 
 	return (!m_oscSenderConnected && !oscReceiverConnected);
@@ -671,6 +676,26 @@ void OSCProtocolProcessor::SetIpAddress(const std::string& ipAddress)
 		NetworkProtocolProcessorBase::SetIpAddress(ipAddress);
 	else
 		m_autodetectClientConnection = true;
+}
+
+/**
+ * Reimplemented setter for the internal host port member,
+ * to be able to reinstantiate the osc receiver object with the changed port.
+ * @param	hostPort	The value to set for host port member.
+ */
+void OSCProtocolProcessor::SetHostPort(std::int32_t hostPort)
+{
+	if (hostPort != GetHostPort())
+	{
+		NetworkProtocolProcessorBase::SetHostPort(hostPort);
+		
+		if (m_IsRunning && m_oscReceiver)
+			m_oscReceiver->disconnect();
+		m_oscReceiver = std::make_unique<SenderAwareOSCReceiver>(hostPort);
+		m_oscReceiver->addListener(this);
+		if (m_IsRunning && m_oscReceiver)
+			m_oscReceiver->connect();
+	}
 }
 
 /**

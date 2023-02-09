@@ -72,6 +72,8 @@ public:
 protected:
 	void SetIpAddress(const std::string& ipAddress) override;
 
+	void SetHostPort(std::int32_t hostPort) override;
+
 	bool createMessageData(const OSCMessage& messageInput, const RemoteObjectIdentifier& objectId, RemoteObjectMessageData& newMessageData);
 	bool createIntMessageData(const OSCMessage& messageInput, RemoteObjectMessageData& newMessageData);
 	bool createFloatMessageData(const OSCMessage& messageInput, RemoteObjectMessageData& newMessageData);
@@ -79,11 +81,11 @@ protected:
     
     bool connectSenderIfRequired();
 
-	OSCSender				m_oscSender;					/**< An OSCSender object can connect to a network port. It then can send OSC
-															   * messages and bundles to a specified host over an UDP socket. */
-	bool					m_oscSenderConnected{ false };	/**< Bool indicator, if the connection of the sender object to a client is established. */
-	SenderAwareOSCReceiver	m_oscReceiver;					/**< An OSCReceiver object can connect to a network port, receive incoming OSC packets from the network
-															   * via UDP, parse them, and forward the included OSCMessage and OSCBundle objects to its listeners. */
+	OSCSender								m_oscSender;					/**< An OSCSender object can connect to a network port. It then can send OSC
+																			 * messages and bundles to a specified host over an UDP socket. */
+	bool									m_oscSenderConnected{ false };	/**< Bool indicator, if the connection of the sender object to a client is established. */
+	std::unique_ptr<SenderAwareOSCReceiver>	m_oscReceiver;					/**< An OSCReceiver object can connect to a network port, receive incoming OSC packets from the network
+																			 * via UDP, parse them, and forward the included OSCMessage and OSCBundle objects to its listeners. */
 
 	float m_floatValueBuffer[3] = { 0.0f, 0.0f, 0.0f };
 	int m_intValueBuffer[2] = { 0, 0 };

@@ -44,7 +44,7 @@ protected:
 	std::int32_t GetClientPort();
 	void SetClientPort(std::int32_t clientPort);
 	std::int32_t GetHostPort();
-	void SetHostPort(std::int32_t hostPort);
+	virtual void SetHostPort(std::int32_t hostPort);
 
 private:
 	std::string		m_ipAddress;	/**< IP Address where messages will be sent to / received from. */

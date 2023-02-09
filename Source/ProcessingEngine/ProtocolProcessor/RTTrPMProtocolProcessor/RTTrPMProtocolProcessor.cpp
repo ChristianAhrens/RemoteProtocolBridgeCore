@@ -28,12 +28,13 @@
  * Derived RTTrPM remote protocol processing class
  */
 RTTrPMProtocolProcessor::RTTrPMProtocolProcessor(const NodeId& parentNodeId, int listenerPortNumber)
-	: NetworkProtocolProcessorBase(parentNodeId), m_rttrpmReceiver(listenerPortNumber)
+	: NetworkProtocolProcessorBase(parentNodeId)
 {
 	m_type = ProtocolType::PT_RTTrPMProtocol;
 
 	// RTTrPMProtocolProcessor derives from RTTrPMReceiver::RealtimeListener
-	m_rttrpmReceiver.addListener(this);
+	m_rttrpmReceiver = std::make_unique<RTTrPMReceiver>(listenerPortNumber);
+	m_rttrpmReceiver->addListener(this);
 }
 
 /**
@@ -43,7 +44,8 @@ RTTrPMProtocolProcessor::~RTTrPMProtocolProcessor()
 {
 	Stop();
 
-	m_rttrpmReceiver.removeListener(this);
+	if (m_rttrpmReceiver)
+		m_rttrpmReceiver->removeListener(this);
 }
 
 /**
@@ -52,7 +54,8 @@ RTTrPMProtocolProcessor::~RTTrPMProtocolProcessor()
  */
 bool RTTrPMProtocolProcessor::Start()
 {
-	m_IsRunning = m_rttrpmReceiver.start();
+	if (m_rttrpmReceiver)
+		m_IsRunning = m_rttrpmReceiver->start();
 
 	return m_IsRunning;
 }
@@ -62,9 +65,30 @@ bool RTTrPMProtocolProcessor::Start()
  */
 bool RTTrPMProtocolProcessor::Stop()
 {
-	m_IsRunning = !m_rttrpmReceiver.stop();
+	if (m_rttrpmReceiver)
+		m_IsRunning = !m_rttrpmReceiver->stop();
 
 	return !m_IsRunning;
+}
+
+/**
+ * Reimplemented setter for the internal host port member,
+ * to be able to reinstantiate the rttrpm receiver object with the changed port.
+ * @param	hostPort	The value to set for host port member.
+ */
+void RTTrPMProtocolProcessor::SetHostPort(std::int32_t hostPort)
+{
+	if (hostPort != GetHostPort())
+	{
+		NetworkProtocolProcessorBase::SetHostPort(hostPort);
+
+		if (m_IsRunning && m_rttrpmReceiver)
+			m_rttrpmReceiver->stop();
+		m_rttrpmReceiver = std::make_unique<RTTrPMReceiver>(hostPort);
+		m_rttrpmReceiver->addListener(this);
+		if (m_IsRunning && m_rttrpmReceiver)
+			m_rttrpmReceiver->start();
+	}
 }
 
 /**
