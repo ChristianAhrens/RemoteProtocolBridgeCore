@@ -37,9 +37,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ProcessingEngineConfig.h"
 #include "../LoggingTarget_Interface.h"
 
-#include "ProtocolProcessor/OSCProtocolProcessor/OSCProtocolProcessor.h"
-#include "ProtocolProcessor/OCAProtocolProcessor/OCAProtocolProcessor.h"
-
 // **************************************************************************************
 //    class ProcessingEngine
 // **************************************************************************************

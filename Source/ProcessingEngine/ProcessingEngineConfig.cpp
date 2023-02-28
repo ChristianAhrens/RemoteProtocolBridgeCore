@@ -1057,8 +1057,8 @@ String  ProcessingEngineConfig::ProtocolTypeToString(ProtocolType pt)
 {
 	switch (pt)
 	{
-	case PT_OCAProtocol:
-		return "OCA";
+	case PT_OCP1Protocol:
+		return "OCP1";
 	case PT_OSCProtocol:
 		return "OSC";
 	case PT_YamahaOSCProtocol:
@@ -1083,8 +1083,8 @@ String  ProcessingEngineConfig::ProtocolTypeToString(ProtocolType pt)
 */
 ProtocolType  ProcessingEngineConfig::ProtocolTypeFromString(String type)
 {
-	if (type == ProtocolTypeToString(PT_OCAProtocol))
-		return PT_OCAProtocol;
+	if (type == ProtocolTypeToString(PT_OCP1Protocol))
+		return PT_OCP1Protocol;
 	if (type == ProtocolTypeToString(PT_OSCProtocol))
 		return PT_OSCProtocol;
 	if (type == ProtocolTypeToString(PT_MidiProtocol))

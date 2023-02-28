@@ -49,7 +49,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ObjectDataHandling/A1active_withValFilter/A1active_withValFilter.h"
 #include "ObjectDataHandling/A2active_withValFilter/A2active_withValFilter.h"
 
-#include "ProtocolProcessor/OCAProtocolProcessor/OCAProtocolProcessor.h"
+#include "ProtocolProcessor/OCP1ProtocolProcessor/OCP1ProtocolProcessor.h"
 #include "ProtocolProcessor/OSCProtocolProcessor/OSCProtocolProcessor.h"
 #include "ProtocolProcessor/RTTrPMProtocolProcessor/RTTrPMProtocolProcessor.h"
 #include "ProtocolProcessor/MIDIProtocolProcessor/MIDIProtocolProcessor.h"
@@ -392,8 +392,8 @@ ProtocolProcessorBase *ProcessingEngineNode::CreateProtocolProcessor(ProtocolTyp
 	{
 		case PT_OSCProtocol:
 			return new OSCProtocolProcessor(m_nodeId, listenerPortNumber);
-		case PT_OCAProtocol:
-			return new OCAProtocolProcessor(m_nodeId);
+		case PT_OCP1Protocol:
+			return new OCP1ProtocolProcessor(m_nodeId);
 		case PT_RTTrPMProtocol:
 			return new RTTrPMProtocolProcessor(m_nodeId, listenerPortNumber);
 		case PT_MidiProtocol:

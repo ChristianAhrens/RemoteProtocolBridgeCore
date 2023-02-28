@@ -63,7 +63,7 @@ typedef std::int8_t		RecordId;
 enum ProtocolType
 {
 	PT_Invalid = 0,			/**< Invalid protocol type value. */
-	PT_OCAProtocol,			/**< OCA protocol type value. */
+	PT_OCP1Protocol,			/**< OCA protocol type value. */
 	PT_OSCProtocol,			/**< OSC protocol type value. */
 	PT_MidiProtocol,		/**< MIDI protocol type value. */
 	PT_RTTrPMProtocol,		/**< Blacktrax RTTrPMotion protocol type value. */
