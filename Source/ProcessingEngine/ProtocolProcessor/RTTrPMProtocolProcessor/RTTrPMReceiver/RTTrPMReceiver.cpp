@@ -119,7 +119,7 @@ int RTTrPMReceiver::HandleBuffer(unsigned char* dataBuffer, size_t bytesRead, RT
 
 	header = RTTrPMHeader(data, readPos);					
 
-	if(readPos == 0)
+	if(readPos == 0 || header.GetPacketSize() == 0)
 		return 0;
 
 	auto packetModuleCount = header.GetNumberOfModules();
@@ -144,7 +144,7 @@ int RTTrPMReceiver::HandleBuffer(unsigned char* dataBuffer, size_t bytesRead, RT
 				case PacketModule::TrackedPointPosition:
 					packetModules.push_back(std::make_unique<TrackedPointPositionModule>(data, readPos));
 					break;
-				case PacketModule::TrackedPointAccelerationandVelocity:
+				case PacketModule::TrackedPointAccelerationAndVelocity:
 					packetModules.push_back(std::make_unique<TrackedPointAccelAndVeloModule>(data, readPos));
 					break;
 				case PacketModule::OrientationQuaternion:

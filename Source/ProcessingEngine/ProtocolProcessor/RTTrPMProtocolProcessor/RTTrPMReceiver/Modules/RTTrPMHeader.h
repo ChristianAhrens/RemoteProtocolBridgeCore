@@ -35,10 +35,10 @@ public:
 	static constexpr std::uint16_t PacketModuleHeaderVersion = 0x0002;
 
 	typedef std::uint16_t PacketModuleSignature;
-	static constexpr PacketModuleSignature BigEndianInt			= 0x4154;
-	static constexpr PacketModuleSignature LittleEndianInt		= 0x5441;
-	static constexpr PacketModuleSignature BigEndianFloat		= 0x4334;
-	static constexpr PacketModuleSignature LittleEndianFloat	= 0x3443;
+	static constexpr PacketModuleSignature LittleEndianInt		= 0x4154;
+	static constexpr PacketModuleSignature BigEndianInt			= 0x5441;
+	static constexpr PacketModuleSignature LittleEndianFloat	= 0x4334;
+	static constexpr PacketModuleSignature BigEndianFloat		= 0x3443;
 
 	typedef std::uint8_t PacketModuleFormat;
 	static constexpr PacketModuleFormat Raw			= 0x00;
@@ -51,6 +51,9 @@ public:
 	~RTTrPMHeader();
 
 	void readData(std::vector<unsigned char>& data, int& readPos);
+
+	bool IsLittleEndian() const;
+	bool IsBigEndian() const;
 
 	PacketModuleSignature GetIntSignature() const;
 	PacketModuleSignature GetFloatSignature() const;

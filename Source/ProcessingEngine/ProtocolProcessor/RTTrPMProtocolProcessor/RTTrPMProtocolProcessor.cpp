@@ -99,25 +99,41 @@ void RTTrPMProtocolProcessor::SetHostPort(std::int32_t hostPort)
  */
 bool RTTrPMProtocolProcessor::setStateXml(XmlElement* stateXml)
 {
+	auto stateXmlUpdateSuccess = true;
 	if (!ProtocolProcessorBase::setStateXml(stateXml))
-		return false;
+		stateXmlUpdateSuccess = false;
 	else
 	{
 		auto hostPortXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::HOSTPORT));
 		if (hostPortXmlElement)
 			SetHostPort(hostPortXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::PORT)));
 		else
-			return false;
+			stateXmlUpdateSuccess = false;
 
 		auto mappingAreaXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::MAPPINGAREA));
 		if (mappingAreaXmlElement)
-		{
 			m_mappingAreaId = static_cast<MappingAreaId>(mappingAreaXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::ID)));
-			return true;
+		else
+			stateXmlUpdateSuccess = false;
+
+		auto moduleTypeForPositioningXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::PACKETMODULE));
+		if (moduleTypeForPositioningXmlElement)
+		{
+			auto moduleTypeIdentifier = moduleTypeForPositioningXmlElement->getStringAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::TYPE));
+			for (auto const& moduleType : PacketModule::PacketModuleTypes)
+			{
+				if (moduleTypeIdentifier == GetRTTrPMModuleString(moduleType))
+				{
+					m_packetModuleTypeForPositioning = moduleType;
+					break;
+				}
+			}
+			stateXmlUpdateSuccess = false;
 		}
 		else
-			return false;
+			stateXmlUpdateSuccess = false;
 	}
+	return stateXmlUpdateSuccess;
 }
 
 /**
@@ -145,14 +161,29 @@ bool RTTrPMProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id,
 void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMMessage& rttrpmMessage, const String& senderIPAddress, const int& senderPort)
 {
 	if (rttrpmMessage.header.GetPacketSize() == 0)
+	{
+		std::stringstream ssdbg;
+		ssdbg << __FUNCTION__ << " ERROR: empty RTTrPM message header";
+		std::cout << ssdbg.str() << std::endl;
+		DBG(ssdbg.str());
 		return;
+	}
+
+	if (!rttrpmMessage.header.IsLittleEndian())
+	{
+		std::stringstream ssdbg;
+		ssdbg << __FUNCTION__ << " ERROR: only LittleEndian RTTrPM encoding supported";
+		std::cout << ssdbg.str() << std::endl;
+		DBG(ssdbg.str());
+		return;
+	}
 
 	ignoreUnused(senderPort);
 	if (!GetIpAddress().empty() && senderIPAddress != String(GetIpAddress()))
 	{
 #ifdef DEBUG
 		DBG("NId" + String(m_parentNodeId)
-			+ " PId" + String(m_protocolProcessorId) + ": ignore unexpected OSC message from " 
+			+ " PId" + String(m_protocolProcessorId) + ": ignore unexpected RTTrPM message from " 
 			+ senderIPAddress + " (" + String(GetIpAddress()) + " expected)");
 #endif
 		return;
@@ -187,9 +218,9 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 						//DBG("PacketModuleTrackable('" + String(trackableModule->GetName()) + "'): seqNo" 
 						//	+ String(trackableModule->GetSeqNumber()) + " with " + String(trackableModule->GetNumberOfSubModules()) + " submodules");
 
-						ChannelId channelId = String(trackableModule->GetName()).getIntValue();
+						ChannelId channelIdx = String(trackableModule->GetName()).getIntValue();
 
-						newMsgData._addrVal._first = channelId;
+						newMsgData._addrVal._first = channelIdx + 1;
 						newMsgData._addrVal._second = static_cast<RecordId>(m_mappingAreaId);
 					}
 				}
@@ -202,6 +233,30 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 						//DBG("CentroidPositionModule: latency" 
 						//	+ String(centroidPositionModule->GetLatency()) 
 						//	+ String::formatted(" x%f,y%f,z%f", centroidPositionModule->GetX(), centroidPositionModule->GetY(), centroidPositionModule->GetZ()));
+
+						if (PacketModule::CentroidPosition == m_packetModuleTypeForPositioning)
+						{
+							if (m_mappingAreaId == MAI_Invalid)
+								newObjectId = ROI_Positioning_SourcePosition_XY;
+							else
+								newObjectId = ROI_CoordinateMapping_SourcePosition_XY;
+
+							newDualFloatValue[0] = static_cast<float>(centroidPositionModule->GetX());
+							newDualFloatValue[1] = static_cast<float>(centroidPositionModule->GetY());
+
+							newMsgData._valType = ROVT_FLOAT;
+							newMsgData._valCount = 2;
+							newMsgData._payload = &newDualFloatValue;
+							newMsgData._payloadSize = 2 * sizeof(float);
+
+							// If the received data targets a muted object, dont forward the message
+							if (IsRemoteObjectMuted(RemoteObject(newObjectId, newMsgData._addrVal)))
+								return;
+
+							// provide the received message to parent node
+							else if (m_messageListener)
+								m_messageListener->OnProtocolMessageReceived(this, newObjectId, newMsgData);
+						}
 					}
 				}
 				break;
@@ -215,26 +270,29 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 						//	+ " latency" + String(trackedPointPositionModule->GetLatency()) 
 						//	+ String::formatted(" x%f,y%f,z%f", trackedPointPositionModule->GetX(), trackedPointPositionModule->GetY(), trackedPointPositionModule->GetZ()));
 
-						if (m_mappingAreaId == MAI_Invalid)
-							newObjectId = ROI_Positioning_SourcePosition_XY;
-						else
-							newObjectId = ROI_CoordinateMapping_SourcePosition_XY;
+						if (PacketModule::TrackedPointPosition == m_packetModuleTypeForPositioning)
+						{
+							if (m_mappingAreaId == MAI_Invalid)
+								newObjectId = ROI_Positioning_SourcePosition_XY;
+							else
+								newObjectId = ROI_CoordinateMapping_SourcePosition_XY;
 
-						newDualFloatValue[0] = static_cast<float>(trackedPointPositionModule->GetX());
-						newDualFloatValue[1] = static_cast<float>(trackedPointPositionModule->GetY());
+							newDualFloatValue[0] = static_cast<float>(trackedPointPositionModule->GetX());
+							newDualFloatValue[1] = static_cast<float>(trackedPointPositionModule->GetY());
 
-						newMsgData._valType = ROVT_FLOAT;
-						newMsgData._valCount = 2;
-						newMsgData._payload = &newDualFloatValue;
-						newMsgData._payloadSize = 2 * sizeof(float);
+							newMsgData._valType = ROVT_FLOAT;
+							newMsgData._valCount = 2;
+							newMsgData._payload = &newDualFloatValue;
+							newMsgData._payloadSize = 2 * sizeof(float);
 
-						// If the received data targets a muted object, dont forward the message
-						if (IsRemoteObjectMuted(RemoteObject(newObjectId, newMsgData._addrVal)))
-							return;
+							// If the received data targets a muted object, dont forward the message
+							if (IsRemoteObjectMuted(RemoteObject(newObjectId, newMsgData._addrVal)))
+								return;
 
-						// provide the received message to parent node
-						else if (m_messageListener)
-							m_messageListener->OnProtocolMessageReceived(this, newObjectId, newMsgData);
+							// provide the received message to parent node
+							else if (m_messageListener)
+								m_messageListener->OnProtocolMessageReceived(this, newObjectId, newMsgData);
+						}
 					}
 				}
 				break;
@@ -267,21 +325,69 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 					if (centroidAccelAndVeloModule)
 					{
 						//DBG("CentroidAccelAndVeloModule:"
-						//	+ String::formatted(" xc%f,yc%f,zc%f", CentroidAccelAndVeloModule->GetXCoordinate(), CentroidAccelAndVeloModule->GetYCoordinate(), CentroidAccelAndVeloModule->GetZCoordinate())
-						//	+ String::formatted(" xa%f,ya%f,za%f", CentroidAccelAndVeloModule->GetXAcceleration(), CentroidAccelAndVeloModule->GetYAcceleration(), CentroidAccelAndVeloModule->GetZAcceleration())
-						//	+ String::formatted(" xv%f,yv%f,zv%f", CentroidAccelAndVeloModule->GetXVelocity(), CentroidAccelAndVeloModule->GetYVelocity(), CentroidAccelAndVeloModule->GetZVelocity()));
+						//	+ String::formatted(" xc%f,yc%f,zc%f", centroidAccelAndVeloModule->GetXCoordinate(), centroidAccelAndVeloModule->GetYCoordinate(), centroidAccelAndVeloModule->GetZCoordinate())
+						//	+ String::formatted(" xa%f,ya%f,za%f", centroidAccelAndVeloModule->GetXAcceleration(), centroidAccelAndVeloModule->GetYAcceleration(), centroidAccelAndVeloModule->GetZAcceleration())
+						//	+ String::formatted(" xv%f,yv%f,zv%f", centroidAccelAndVeloModule->GetXVelocity(), centroidAccelAndVeloModule->GetYVelocity(), centroidAccelAndVeloModule->GetZVelocity()));
+
+						if (PacketModule::CentroidAccelerationAndVelocity == m_packetModuleTypeForPositioning)
+						{
+							if (m_mappingAreaId == MAI_Invalid)
+								newObjectId = ROI_Positioning_SourcePosition_XY;
+							else
+								newObjectId = ROI_CoordinateMapping_SourcePosition_XY;
+
+							newDualFloatValue[0] = static_cast<float>(centroidAccelAndVeloModule->GetXCoordinate());
+							newDualFloatValue[1] = static_cast<float>(centroidAccelAndVeloModule->GetYCoordinate());
+
+							newMsgData._valType = ROVT_FLOAT;
+							newMsgData._valCount = 2;
+							newMsgData._payload = &newDualFloatValue;
+							newMsgData._payloadSize = 2 * sizeof(float);
+
+							// If the received data targets a muted object, dont forward the message
+							if (IsRemoteObjectMuted(RemoteObject(newObjectId, newMsgData._addrVal)))
+								return;
+
+							// provide the received message to parent node
+							else if (m_messageListener)
+								m_messageListener->OnProtocolMessageReceived(this, newObjectId, newMsgData);
+						}
 					}
 				}
 				break;
-			case PacketModule::TrackedPointAccelerationandVelocity:
+			case PacketModule::TrackedPointAccelerationAndVelocity:
 				{
 					const TrackedPointAccelAndVeloModule* trackedPointAccelAndVeloModule = dynamic_cast<const TrackedPointAccelAndVeloModule*>(RTTrPMmodule.get());
 					if (trackedPointAccelAndVeloModule)
 					{
-						//DBG("TrackedPointAccelAndVeloModule: idx" + String(TrackedPointAccelAndVeloModule->GetPointIndex())
-						//	+ String::formatted(" xc%f,yc%f,zc%f", TrackedPointAccelAndVeloModule->GetXCoordinate(), TrackedPointAccelAndVeloModule->GetYCoordinate(), TrackedPointAccelAndVeloModule->GetZCoordinate())
-						//	+ String::formatted(" xa%f,ya%f,za%f", TrackedPointAccelAndVeloModule->GetXAcceleration(), TrackedPointAccelAndVeloModule->GetYAcceleration(), TrackedPointAccelAndVeloModule->GetZAcceleration())
-						//	+ String::formatted(" xv%f,yv%f,zv%f", TrackedPointAccelAndVeloModule->GetXVelocity(), TrackedPointAccelAndVeloModule->GetYVelocity(), TrackedPointAccelAndVeloModule->GetZVelocity()));
+						//DBG("TrackedPointAccelAndVeloModule: idx" + String(trackedPointAccelAndVeloModule->GetPointIndex())
+						//	+ String::formatted(" xc%f,yc%f,zc%f", trackedPointAccelAndVeloModule->GetXCoordinate(), trackedPointAccelAndVeloModule->GetYCoordinate(), trackedPointAccelAndVeloModule->GetZCoordinate())
+						//	+ String::formatted(" xa%f,ya%f,za%f", trackedPointAccelAndVeloModule->GetXAcceleration(), trackedPointAccelAndVeloModule->GetYAcceleration(), trackedPointAccelAndVeloModule->GetZAcceleration())
+						//	+ String::formatted(" xv%f,yv%f,zv%f", trackedPointAccelAndVeloModule->GetXVelocity(), trackedPointAccelAndVeloModule->GetYVelocity(), trackedPointAccelAndVeloModule->GetZVelocity()));
+
+						if (PacketModule::TrackedPointAccelerationAndVelocity == m_packetModuleTypeForPositioning)
+						{
+							if (m_mappingAreaId == MAI_Invalid)
+								newObjectId = ROI_Positioning_SourcePosition_XY;
+							else
+								newObjectId = ROI_CoordinateMapping_SourcePosition_XY;
+
+							newDualFloatValue[0] = static_cast<float>(trackedPointAccelAndVeloModule->GetXCoordinate());
+							newDualFloatValue[1] = static_cast<float>(trackedPointAccelAndVeloModule->GetYCoordinate());
+
+							newMsgData._valType = ROVT_FLOAT;
+							newMsgData._valCount = 2;
+							newMsgData._payload = &newDualFloatValue;
+							newMsgData._payloadSize = 2 * sizeof(float);
+
+							// If the received data targets a muted object, dont forward the message
+							if (IsRemoteObjectMuted(RemoteObject(newObjectId, newMsgData._addrVal)))
+								return;
+
+							// provide the received message to parent node
+							else if (m_messageListener)
+								m_messageListener->OnProtocolMessageReceived(this, newObjectId, newMsgData);
+						}
 					}
 				}
 				break;
@@ -305,5 +411,39 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 		{
 			newObjectId = ROI_Invalid;
 		}
+	}
+}
+
+/**
+ * Static helper method that can be used to convert a given module type int value
+ * to its string representation to be used in config or to use for human readable interfaces.
+ * @param	moduleType	The type of the packet module to get a string representation for.
+ * @return	The string representation for the given packet module type or empty if invalid.
+ */
+const juce::String RTTrPMProtocolProcessor::GetRTTrPMModuleString(PacketModule::PacketModuleType moduleType)
+{
+	switch(moduleType)
+	{
+	case PacketModule::WithTimestamp:
+		return "WithTimestamp";
+	case PacketModule::WithoutTimestamp:
+		return "WithoutTimestamp";
+	case PacketModule::CentroidPosition:
+		return "CentroidPosition";
+	case PacketModule::TrackedPointPosition:
+		return "TrackedPointPosition";
+	case PacketModule::OrientationQuaternion:
+		return "OrientationQuaternion";
+	case PacketModule::OrientationEuler:
+		return "OrientationEuler";
+	case PacketModule::CentroidAccelerationAndVelocity:
+		return "CentroidAccelerationAndVelocity";
+	case PacketModule::TrackedPointAccelerationAndVelocity:
+		return "TrackedPointAccelerationAndVelocity";
+	case PacketModule::ZoneCollisionDetection:
+		return "ZoneCollisionDetection";
+	case PacketModule::Invalid:
+	default:
+		return "";
 	}
 }

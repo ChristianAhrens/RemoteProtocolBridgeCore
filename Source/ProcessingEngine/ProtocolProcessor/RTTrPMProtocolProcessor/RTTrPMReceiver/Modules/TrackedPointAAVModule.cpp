@@ -85,7 +85,7 @@ TrackedPointAccelAndVeloModule::~TrackedPointAccelAndVeloModule()
  */
 bool TrackedPointAccelAndVeloModule::isValid() const
 {
-	return (PacketModule::isValid() && (GetModuleType() == TrackedPointAccelerationandVelocity));
+	return (PacketModule::isValid() && (GetModuleType() == TrackedPointAccelerationAndVelocity));
 }
 
 /**

@@ -40,8 +40,9 @@ public:
 	static constexpr PacketModuleType OrientationQuaternion					= 0x03;
 	static constexpr PacketModuleType OrientationEuler						= 0x04;
 	static constexpr PacketModuleType CentroidAccelerationAndVelocity		= 0x20;
-	static constexpr PacketModuleType TrackedPointAccelerationandVelocity	= 0x21;
+	static constexpr PacketModuleType TrackedPointAccelerationAndVelocity	= 0x21;
 	static constexpr PacketModuleType ZoneCollisionDetection				= 0x22;
+	static const inline std::vector<std::uint8_t>	PacketModuleTypes{ WithTimestamp, WithoutTimestamp, CentroidPosition, TrackedPointPosition, OrientationQuaternion, OrientationEuler, CentroidAccelerationAndVelocity, TrackedPointAccelerationAndVelocity, ZoneCollisionDetection };
 
 public:
 	PacketModule();

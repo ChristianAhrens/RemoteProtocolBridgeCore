@@ -82,6 +82,7 @@ public:
 		VALTOCMDASSI,
 		XYMESSAGECOMBINED,
 		REMAPPINGS,
+		PACKETMODULE,
 	};
 	static String getTagName(TagID Id)
 	{
@@ -149,6 +150,8 @@ public:
 			return "xyMessageCombined";
 		case REMAPPINGS:
 			return "Remappings";
+		case PACKETMODULE:
+			return "PacketModule";
 		default:
 			return "INVALID";
 		}

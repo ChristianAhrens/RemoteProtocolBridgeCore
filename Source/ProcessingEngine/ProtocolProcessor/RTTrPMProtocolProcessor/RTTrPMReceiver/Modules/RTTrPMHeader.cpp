@@ -18,6 +18,12 @@
 
 #include "RTTrPMHeader.h"
 
+#if defined (_WIN32) || defined (_WIN64)
+#include <Winsock2.h>
+#else
+#include <arpa/inet.h>
+#endif
+
 
 /**
 * Default constructor of the class RTTrPMHeader.
@@ -53,23 +59,58 @@ void RTTrPMHeader::readData(std::vector<unsigned char>& data, int& readPos)
 
 	readPos += 4;
 
-	if((m_intSignature == BigEndianInt) && (m_floatSignature == BigEndianFloat))
-	{
-		std::copy(readIter, readIter + 2, (std::uint16_t*)&m_version);
-		readIter += 2;
-		std::copy(readIter, readIter + 4, (std::uint32_t*)&m_packetID);	   
-		readIter += 4;
-		std::copy(readIter, readIter + 1, (std::uint8_t*)&m_packetFormat);   
-		readIter += 1;
-		std::copy(readIter, readIter + 2, (std::uint16_t*)&m_packetSize);  
-		readIter += 2;
-		std::copy(readIter, readIter + 4, (std::uint32_t*)&m_context);	   
-		readIter += 4;
-		std::copy(readIter, readIter + 1, (std::uint8_t*)&m_numModules);	   
-		readIter += 1;
+	std::copy(readIter, readIter + 2, (unsigned char*)&m_version);
+	readIter += 2;
+	std::copy(readIter, readIter + 4, (unsigned char*)&m_packetID);
+	readIter += 4;
+	std::copy(readIter, readIter + 1, (unsigned char*)&m_packetFormat);
+	readIter += 1;
+	std::copy(readIter, readIter + 2, (unsigned char*)&m_packetSize);
+	readIter += 2;
+	std::copy(readIter, readIter + 4, (unsigned char*)&m_context);
+	readIter += 4;
+	std::copy(readIter, readIter + 1, (unsigned char*)&m_numModules);
+	readIter += 1;
 
-		readPos += 14;
+	readPos += 14;
+
+	if (IsLittleEndian())
+	{
+		// no conversion if little endian signature
+		return;
 	}
+	else if (IsBigEndian())
+	{
+		// conversion net to host if big endian
+		m_version = ntohs(m_version);
+		m_packetID = ntohl(m_packetID);
+		m_packetSize = ntohs(m_packetSize);
+		m_context = ntohl(m_context);
+		return;
+	}
+	else
+	{
+		// unknown signatures
+		return;
+	}
+}
+
+/**
+ * Helper method to query if the data is litte endian encoded
+ * @return	True if little endian encoded, false if not.
+ */
+bool RTTrPMHeader::IsLittleEndian() const
+{
+	return (m_intSignature == LittleEndianInt) && (m_floatSignature == LittleEndianFloat);
+}
+
+/**
+ * Helper method to query if the data is big endian encoded
+ * @return	True if big endian encoded, false if not.
+ */
+bool RTTrPMHeader::IsBigEndian() const
+{
+	return (m_intSignature == BigEndianInt) && (m_floatSignature == BigEndianFloat);
 }
 
 /**
