@@ -142,7 +142,7 @@ bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(ProtocolId PId, R
 			// now do the basic A to B forwarding
 			auto sendSuccess = true;
 			for (auto const& pId : GetProtocolBIds())
-				sendSuccess &= parentNode->SendMessageTo(pId, Id, msgData);
+				sendSuccess = parentNode->SendMessageTo(pId, Id, msgData) && sendSuccess;
 			return sendSuccess;
 		}
 		// forward to A current master if data comes from B

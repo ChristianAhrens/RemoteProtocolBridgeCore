@@ -71,7 +71,7 @@ bool Reverse_B_to_A_only::OnReceivedMessageFromProtocol(ProtocolId PId, RemoteOb
 		// Send to all typeA protocols
 		sendSuccess = true;
 		for (auto const& protocolA : GetProtocolAIds())
-			sendSuccess = sendSuccess && parentNode->SendMessageTo(protocolA, Id, msgData);
+			sendSuccess = parentNode->SendMessageTo(protocolA, Id, msgData) && sendSuccess;
 	}
 
 	return sendSuccess;

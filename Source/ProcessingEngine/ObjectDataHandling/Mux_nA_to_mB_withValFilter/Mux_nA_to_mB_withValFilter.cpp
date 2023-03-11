@@ -97,7 +97,9 @@ bool Mux_nA_to_mB_withValFilter::OnReceivedMessageFromProtocol(ProtocolId PId, R
 
 	// do some sanity checks on this instances configuration parameters and the given message data origin id
 	auto muxConfigValid = (m_protoChCntA > 0) && (m_protoChCntB > 0);
-	auto protocolIdValid = (std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) != GetProtocolAIds().end()) || (std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) != GetProtocolBIds().end());
+	auto isProtocolTypeA = (std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) != GetProtocolAIds().end());
+	auto isProtocolTypeB = (std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) != GetProtocolBIds().end());
+	auto protocolIdValid = isProtocolTypeA || isProtocolTypeB;
 
 	if (!muxConfigValid || !protocolIdValid)
 		return false;
@@ -118,7 +120,7 @@ bool Mux_nA_to_mB_withValFilter::OnReceivedMessageFromProtocol(ProtocolId PId, R
 		msgData._addrVal._first = targetProtoSrc.second;
 		auto sendSuccess = true;
 		for (auto const& targetPId : targetProtoSrc.first)
-			sendSuccess &= parentNode->SendMessageTo(targetPId, Id, msgData);
+			sendSuccess = parentNode->SendMessageTo(targetPId, Id, msgData) && sendSuccess;
 		return sendSuccess;
 	}
 	else

@@ -115,7 +115,7 @@ bool Remap_A_X_Y_to_B_XY_Handling::OnReceivedMessageFromProtocol(ProtocolId PId,
 		// Send to all typeB protocols
 		auto sendSuccess = true;
 		for (auto const& protocolB : GetProtocolBIds())
-			sendSuccess = sendSuccess && parentNode->SendMessageTo(protocolB, ObjIdToSend, msgData);
+			sendSuccess = parentNode->SendMessageTo(protocolB, ObjIdToSend, msgData) && sendSuccess;
 
 		return sendSuccess;
 			
@@ -146,11 +146,11 @@ bool Remap_A_X_Y_to_B_XY_Handling::OnReceivedMessageFromProtocol(ProtocolId PId,
 			auto sendSuccess = true;
 			for (auto const& protocolA : GetProtocolAIds())
 			{
-				msgData._payload = &newXVal;
-				sendSuccess = sendSuccess && parentNode->SendMessageTo(protocolA, ROI_CoordinateMapping_SourcePosition_X, msgData);
+                msgData._payload = &newXVal;
+				sendSuccess = parentNode->SendMessageTo(protocolA, ROI_CoordinateMapping_SourcePosition_X, msgData) && sendSuccess;
 
-				msgData._payload = &newYVal;
-				sendSuccess = sendSuccess && parentNode->SendMessageTo(protocolA, ROI_CoordinateMapping_SourcePosition_Y, msgData);
+                msgData._payload = &newYVal;
+				sendSuccess = parentNode->SendMessageTo(protocolA, ROI_CoordinateMapping_SourcePosition_Y, msgData) && sendSuccess;
 			}
 
 			return sendSuccess;
@@ -160,7 +160,7 @@ bool Remap_A_X_Y_to_B_XY_Handling::OnReceivedMessageFromProtocol(ProtocolId PId,
 			// Send to all typeA protocols
 			auto sendSuccess = true;
 			for (auto const& protocolA : GetProtocolAIds())
-				sendSuccess = sendSuccess && parentNode->SendMessageTo(protocolA, Id, msgData);
+				sendSuccess = parentNode->SendMessageTo(protocolA, Id, msgData) && sendSuccess;
 
 			return sendSuccess;
 		}

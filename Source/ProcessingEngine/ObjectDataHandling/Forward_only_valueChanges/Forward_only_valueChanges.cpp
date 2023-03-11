@@ -94,7 +94,7 @@ bool Forward_only_valueChanges::OnReceivedMessageFromProtocol(ProtocolId PId, Re
 		// Send to all typeB protocols
 		auto sendSuccess = true;
 		for (auto const& protocolB : GetProtocolBIds())
-			sendSuccess = sendSuccess && parentNode->SendMessageTo(protocolB, Id, msgData);
+			sendSuccess = parentNode->SendMessageTo(protocolB, Id, msgData) && sendSuccess;
 
 		return sendSuccess;
 	}
@@ -103,7 +103,7 @@ bool Forward_only_valueChanges::OnReceivedMessageFromProtocol(ProtocolId PId, Re
 		// Send to all typeA protocols
 		auto sendSuccess = true;
 		for (auto const& protocolA : GetProtocolAIds())
-			sendSuccess = sendSuccess && parentNode->SendMessageTo(protocolA, Id, msgData);
+			sendSuccess = parentNode->SendMessageTo(protocolA, Id, msgData) && sendSuccess;
 
 		return sendSuccess;
 	}
@@ -294,14 +294,9 @@ bool Forward_only_valueChanges::SendValueCacheToProtocol(const ProtocolId PId)
 	if (!isProtocolA && !isProtocolB)
 		return false;
 
-	auto sendSuccess = true;
-	for (auto const& cachedValue : m_currentValues)
-	{
-		for (auto const& cachedValueObject : cachedValue.second)
-		{
-			sendSuccess = sendSuccess && parentNode->SendMessageTo(PId, cachedValue.first, cachedValueObject.second);
-		}
-	}
-
-	return sendSuccess;
+    auto sendSuccess = true;
+    for (auto const& cachedValue : m_currentValues)
+        for (auto const& cachedValueObject : cachedValue.second)
+            sendSuccess = parentNode->SendMessageTo(PId, cachedValue.first, cachedValueObject.second) && sendSuccess;
+    return sendSuccess;
 }

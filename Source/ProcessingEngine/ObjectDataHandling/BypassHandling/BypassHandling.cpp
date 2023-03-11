@@ -66,14 +66,14 @@ bool BypassHandling::OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectI
 		// Send to all typeB protocols
 		sendSuccess = true;
 		for (auto const& protocolB : GetProtocolBIds())
-			sendSuccess = sendSuccess && parentNode->SendMessageTo(protocolB, Id, msgData);
+			sendSuccess = parentNode->SendMessageTo(protocolB, Id, msgData) && sendSuccess;
 	}
 	else if (std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) != GetProtocolBIds().end())
 	{
 		// Send to all typeA protocols
 		sendSuccess = true;
 		for (auto const& protocolA : GetProtocolAIds())
-			sendSuccess = sendSuccess && parentNode->SendMessageTo(protocolA, Id, msgData);
+			sendSuccess = parentNode->SendMessageTo(protocolA, Id, msgData) && sendSuccess;
 	}
 
 	return sendSuccess;

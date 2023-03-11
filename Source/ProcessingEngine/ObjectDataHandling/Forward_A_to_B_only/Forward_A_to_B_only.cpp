@@ -66,7 +66,7 @@ bool Forward_A_to_B_only::OnReceivedMessageFromProtocol(ProtocolId PId, RemoteOb
 		// Send to all typeB protocols
 		sendSuccess = true;
 		for (auto const& protocolB : GetProtocolBIds())
-			sendSuccess = sendSuccess && parentNode->SendMessageTo(protocolB, Id, msgData);
+			sendSuccess = parentNode->SendMessageTo(protocolB, Id, msgData) && sendSuccess;
 	}
 	else if (std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) != GetProtocolBIds().end())
 	{

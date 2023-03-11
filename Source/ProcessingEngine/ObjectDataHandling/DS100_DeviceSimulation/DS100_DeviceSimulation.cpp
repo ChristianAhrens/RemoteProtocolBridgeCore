@@ -140,7 +140,7 @@ bool DS100_DeviceSimulation::OnReceivedMessageFromProtocol(ProtocolId PId, Remot
 				// Send to all typeB protocols
 				auto sendSuccess = true;
 				for (auto const protocolB : GetProtocolBIds())
-					sendSuccess = sendSuccess && parentNode->SendMessageTo(protocolB, Id, msgData);
+					sendSuccess = parentNode->SendMessageTo(protocolB, Id, msgData) && sendSuccess;
 
 				return sendSuccess;
 
@@ -151,7 +151,7 @@ bool DS100_DeviceSimulation::OnReceivedMessageFromProtocol(ProtocolId PId, Remot
 				// Send to all typeA protocols
 				auto sendSuccess = true;
 				for (auto const protocolA : GetProtocolAIds())
-					sendSuccess = sendSuccess && parentNode->SendMessageTo(protocolA, Id, msgData);
+					sendSuccess = parentNode->SendMessageTo(protocolA, Id, msgData) && sendSuccess;
 
 				return sendSuccess;
 			}
