@@ -58,7 +58,7 @@ void TimerThreadBase::startTimerThread(int callbackInterval, int initialCallback
  */
 void TimerThreadBase::stopTimerThread()
 {
-    stopThread(2 * m_callbackInterval);
+    stopThread(4 * m_callbackInterval);
 }
 
 /**
