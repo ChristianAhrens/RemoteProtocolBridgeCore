@@ -131,7 +131,7 @@ bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
 		return SendValueCacheToProtocol(PId);
 
 	// check the incoming data regarding value change to then forward and if required mirror it to other protocols
-	if (IsChangedDataValue(Id, msgData._addrVal, msgData))
+	if (IsChangedDataValue(PId, Id, msgData._addrVal, msgData))
 	{
 		// mirror and forward to all B if data comes from A
 		if (isProtocolTypeA)

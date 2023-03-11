@@ -41,8 +41,8 @@ public:
 	bool OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData) override;
 
 protected:
-	bool IsChangedDataValue(const RemoteObjectIdentifier Id, const RemoteObjectAddressing& roAddr, const RemoteObjectMessageData& msgData, bool setAsNewCurrentData = true);
-	void SetCurrentDataValue(const RemoteObjectIdentifier Id, const RemoteObjectAddressing& roAddr, const RemoteObjectMessageData& msgData);
+	bool IsChangedDataValue(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectAddressing& roAddr, const RemoteObjectMessageData& msgData, bool setAsNewCurrentData = true);
+    void SetCurrentValue(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectAddressing& roAddr, const RemoteObjectMessageData& msgData);
 
 	float GetPrecision();
 	void SetPrecision(float precision);
@@ -51,6 +51,7 @@ protected:
 	bool SendValueCacheToProtocol(const ProtocolId PId);
 	
 private:
-	std::map<RemoteObjectIdentifier, std::map<RemoteObjectAddressing, RemoteObjectMessageData>>	m_currentValues;	/**< Hash of current value data to use to compare to incoming data regarding value changes. */
+	std::map<RemoteObjectIdentifier, std::map<RemoteObjectAddressing, RemoteObjectMessageData>>	m_currentAValues;	/**< Hash of current value data present on RoleA protocols side of ProcessingNode to use to compare to incoming data regarding value changes. */
+    std::map<RemoteObjectIdentifier, std::map<RemoteObjectAddressing, RemoteObjectMessageData>>    m_currentBValues;    /**< Hash of current value data to use to compare to incoming data present on RoleB protocols side of ProcessingNode  regarding value changes. */
 	float m_precision;																								/**< Value precision to use for processing. */
 };

@@ -86,7 +86,7 @@ bool Forward_only_valueChanges::OnReceivedMessageFromProtocol(const ProtocolId P
 	if (IsCachedValuesQuery(Id))
 		return SendValueCacheToProtocol(PId);
 
-	if (!IsChangedDataValue(Id, msgData._addrVal, msgData))
+	if (!IsChangedDataValue(PId, Id, msgData._addrVal, msgData))
 		return false;
 
 	if (std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) != GetProtocolAIds().end())
@@ -115,13 +115,14 @@ bool Forward_only_valueChanges::OnReceivedMessageFromProtocol(const ProtocolId P
  * Helper method to detect if incoming value has changed in any way compared with the previously received one
  * (RemoteObjectIdentifier is taken in account as well as the channel/record addressing)
  *
+ * @param PId                                          The id of the protocol that received the value to check for if it differs from currently cached one.
  * @param Id					The ROI that was received and has to be checked
  * @param roAddr				The remote object addressing the data shall be verified against regarding changes
  * @param msgData				The received message data that has to be checked
  * @param setAsNewCurrentData	Bool indication if in addition to change check, the value shall be set as new current data if the check was positive
  * @return						True if a change has been detected, false if not
  */
-bool Forward_only_valueChanges::IsChangedDataValue(const RemoteObjectIdentifier Id, const RemoteObjectAddressing& roAddr, const RemoteObjectMessageData& msgData, bool setAsNewCurrentData)
+bool Forward_only_valueChanges::IsChangedDataValue(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectAddressing& roAddr, const RemoteObjectMessageData& msgData, bool setAsNewCurrentData)
 {
     if (ProcessingEngineConfig::IsKeepaliveObject(Id))
         return true;
@@ -132,15 +133,29 @@ bool Forward_only_valueChanges::IsChangedDataValue(const RemoteObjectIdentifier 
 		return true;
 
 	auto isChangedDataValue = false;
+    
+    // determine what protocol type has received the data to check
+    auto isProtocolTypeA = std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) != GetProtocolAIds().end();
+    auto isProtocolTypeB = std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) != GetProtocolBIds().end();
+    if (!isProtocolTypeA && !isProtocolTypeB)
+    {
+        jassertfalse;
+        return true;
+    }
+    
+    // Depending on what protocol received the value, use the corresponding value cache for the protocol type
+    auto currentValues = &m_currentAValues;
+    if (isProtocolTypeB)
+        currentValues = &m_currentBValues;
 
 	// if our hash does not yet contain our ROI, initialize it
-	if ((m_currentValues.count(Id) == 0) || (m_currentValues.at(Id).count(roAddr) == 0))
+	if ((currentValues->count(Id) == 0) || (currentValues->at(Id).count(roAddr) == 0))
 	{
 		isChangedDataValue = true;
 	}
 	else
 	{
-		const RemoteObjectMessageData& currentVal = m_currentValues.at(Id).at(roAddr);
+		const RemoteObjectMessageData& currentVal = currentValues->at(Id).at(roAddr);
 		if ((currentVal._valType != msgData._valType) || (currentVal._valCount != msgData._valCount) || (currentVal._payloadSize != msgData._payloadSize))
 		{
 			isChangedDataValue = true;
@@ -209,7 +224,7 @@ bool Forward_only_valueChanges::IsChangedDataValue(const RemoteObjectIdentifier 
 	}
 
 	if (isChangedDataValue && setAsNewCurrentData)
-		SetCurrentDataValue(Id, roAddr, msgData);
+		SetCurrentValue(PId, Id, roAddr, msgData);
 
 	return isChangedDataValue;
 }
@@ -218,35 +233,50 @@ bool Forward_only_valueChanges::IsChangedDataValue(const RemoteObjectIdentifier 
  * Helper method to set a new RemoteObjectMessageData obj. to internal map of current values.
  * Takes care of cleaning up previously stored data if required.
  *
+ * @param PId                The id of the protocol that received the value to check for if it differs from currently cached one.
  * @param Id		The ROI that shall be stored
  * @param roAddr	The remote object addressing the data shall be updated for
  * @param msgData	The message data that shall be stored
  */
-void Forward_only_valueChanges::SetCurrentDataValue(const RemoteObjectIdentifier Id, const RemoteObjectAddressing& roAddr, const RemoteObjectMessageData& msgData)
+void Forward_only_valueChanges::SetCurrentValue(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectAddressing& roAddr, const RemoteObjectMessageData& msgData)
 {
+    // determine what protocol type has received the data to check
+    auto isProtocolTypeA = std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) != GetProtocolAIds().end();
+    auto isProtocolTypeB = std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) != GetProtocolBIds().end();
+    if (!isProtocolTypeA && !isProtocolTypeB)
+    {
+        jassertfalse;
+        return;
+    }
+    
+    // Depending on what protocol received the value, use the corresponding value cache for the protocol type
+    auto currentValues = &m_currentAValues;
+    if (isProtocolTypeB)
+        currentValues = &m_currentBValues;
+    
 	// Check if the new data value addressing is currently not present in internal hash
 	// or if it differs in its value size and needs to be reinitialized
-	if ((m_currentValues.count(Id) == 0) || (m_currentValues.at(Id).count(roAddr) == 0) ||
-		(m_currentValues.at(Id).at(roAddr)._payloadSize != msgData._payloadSize))
+	if ((currentValues->count(Id) == 0) || (currentValues->at(Id).count(roAddr) == 0) ||
+		(currentValues->at(Id).at(roAddr)._payloadSize != msgData._payloadSize))
 	{
 		// If the data value exists, but has wrong size, reinitialize it
-		if((m_currentValues.count(Id) != 0) && (m_currentValues.at(Id).count(roAddr) != 0) &&
-			(m_currentValues.at(Id).at(roAddr)._payloadSize != msgData._payloadSize))
+		if((currentValues->count(Id) != 0) && (currentValues->at(Id).count(roAddr) != 0) &&
+			(currentValues->at(Id).at(roAddr)._payloadSize != msgData._payloadSize))
 		{
-            m_currentValues.at(Id).at(roAddr)._payload = nullptr;
-            m_currentValues.at(Id).at(roAddr)._payloadSize = 0;
-            m_currentValues.at(Id).at(roAddr)._valCount = 0;
+            currentValues->at(Id).at(roAddr)._payload = nullptr;
+            currentValues->at(Id).at(roAddr)._payloadSize = 0;
+            currentValues->at(Id).at(roAddr)._valCount = 0;
 		}
 	
-		m_currentValues[Id][roAddr].payloadCopy(msgData);
+        (*currentValues)[Id][roAddr].payloadCopy(msgData);
 	}
 	else
 	{
 		// do not copy entire data struct, since we need to keep our payload ptr
-		m_currentValues.at(Id).at(roAddr)._addrVal = roAddr;
-		m_currentValues.at(Id).at(roAddr)._valCount = msgData._valCount;
-		m_currentValues.at(Id).at(roAddr)._valType = msgData._valType;
-		memcpy(m_currentValues.at(Id).at(roAddr)._payload, msgData._payload, msgData._payloadSize);
+        currentValues->at(Id).at(roAddr)._addrVal = roAddr;
+        currentValues->at(Id).at(roAddr)._valCount = msgData._valCount;
+        currentValues->at(Id).at(roAddr)._valType = msgData._valType;
+		memcpy(currentValues->at(Id).at(roAddr)._payload, msgData._payload, msgData._payloadSize);
 	}
 }
 
@@ -291,12 +321,22 @@ bool Forward_only_valueChanges::SendValueCacheToProtocol(const ProtocolId PId)
 
 	auto isProtocolA = (std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) == GetProtocolAIds().end());
 	auto isProtocolB = (std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) == GetProtocolBIds().end());
-	if (!isProtocolA && !isProtocolB)
-		return false;
-
-    auto sendSuccess = true;
-    for (auto const& cachedValue : m_currentValues)
-        for (auto const& cachedValueObject : cachedValue.second)
-            sendSuccess = parentNode->SendMessageTo(PId, cachedValue.first, cachedValueObject.second) && sendSuccess;
-    return sendSuccess;
+	if (isProtocolA)
+    {
+        auto sendSuccess = true;
+        for (auto const& cachedValue : m_currentAValues)
+            for (auto const& cachedValueObject : cachedValue.second)
+                sendSuccess = sendSuccess && parentNode->SendMessageTo(PId, cachedValue.first, cachedValueObject.second);
+        return sendSuccess;
+    }
+    else if (isProtocolB)
+    {
+        auto sendSuccess = true;
+        for (auto const& cachedValue : m_currentAValues)
+            for (auto const& cachedValueObject : cachedValue.second)
+                sendSuccess = sendSuccess && parentNode->SendMessageTo(PId, cachedValue.first, cachedValueObject.second);
+        return sendSuccess;
+    }
+    else
+        return false;
 }

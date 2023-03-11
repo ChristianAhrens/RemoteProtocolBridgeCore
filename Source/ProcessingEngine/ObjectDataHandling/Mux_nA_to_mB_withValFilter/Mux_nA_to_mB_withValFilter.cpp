@@ -116,7 +116,7 @@ bool Mux_nA_to_mB_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
 	auto mappedOrigAddr = GetMappedOriginAddressing(PId, modMsgData);
 	auto targetProtoValid = !targetProtoSrc.first.empty();
 
-	if (targetProtoValid && IsChangedDataValue(Id, mappedOrigAddr, modMsgData))
+	if (targetProtoValid && IsChangedDataValue(PId, Id, mappedOrigAddr, modMsgData))
 	{
 		// finally before forwarding data, the target channel has to be adjusted according to what we determined beforehand to be the correct mapped channel for target protocol
         modMsgData._addrVal._first = targetProtoSrc.second;
