@@ -36,7 +36,7 @@ public:
 	BypassHandling(ProcessingEngineNode* parentNode);
 	~BypassHandling();
 
-	bool OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier Id, RemoteObjectMessageData& msgData) override;
+	bool OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData) override;
 
 protected:
 

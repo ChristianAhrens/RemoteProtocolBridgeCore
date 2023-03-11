@@ -119,7 +119,7 @@ bool DS100_DeviceSimulation::setStateXml(XmlElement* stateXml)
  * @param msgData	The actual message value/content data
  * @return	True if successful sent/forwarded, false if not
  */
-bool DS100_DeviceSimulation::OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier Id, RemoteObjectMessageData& msgData)
+bool DS100_DeviceSimulation::OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
 {
 	auto parentNode = ObjectDataHandling_Abstract::GetParentNode();
 	if (parentNode)

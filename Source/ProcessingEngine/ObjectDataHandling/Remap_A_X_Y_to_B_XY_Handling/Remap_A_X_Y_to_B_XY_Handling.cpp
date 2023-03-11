@@ -51,13 +51,15 @@ Remap_A_X_Y_to_B_XY_Handling::~Remap_A_X_Y_to_B_XY_Handling()
  * @param msgData	The actual message value/content data
  * @return	True if successful sent/forwarded, false if not
  */
-bool Remap_A_X_Y_to_B_XY_Handling::OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier Id, RemoteObjectMessageData& msgData)
+bool Remap_A_X_Y_to_B_XY_Handling::OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
 {
 	auto parentNode = ObjectDataHandling_Abstract::GetParentNode();
 	if (!parentNode)
 		return false;
 
 	UpdateOnlineState(PId);
+    
+    auto modMsgData = msgData;
 
 	if (std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) != GetProtocolAIds().end())
 	{
@@ -82,9 +84,9 @@ bool Remap_A_X_Y_to_B_XY_Handling::OnReceivedMessageFromProtocol(ProtocolId PId,
 			newXYVal[0] = m_currentPosValue[addrId].x;
 			newXYVal[1] = m_currentPosValue[addrId].y;
 
-			msgData._valCount = 2;
-			msgData._payload = &newXYVal;
-			msgData._payloadSize = 2 * sizeof(float);
+            modMsgData._valCount = 2;
+            modMsgData._payload = &newXYVal;
+            modMsgData._payloadSize = 2 * sizeof(float);
 
 			ObjIdToSend = ROI_CoordinateMapping_SourcePosition_XY;
 		}
@@ -105,9 +107,9 @@ bool Remap_A_X_Y_to_B_XY_Handling::OnReceivedMessageFromProtocol(ProtocolId PId,
 			newXYVal[0] = m_currentPosValue[addrId].x;
 			newXYVal[1] = m_currentPosValue[addrId].y;
 
-			msgData._valCount = 2;
-			msgData._payload = &newXYVal;
-			msgData._payloadSize = 2 * sizeof(float);
+            modMsgData._valCount = 2;
+            modMsgData._payload = &newXYVal;
+            modMsgData._payloadSize = 2 * sizeof(float);
 
 			ObjIdToSend = ROI_CoordinateMapping_SourcePosition_XY;
 		}
@@ -115,7 +117,7 @@ bool Remap_A_X_Y_to_B_XY_Handling::OnReceivedMessageFromProtocol(ProtocolId PId,
 		// Send to all typeB protocols
 		auto sendSuccess = true;
 		for (auto const& protocolB : GetProtocolBIds())
-			sendSuccess = parentNode->SendMessageTo(protocolB, ObjIdToSend, msgData) && sendSuccess;
+			sendSuccess = parentNode->SendMessageTo(protocolB, ObjIdToSend, modMsgData) && sendSuccess;
 
 		return sendSuccess;
 			
@@ -139,18 +141,18 @@ bool Remap_A_X_Y_to_B_XY_Handling::OnReceivedMessageFromProtocol(ProtocolId PId,
 			float newXVal = m_currentPosValue[addrId].x;
 			float newYVal = m_currentPosValue[addrId].y;
 
-			msgData._valCount = 1;
-			msgData._payloadSize = sizeof(float);
+            modMsgData._valCount = 1;
+            modMsgData._payloadSize = sizeof(float);
 
 			// Send to all typeA protocols
 			auto sendSuccess = true;
 			for (auto const& protocolA : GetProtocolAIds())
 			{
-                msgData._payload = &newXVal;
-				sendSuccess = parentNode->SendMessageTo(protocolA, ROI_CoordinateMapping_SourcePosition_X, msgData) && sendSuccess;
+				modMsgData._payload = &newXVal;
+				sendSuccess = parentNode->SendMessageTo(protocolA, ROI_CoordinateMapping_SourcePosition_X, modMsgData) && sendSuccess;
 
-                msgData._payload = &newYVal;
-				sendSuccess = parentNode->SendMessageTo(protocolA, ROI_CoordinateMapping_SourcePosition_Y, msgData) && sendSuccess;
+				modMsgData._payload = &newYVal;
+				sendSuccess = parentNode->SendMessageTo(protocolA, ROI_CoordinateMapping_SourcePosition_Y, modMsgData) && sendSuccess;
 			}
 
 			return sendSuccess;
@@ -160,7 +162,7 @@ bool Remap_A_X_Y_to_B_XY_Handling::OnReceivedMessageFromProtocol(ProtocolId PId,
 			// Send to all typeA protocols
 			auto sendSuccess = true;
 			for (auto const& protocolA : GetProtocolAIds())
-				sendSuccess = parentNode->SendMessageTo(protocolA, Id, msgData) && sendSuccess;
+				sendSuccess = parentNode->SendMessageTo(protocolA, Id, modMsgData) && sendSuccess;
 
 			return sendSuccess;
 		}

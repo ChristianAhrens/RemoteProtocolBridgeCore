@@ -88,7 +88,7 @@ bool Mux_nA_to_mB_withValFilter::setStateXml(XmlElement* stateXml)
  * @param msgData	The actual message value/content data
  * @return	True if successful sent/forwarded, false if not
  */
-bool Mux_nA_to_mB_withValFilter::OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier Id, RemoteObjectMessageData& msgData)
+bool Mux_nA_to_mB_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
 {
 	// a valid parent node is required to be able to do anything with the received message
 	auto parentNode = ObjectDataHandling_Abstract::GetParentNode();
@@ -105,22 +105,24 @@ bool Mux_nA_to_mB_withValFilter::OnReceivedMessageFromProtocol(ProtocolId PId, R
 		return false;
 
 	UpdateOnlineState(PId);
+    
+    auto modMsgData = msgData;
 
 	if (IsCachedValuesQuery(Id))
 		return SendValueCacheToProtocol(PId);
 
 	// check for changed value based on mapped addressing and target protocol id before forwarding data
-	auto targetProtoSrc = GetTargetProtocolsAndSource(PId, msgData);
-	auto mappedOrigAddr = GetMappedOriginAddressing(PId, msgData);
+	auto targetProtoSrc = GetTargetProtocolsAndSource(PId, modMsgData);
+	auto mappedOrigAddr = GetMappedOriginAddressing(PId, modMsgData);
 	auto targetProtoValid = !targetProtoSrc.first.empty();
 
-	if (targetProtoValid && IsChangedDataValue(Id, mappedOrigAddr, msgData))
+	if (targetProtoValid && IsChangedDataValue(Id, mappedOrigAddr, modMsgData))
 	{
 		// finally before forwarding data, the target channel has to be adjusted according to what we determined beforehand to be the correct mapped channel for target protocol
-		msgData._addrVal._first = targetProtoSrc.second;
+        modMsgData._addrVal._first = targetProtoSrc.second;
 		auto sendSuccess = true;
 		for (auto const& targetPId : targetProtoSrc.first)
-			sendSuccess = parentNode->SendMessageTo(targetPId, Id, msgData) && sendSuccess;
+			sendSuccess = parentNode->SendMessageTo(targetPId, Id, modMsgData) && sendSuccess;
 		return sendSuccess;
 	}
 	else

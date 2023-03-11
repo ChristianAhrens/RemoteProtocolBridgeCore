@@ -47,7 +47,7 @@ public:
 	Remap_A_X_Y_to_B_XY_Handling(ProcessingEngineNode* parentNode);
 	~Remap_A_X_Y_to_B_XY_Handling();
 
-	bool OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier Id, RemoteObjectMessageData& msgData) override;
+	bool OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData) override;
 
 protected:
 	HashMap<int32, xyzVals> m_currentPosValue;	/**< Hash to hold current x y values for all currently used objects (identified by merge of obj. addressing to a single uint32 used as key). */

@@ -82,13 +82,15 @@ bool Mux_nA_to_mB::setStateXml(XmlElement* stateXml)
  * @param msgData	The actual message value/content data
  * @return	True if successful sent/forwarded, false if not
  */
-bool Mux_nA_to_mB::OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier Id, RemoteObjectMessageData& msgData)
+bool Mux_nA_to_mB::OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
 {
 	auto parentNode = ObjectDataHandling_Abstract::GetParentNode();
 	if (!parentNode)
 		return false;
 
 	UpdateOnlineState(PId);
+    
+    auto modMsgData = msgData;
 
 	if (m_protoChCntA>0 && m_protoChCntB>0)
 	{
@@ -104,9 +106,9 @@ bool Mux_nA_to_mB::OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIde
 			if (chForB == 0)
 				chForB = static_cast<std::int32_t>(m_protoChCntB);
 
-			msgData._addrVal._first = chForB;
+            modMsgData._addrVal._first = chForB;
 			if (GetProtocolBIds().size() >= protocolBIndex + 1)
-				return parentNode->SendMessageTo(GetProtocolBIds()[protocolBIndex], Id, msgData);
+				return parentNode->SendMessageTo(GetProtocolBIds()[protocolBIndex], Id, modMsgData);
 		}
 		else if (PIdBIter != GetProtocolBIds().end())
 		{
@@ -118,9 +120,9 @@ bool Mux_nA_to_mB::OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIde
 			if (chForA == 0)
 				chForA = static_cast<std::int32_t>(m_protoChCntA);
 
-			msgData._addrVal._first = chForA;
+            modMsgData._addrVal._first = chForA;
 			if (GetProtocolAIds().size() >= protocolAIndex + 1)
-				return parentNode->SendMessageTo(GetProtocolAIds()[protocolAIndex], Id, msgData);
+				return parentNode->SendMessageTo(GetProtocolAIds()[protocolAIndex], Id, modMsgData);
 		}
 	}
 

@@ -109,7 +109,7 @@ bool Mirror_dualA_withValFilter::setStateXml(XmlElement* stateXml)
  * @param msgData	The actual message value/content data
  * @return	True if successful sent/forwarded, false if not
  */
-bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier Id, RemoteObjectMessageData& msgData)
+bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
 {
 	// a valid parent node is required to be able to do anything with the received message
 	auto parentNode = ObjectDataHandling_Abstract::GetParentNode();
