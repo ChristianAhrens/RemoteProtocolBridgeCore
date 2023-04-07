@@ -67,9 +67,11 @@ private:
 													 *   If this is MAI_Invalid, absolute messages will be generated.
 													 */
 	PacketModule::PacketModuleType	m_packetModuleTypeForPositioning{ PacketModule::CentroidPosition };
-	juce::Range<float>				m_mappingAreaRescaleRangeX{ 0.0f, 0.0f };
-	juce::Range<float>				m_mappingAreaRescaleRangeY{ 0.0f, 0.0f };
+	
+	juce::Range<float>	m_mappingAreaRescaleRangeX{ 0.0f, 0.0f };
+	juce::Range<float>	m_mappingAreaRescaleRangeY{ 0.0f, 0.0f };
 
+	std::map<int, ChannelId>	m_beaconIdxToChannelMap;
 
 	float m_floatValueBuffer[3] = { 0.0f, 0.0f, 0.0f };
 	int m_intValueBuffer[2] = { 0, 0 };

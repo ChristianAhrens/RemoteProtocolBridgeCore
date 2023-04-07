@@ -161,6 +161,30 @@ bool RTTrPMProtocolProcessor::setStateXml(XmlElement* stateXml)
 		}
 		else
 			stateXmlUpdateSuccess = false;
+
+		auto beaconIdxRemappingsXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::REMAPPINGS));
+		if (beaconIdxRemappingsXmlElement)
+		{
+			m_beaconIdxToChannelMap.clear();
+			auto beaconIdxRemappingXmlElement = beaconIdxRemappingsXmlElement->getFirstChildElement();
+			while (nullptr != beaconIdxRemappingXmlElement)
+			{
+				if (beaconIdxRemappingXmlElement->getTagName() == ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::REMAPPINGS))
+				{
+					auto beaconIdxRemappingTextElement = beaconIdxRemappingXmlElement->getFirstChildElement();
+					if (beaconIdxRemappingTextElement && beaconIdxRemappingTextElement->isTextElement())
+					{
+						auto beaconIdx = beaconIdxRemappingXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::ID), -1);
+						auto channel = ChannelId(beaconIdxRemappingTextElement->getText().getIntValue());
+						m_beaconIdxToChannelMap.insert(std::make_pair(beaconIdx, channel));
+					}
+				}
+
+				beaconIdxRemappingXmlElement = beaconIdxRemappingXmlElement->getNextElement();
+			}
+		}
+		else
+			stateXmlUpdateSuccess = true; // beaconIdx remapping is not mandatory!
 	}
 	return stateXmlUpdateSuccess;
 }
@@ -245,9 +269,13 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 						//DBG("PacketModuleTrackable('" + String(trackableModule->GetName()) + "'): seqNo" 
 						//	+ String(trackableModule->GetSeqNumber()) + " with " + String(trackableModule->GetNumberOfSubModules()) + " submodules");
 
-						ChannelId channelIdx = String(trackableModule->GetName()).getIntValue();
-
-						newMsgData._addrVal._first = channelIdx + 1;
+						auto beaconIdx = String(trackableModule->GetName()).getIntValue();
+						// in case the beaconIdx to channel remapping contains the incoming index, we use that remapping
+						if (m_beaconIdxToChannelMap.find(beaconIdx) != m_beaconIdxToChannelMap.end())
+							newMsgData._addrVal._first = m_beaconIdxToChannelMap.at(beaconIdx);
+						// otherwise the generic channel equals beacon+1 scheme is applied
+						else
+							newMsgData._addrVal._first = ChannelId(beaconIdx + 1);
 						newMsgData._addrVal._second = static_cast<RecordId>(m_mappingAreaId);
 					}
 				}
