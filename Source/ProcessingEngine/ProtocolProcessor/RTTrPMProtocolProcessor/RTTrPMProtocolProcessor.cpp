@@ -132,6 +132,35 @@ bool RTTrPMProtocolProcessor::setStateXml(XmlElement* stateXml)
 		}
 		else
 			stateXmlUpdateSuccess = false;
+
+		auto mappingAreaRescaleXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::MAPPINGAREARESCALE));
+		if (mappingAreaRescaleXmlElement)
+		{
+			auto mappingAreaRescaleTextElement = mappingAreaRescaleXmlElement->getFirstChildElement();
+			if (mappingAreaRescaleTextElement && mappingAreaRescaleTextElement->isTextElement())
+			{
+				auto rangeRescaleValues = StringArray();
+				if (4 != rangeRescaleValues.addTokens(mappingAreaRescaleTextElement->getText(), ";", ""))
+				{
+					m_mappingAreaRescaleRangeX = juce::Range<float>(0.0f, 0.0f);
+					m_mappingAreaRescaleRangeY = juce::Range<float>(0.0f, 0.0f);
+				}
+				else
+				{
+					auto minX = rangeRescaleValues[0].getFloatValue();
+					auto maxX = rangeRescaleValues[1].getFloatValue();
+					auto minY = rangeRescaleValues[2].getFloatValue();
+					auto maxY = rangeRescaleValues[3].getFloatValue();
+
+					m_mappingAreaRescaleRangeX = juce::Range<float>(minX, maxX);
+					m_mappingAreaRescaleRangeY = juce::Range<float>(minY, maxY);
+				}
+			}
+			else
+				stateXmlUpdateSuccess = false;
+		}
+		else
+			stateXmlUpdateSuccess = false;
 	}
 	return stateXmlUpdateSuccess;
 }
@@ -199,9 +228,7 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 
 	RemoteObjectIdentifier newObjectId = ROI_Invalid;
 	
-	//float newFloatValue;
-	float newDualFloatValue[2];
-	//int newIntValue;
+	std::vector<float> newDualFloatValue = { 0.0f, 0.0f };
 
 	for (auto const& RTTrPMmodule : rttrpmMessage.modules)
 	{
@@ -237,16 +264,19 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 						if (PacketModule::CentroidPosition == m_packetModuleTypeForPositioning)
 						{
 							if (m_mappingAreaId == MAI_Invalid)
+							{
 								newObjectId = ROI_Positioning_SourcePosition_XY;
+								newDualFloatValue = { static_cast<float>(centroidPositionModule->GetX()), static_cast<float>(centroidPositionModule->GetY()) };
+							}
 							else
+							{
 								newObjectId = ROI_CoordinateMapping_SourcePosition_XY;
-
-							newDualFloatValue[0] = static_cast<float>(centroidPositionModule->GetX());
-							newDualFloatValue[1] = static_cast<float>(centroidPositionModule->GetY());
+								newDualFloatValue = GetMappedPosition({ static_cast<float>(centroidPositionModule->GetX()), static_cast<float>(centroidPositionModule->GetY()) });
+							}
 
 							newMsgData._valType = ROVT_FLOAT;
 							newMsgData._valCount = 2;
-							newMsgData._payload = &newDualFloatValue;
+							newMsgData._payload = newDualFloatValue.data();
 							newMsgData._payloadSize = 2 * sizeof(float);
 
 							// If the received data targets a muted object, dont forward the message
@@ -273,16 +303,19 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 						if (PacketModule::TrackedPointPosition == m_packetModuleTypeForPositioning)
 						{
 							if (m_mappingAreaId == MAI_Invalid)
+							{
 								newObjectId = ROI_Positioning_SourcePosition_XY;
+								newDualFloatValue = { static_cast<float>(trackedPointPositionModule->GetX()), static_cast<float>(trackedPointPositionModule->GetY()) };
+							}
 							else
+							{
 								newObjectId = ROI_CoordinateMapping_SourcePosition_XY;
-
-							newDualFloatValue[0] = static_cast<float>(trackedPointPositionModule->GetX());
-							newDualFloatValue[1] = static_cast<float>(trackedPointPositionModule->GetY());
+								newDualFloatValue = GetMappedPosition({ static_cast<float>(trackedPointPositionModule->GetX()), static_cast<float>(trackedPointPositionModule->GetY()) });
+							}
 
 							newMsgData._valType = ROVT_FLOAT;
 							newMsgData._valCount = 2;
-							newMsgData._payload = &newDualFloatValue;
+							newMsgData._payload = newDualFloatValue.data();
 							newMsgData._payloadSize = 2 * sizeof(float);
 
 							// If the received data targets a muted object, dont forward the message
@@ -332,16 +365,19 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 						if (PacketModule::CentroidAccelerationAndVelocity == m_packetModuleTypeForPositioning)
 						{
 							if (m_mappingAreaId == MAI_Invalid)
+							{
 								newObjectId = ROI_Positioning_SourcePosition_XY;
+								newDualFloatValue = { static_cast<float>(centroidAccelAndVeloModule->GetXCoordinate()), static_cast<float>(centroidAccelAndVeloModule->GetYCoordinate()) };
+							}
 							else
+							{
 								newObjectId = ROI_CoordinateMapping_SourcePosition_XY;
-
-							newDualFloatValue[0] = static_cast<float>(centroidAccelAndVeloModule->GetXCoordinate());
-							newDualFloatValue[1] = static_cast<float>(centroidAccelAndVeloModule->GetYCoordinate());
+								newDualFloatValue = GetMappedPosition({ static_cast<float>(centroidAccelAndVeloModule->GetXCoordinate()), static_cast<float>(centroidAccelAndVeloModule->GetYCoordinate()) });
+							}
 
 							newMsgData._valType = ROVT_FLOAT;
 							newMsgData._valCount = 2;
-							newMsgData._payload = &newDualFloatValue;
+							newMsgData._payload = newDualFloatValue.data();
 							newMsgData._payloadSize = 2 * sizeof(float);
 
 							// If the received data targets a muted object, dont forward the message
@@ -368,16 +404,19 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 						if (PacketModule::TrackedPointAccelerationAndVelocity == m_packetModuleTypeForPositioning)
 						{
 							if (m_mappingAreaId == MAI_Invalid)
+							{
 								newObjectId = ROI_Positioning_SourcePosition_XY;
+								newDualFloatValue = { static_cast<float>(trackedPointAccelAndVeloModule->GetXCoordinate()), static_cast<float>(trackedPointAccelAndVeloModule->GetYCoordinate()) };
+							}
 							else
+							{
 								newObjectId = ROI_CoordinateMapping_SourcePosition_XY;
-
-							newDualFloatValue[0] = static_cast<float>(trackedPointAccelAndVeloModule->GetXCoordinate());
-							newDualFloatValue[1] = static_cast<float>(trackedPointAccelAndVeloModule->GetYCoordinate());
+								newDualFloatValue = GetMappedPosition({ static_cast<float>(trackedPointAccelAndVeloModule->GetXCoordinate()), static_cast<float>(trackedPointAccelAndVeloModule->GetYCoordinate()) });
+							}
 
 							newMsgData._valType = ROVT_FLOAT;
 							newMsgData._valCount = 2;
-							newMsgData._payload = &newDualFloatValue;
+							newMsgData._payload = newDualFloatValue.data();
 							newMsgData._payloadSize = 2 * sizeof(float);
 
 							// If the received data targets a muted object, dont forward the message
@@ -446,4 +485,26 @@ const juce::String RTTrPMProtocolProcessor::GetRTTrPMModuleString(PacketModule::
 	default:
 		return "";
 	}
+}
+
+/**
+ * Helper method to map a given xy position to the configured rescale origin/range and return this.
+ * @param	moduleDataPosition	The xy position to be mapped
+ * @return	The mapped xy position value
+ */
+std::vector<float> RTTrPMProtocolProcessor::GetMappedPosition(const std::vector<float>& moduleDataPosition)
+{
+	jassert(2 == moduleDataPosition.size());
+	if (2 != moduleDataPosition.size())
+		return {0.0f, 0.0f};
+
+	jassert(0.0f != m_mappingAreaRescaleRangeX.getLength() && 0.0f != m_mappingAreaRescaleRangeY.getLength());
+	if (0.0f == m_mappingAreaRescaleRangeX.getLength() || 0.0f == m_mappingAreaRescaleRangeY.getLength())
+		return { 0.0f, 0.0f };
+
+	std::vector<float> mappedPosition(2);
+	mappedPosition[0] = (moduleDataPosition.at(0) - m_mappingAreaRescaleRangeX.getStart()) / m_mappingAreaRescaleRangeX.getLength();
+	mappedPosition[1] = (moduleDataPosition.at(1) - m_mappingAreaRescaleRangeY.getStart()) / m_mappingAreaRescaleRangeY.getLength();
+
+	return mappedPosition;
 }

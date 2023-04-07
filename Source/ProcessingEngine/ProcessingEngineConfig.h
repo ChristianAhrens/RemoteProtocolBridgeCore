@@ -83,6 +83,7 @@ public:
 		XYMESSAGECOMBINED,
 		REMAPPINGS,
 		PACKETMODULE,
+		MAPPINGAREARESCALE,
 	};
 	static String getTagName(TagID Id)
 	{
@@ -152,6 +153,8 @@ public:
 			return "Remappings";
 		case PACKETMODULE:
 			return "PacketModule";
+		case MAPPINGAREARESCALE:
+			return "MappingAreaRescale";
 		default:
 			return "INVALID";
 		}

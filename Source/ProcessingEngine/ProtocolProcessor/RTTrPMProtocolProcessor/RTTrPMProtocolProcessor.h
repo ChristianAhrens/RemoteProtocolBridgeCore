@@ -56,6 +56,10 @@ protected:
 	void SetHostPort(std::int32_t hostPort) override;
 
 private:
+	//==============================================================================
+	std::vector<float>	GetMappedPosition(const std::vector<float>& moduleDataPosition);
+
+	//==============================================================================
 	std::unique_ptr<RTTrPMReceiver>	m_rttrpmReceiver;	/**< A receiver object for BlackTrax RTTrPM protocol that binds to a network port to receive data
 														 *   via UDP, parse it, and forwards the included RTTrPM packet modules to its listeners.
 														 */
@@ -63,6 +67,8 @@ private:
 													 *   If this is MAI_Invalid, absolute messages will be generated.
 													 */
 	PacketModule::PacketModuleType	m_packetModuleTypeForPositioning{ PacketModule::CentroidPosition };
+	juce::Range<float>				m_mappingAreaRescaleRangeX{ 0.0f, 0.0f };
+	juce::Range<float>				m_mappingAreaRescaleRangeY{ 0.0f, 0.0f };
 
 
 	float m_floatValueBuffer[3] = { 0.0f, 0.0f, 0.0f };
