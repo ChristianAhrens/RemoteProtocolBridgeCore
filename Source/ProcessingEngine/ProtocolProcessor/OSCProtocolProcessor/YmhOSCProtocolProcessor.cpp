@@ -71,8 +71,10 @@ bool YmhOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id,
 
 	// assemble the addressing string
 	String addressString = GetRemoteObjectDomainString() + String(msgData._addrVal._first) + GetRemoteObjectParameterTypeString(Id);
-
-	return SendAddressedMessage(addressString, msgData);
+	if (addressString.isEmpty())
+		return false;
+	else
+		return SendAddressedMessage(addressString, msgData);
 }
 
 /**

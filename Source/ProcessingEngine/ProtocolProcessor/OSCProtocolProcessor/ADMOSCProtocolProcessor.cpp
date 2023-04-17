@@ -203,8 +203,10 @@ bool ADMOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id,
 
 	// assemble the addressing string
 	String addressString = GetADMMessageDomainString() + GetADMMessageTypeString(AMT_Object) + String(msgData._addrVal._first) + GetADMObjectTypeString(targetObjType);
-	
-	return SendAddressedMessage(addressString, admConvertedMsgData);
+	if (addressString.isEmpty())
+		return false;
+	else
+		return SendAddressedMessage(addressString, admConvertedMsgData);
 }
 
 /**

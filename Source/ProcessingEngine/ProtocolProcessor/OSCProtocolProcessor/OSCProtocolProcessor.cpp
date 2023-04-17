@@ -175,6 +175,8 @@ bool OSCProtocolProcessor::connectSenderIfRequired()
 bool OSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
 {
 	String addressString = GetRemoteObjectString(Id);
+	if (addressString.isEmpty())
+		return false;
 
 	if (msgData._addrVal._second != INVALID_ADDRESS_VALUE)
 		addressString += String::formatted("/%d", msgData._addrVal._second);
@@ -194,6 +196,15 @@ bool OSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, co
  */
 bool OSCProtocolProcessor::SendAddressedMessage(const String& addressString, const RemoteObjectMessageData& msgData)
 {	
+	// Do not attemt to send anything if the addresspatter is empty.
+	// This even throws an exception in juce::OSCMessage...
+	if (addressString.isEmpty())
+	{
+		// ...therefor we assert here as a reminder
+		jassertfalse;
+		return false;
+	}
+
 	// do not send any values if the config forbids data sending
 	if (m_dataSendindDisabled)
 		return false;

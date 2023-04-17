@@ -98,6 +98,10 @@ bool RemapOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier r
 
 	// assemble the addressing string
 	auto addressString = m_oscRemappings.at(roid).first;
+	if (addressString.isEmpty())
+	{
+		return false;
+	}
 	if (addressString.contains(juce::StringRef("%1")))
 	{
 		addressString.replace("%1", "%i");
