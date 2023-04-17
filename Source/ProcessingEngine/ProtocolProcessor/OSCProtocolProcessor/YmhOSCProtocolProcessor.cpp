@@ -150,7 +150,6 @@ void YmhOSCProtocolProcessor::oscMessageReceived(const OSCMessage& message, cons
 
 	newMsgData._addrVal._first = channelId;
 	newMsgData._addrVal._second = recordId;
-	newMsgData._valType = ROVT_FLOAT;
 
 	// If the received channel (source) is set to muted, return without further processing
 	if (IsRemoteObjectMuted(RemoteObject(newObjectId, RemoteObjectAddressing(channelId, recordId))))

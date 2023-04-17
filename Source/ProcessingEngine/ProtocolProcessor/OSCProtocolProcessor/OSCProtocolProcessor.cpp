@@ -510,7 +510,6 @@ void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const S
 
 		newMsgData._addrVal._first = channelId;
 		newMsgData._addrVal._second = recordId;
-		newMsgData._valType = ROVT_FLOAT;
 
 		createMessageData(message, newObjectId, newMsgData);
 
