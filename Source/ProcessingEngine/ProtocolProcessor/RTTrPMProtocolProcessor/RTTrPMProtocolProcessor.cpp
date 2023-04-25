@@ -273,9 +273,9 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 						// in case the beaconIdx to channel remapping contains the incoming index, we use that remapping
 						if (m_beaconIdxToChannelMap.find(beaconIdx) != m_beaconIdxToChannelMap.end())
 							newMsgData._addrVal._first = m_beaconIdxToChannelMap.at(beaconIdx);
-						// otherwise the generic channel equals beacon+1 scheme is applied
+						// otherwise the generic channel equals beaconIdx scheme is applied
 						else
-							newMsgData._addrVal._first = ChannelId(beaconIdx + 1);
+							newMsgData._addrVal._first = ChannelId(beaconIdx);
 						newMsgData._addrVal._second = static_cast<RecordId>(m_mappingAreaId);
 					}
 				}
