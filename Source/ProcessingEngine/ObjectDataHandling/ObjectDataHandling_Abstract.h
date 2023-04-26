@@ -67,7 +67,7 @@ public:
 		 * @param	state	The new state for the protocol that changed
 		 * @return	True if change was published successfully, false if not
 		 */
-		void SetChangedProtocolState(ProtocolId id, ObjectHandlingState state)
+		virtual void SetChangedProtocolState(ProtocolId id, ObjectHandlingState state)
 		{
 			postMessage(std::make_unique<StateCallbackMessage>(id, state).release());
 		}
