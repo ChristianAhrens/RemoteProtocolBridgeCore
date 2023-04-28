@@ -305,6 +305,11 @@ protected:
 		JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(InterProtocolMessageQueue)
 	};
 
+	//==============================================================================
+	virtual std::map<ProtocolId, std::unique_ptr<ProtocolProcessorBase>>& GetTypeAProtocols();
+	virtual std::map<ProtocolId, std::unique_ptr<ProtocolProcessorBase>>& GetTypeBProtocols();
+	virtual void SetId(const NodeId id);
+
 private:
 	//==============================================================================
 	ProtocolProcessorBase* CreateProtocolProcessor(ProtocolType type, int listenerPortNumber);

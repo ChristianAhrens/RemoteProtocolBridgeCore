@@ -532,3 +532,37 @@ void ProcessingEngineNode::run()
 
 	m_threadRunning.reset();
 }
+
+/**
+ * Protected getter for the internal list of type A protocols.
+ * This is useful for moc'ing the ProcessingEngineNode in a UnitTesting environment
+ * and e.g. exposing the method access publicly in this special scenario.
+ * @return	The internal list of type A protocols.
+ */
+std::map<ProtocolId, std::unique_ptr<ProtocolProcessorBase>>& ProcessingEngineNode::GetTypeAProtocols()
+{
+	return m_typeAProtocols;
+}
+
+/**
+ * Protected getter for the internal list of type B protocols.
+ * This is useful for moc'ing the ProcessingEngineNode in a UnitTesting environment
+ * and e.g. exposing the method access publicly in this special scenario.
+ * @return	The internal list of type B protocols.
+ */
+std::map<ProtocolId, std::unique_ptr<ProtocolProcessorBase>>& ProcessingEngineNode::GetTypeBProtocols()
+{
+	return m_typeBProtocols;
+}
+
+/**
+ * Protected setter for the internal id of this node, ususally set through the incoming
+ * stateXml when the node is set up regularly.
+ * This is useful for moc'ing the ProcessingEngineNode in a UnitTesting environment
+ * and e.g. exposing the method access publicly in this special scenario.
+ * @param	id	The nodeId value to set to internal member variable.
+ */
+void ProcessingEngineNode::SetId(const NodeId id)
+{
+	m_nodeId = id;
+}
