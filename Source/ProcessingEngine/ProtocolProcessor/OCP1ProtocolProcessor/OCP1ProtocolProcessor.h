@@ -21,6 +21,8 @@
 #include "../../../RemoteProtocolBridgeCommon.h"
 #include "../NetworkProtocolProcessorBase.h"
 
+#include <NanoOcp1.h>
+
 #include <JuceHeader.h>
 
 
@@ -47,5 +49,8 @@ public:
 
 	//==============================================================================
 	static String GetRemoteObjectString(RemoteObjectIdentifier id);
+
+private:
+	std::unique_ptr<NanoOcp1::NanoOcp1Base>	m_nanoOcp;
 
 };

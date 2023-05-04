@@ -47,7 +47,10 @@ OCP1ProtocolProcessor::~OCP1ProtocolProcessor()
  */
 bool OCP1ProtocolProcessor::Start()
 {
-	return true;
+	if (m_nanoOcp)
+		return m_nanoOcp->start();
+	else
+		return false;
 }
 
 /**
@@ -55,7 +58,10 @@ bool OCP1ProtocolProcessor::Start()
  */
 bool OCP1ProtocolProcessor::Stop()
 {
-	return true;
+	if (m_nanoOcp)
+		return m_nanoOcp->stop();
+	else
+		return false;
 }
 
 /**
@@ -66,9 +72,26 @@ bool OCP1ProtocolProcessor::Stop()
  */
 bool OCP1ProtocolProcessor::setStateXml(XmlElement* stateXml)
 {
-	ignoreUnused(stateXml);
+	if (!NetworkProtocolProcessorBase::setStateXml(stateXml))
+		return false;
+	else
+	{
+		auto ocp1ConnectionModeXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::OCP1CONNECTIONMODE));
+		if (ocp1ConnectionModeXmlElement)
+		{
+			auto modeString = ocp1ConnectionModeXmlElement->getAllSubText();
+			if (modeString == "server")
+				m_nanoOcp = std::make_unique<NanoOcp1::NanoOcp1Server>(GetIpAddress(), GetClientPort());
+			else if (modeString == "client")
+				m_nanoOcp = std::make_unique<NanoOcp1::NanoOcp1Client>(GetIpAddress(), GetClientPort());
+			else
+				return false;
 
-	return false;
+			return true;
+		}
+		else
+			return false;
+	}
 }
 
 /**
@@ -100,6 +123,8 @@ String OCP1ProtocolProcessor::GetRemoteObjectString(RemoteObjectIdentifier id)
 		return "Positioning_Source_Position_X";
 	case ROI_CoordinateMapping_SourcePosition_Y:
 		return "Positioning_Source_Position_Y";
+	case ROI_CoordinateMapping_SourcePosition_XY:
+		return "Positioning_Source_Position_XY";
 	case ROI_Positioning_SourceSpread:
 		return "Positioning_Source_Spread";
 	case ROI_Positioning_SourceDelayMode:

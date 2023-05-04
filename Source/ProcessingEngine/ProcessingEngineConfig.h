@@ -84,6 +84,7 @@ public:
 		REMAPPINGS,
 		PACKETMODULE,
 		MAPPINGAREARESCALE,
+		OCP1CONNECTIONMODE,
 	};
 	static String getTagName(TagID Id)
 	{
@@ -155,6 +156,8 @@ public:
 			return "PacketModule";
 		case MAPPINGAREARESCALE:
 			return "MappingAreaRescale";
+		case OCP1CONNECTIONMODE:
+			return "Ocp1ConnectionMode";
 		default:
 			return "INVALID";
 		}
