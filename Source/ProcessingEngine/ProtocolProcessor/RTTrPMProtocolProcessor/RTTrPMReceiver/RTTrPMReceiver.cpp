@@ -171,7 +171,7 @@ int RTTrPMReceiver::HandleBuffer(unsigned char* dataBuffer, size_t bytesRead, RT
 */
 void RTTrPMReceiver::run()
 {
-	int bufferSize = 512;
+	int bufferSize = 4096;
 	HeapBlock<unsigned char> rttrpmBuffer(bufferSize);
 	String senderIPAddress;
 	int senderPortNumber;
