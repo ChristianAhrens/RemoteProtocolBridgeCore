@@ -126,7 +126,6 @@ bool RTTrPMProtocolProcessor::setStateXml(XmlElement* stateXml)
 				if (moduleTypeIdentifier.contains(GetRTTrPMModuleString(moduleType)))
 				{
 					m_packetModuleTypesForPositioning.add(moduleType);
-					break;
 				}
 			}
 			stateXmlUpdateSuccess = false;
