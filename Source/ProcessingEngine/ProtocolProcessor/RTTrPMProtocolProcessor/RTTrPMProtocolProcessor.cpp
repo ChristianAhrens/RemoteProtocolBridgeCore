@@ -116,16 +116,16 @@ bool RTTrPMProtocolProcessor::setStateXml(XmlElement* stateXml)
 		else
 			stateXmlUpdateSuccess = false;
 
+		m_packetModuleTypesForPositioning.clear();
 		auto moduleTypeForPositioningXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::PACKETMODULE));
 		if (moduleTypeForPositioningXmlElement)
 		{
 			auto moduleTypeIdentifier = moduleTypeForPositioningXmlElement->getStringAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::TYPE));
 			for (auto const& moduleType : PacketModule::PacketModuleTypes)
 			{
-				if (moduleTypeIdentifier == GetRTTrPMModuleString(moduleType))
+				if (moduleTypeIdentifier.contains(GetRTTrPMModuleString(moduleType)))
 				{
-					m_packetModuleTypeForPositioning = moduleType;
-					break;
+					m_packetModuleTypesForPositioning.add(moduleType);
 				}
 			}
 			stateXmlUpdateSuccess = false;
@@ -289,7 +289,7 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 						//	+ String(centroidPositionModule->GetLatency()) 
 						//	+ String::formatted(" x%f,y%f,z%f", centroidPositionModule->GetX(), centroidPositionModule->GetY(), centroidPositionModule->GetZ()));
 
-						if (PacketModule::CentroidPosition == m_packetModuleTypeForPositioning)
+						if (m_packetModuleTypesForPositioning.contains(PacketModule::CentroidPosition))
 						{
 							if (m_mappingAreaId == MAI_Invalid)
 							{
@@ -328,7 +328,7 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 						//	+ " latency" + String(trackedPointPositionModule->GetLatency()) 
 						//	+ String::formatted(" x%f,y%f,z%f", trackedPointPositionModule->GetX(), trackedPointPositionModule->GetY(), trackedPointPositionModule->GetZ()));
 
-						if (PacketModule::TrackedPointPosition == m_packetModuleTypeForPositioning)
+						if (m_packetModuleTypesForPositioning.contains(PacketModule::TrackedPointPosition))
 						{
 							if (m_mappingAreaId == MAI_Invalid)
 							{
@@ -390,7 +390,7 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 						//	+ String::formatted(" xa%f,ya%f,za%f", centroidAccelAndVeloModule->GetXAcceleration(), centroidAccelAndVeloModule->GetYAcceleration(), centroidAccelAndVeloModule->GetZAcceleration())
 						//	+ String::formatted(" xv%f,yv%f,zv%f", centroidAccelAndVeloModule->GetXVelocity(), centroidAccelAndVeloModule->GetYVelocity(), centroidAccelAndVeloModule->GetZVelocity()));
 
-						if (PacketModule::CentroidAccelerationAndVelocity == m_packetModuleTypeForPositioning)
+						if (m_packetModuleTypesForPositioning.contains(PacketModule::CentroidAccelerationAndVelocity))
 						{
 							if (m_mappingAreaId == MAI_Invalid)
 							{
@@ -429,7 +429,7 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 						//	+ String::formatted(" xa%f,ya%f,za%f", trackedPointAccelAndVeloModule->GetXAcceleration(), trackedPointAccelAndVeloModule->GetYAcceleration(), trackedPointAccelAndVeloModule->GetZAcceleration())
 						//	+ String::formatted(" xv%f,yv%f,zv%f", trackedPointAccelAndVeloModule->GetXVelocity(), trackedPointAccelAndVeloModule->GetYVelocity(), trackedPointAccelAndVeloModule->GetZVelocity()));
 
-						if (PacketModule::TrackedPointAccelerationAndVelocity == m_packetModuleTypeForPositioning)
+						if (m_packetModuleTypesForPositioning.contains(PacketModule::TrackedPointAccelerationAndVelocity))
 						{
 							if (m_mappingAreaId == MAI_Invalid)
 							{

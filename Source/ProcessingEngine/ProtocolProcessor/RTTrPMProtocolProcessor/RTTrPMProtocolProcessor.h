@@ -66,7 +66,7 @@ private:
 	MappingAreaId	m_mappingAreaId{ MAI_Invalid };	/**< The DS100 mapping area to be used when converting incoming coords into relative messages. 
 													 *   If this is MAI_Invalid, absolute messages will be generated.
 													 */
-	PacketModule::PacketModuleType	m_packetModuleTypeForPositioning{ PacketModule::CentroidPosition };
+	juce::Array<PacketModule::PacketModuleType>	m_packetModuleTypesForPositioning{ PacketModule::CentroidPosition };
 	
 	juce::Range<float>	m_mappingAreaRescaleRangeX{ 0.0f, 0.0f };
 	juce::Range<float>	m_mappingAreaRescaleRangeY{ 0.0f, 0.0f };
