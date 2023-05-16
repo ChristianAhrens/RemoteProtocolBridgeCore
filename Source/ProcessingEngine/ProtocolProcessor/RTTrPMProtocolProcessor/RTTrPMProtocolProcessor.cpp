@@ -309,7 +309,7 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 
 							// If the received data targets a muted object, dont forward the message
 							if (IsRemoteObjectMuted(RemoteObject(newObjectId, newMsgData._addrVal)))
-								return;
+								continue;
 
 							// provide the received message to parent node
 							else if (m_messageListener)
@@ -348,7 +348,7 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 
 							// If the received data targets a muted object, dont forward the message
 							if (IsRemoteObjectMuted(RemoteObject(newObjectId, newMsgData._addrVal)))
-								return;
+								continue;
 
 							// provide the received message to parent node
 							else if (m_messageListener)
@@ -410,7 +410,7 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 
 							// If the received data targets a muted object, dont forward the message
 							if (IsRemoteObjectMuted(RemoteObject(newObjectId, newMsgData._addrVal)))
-								return;
+								continue;
 
 							// provide the received message to parent node
 							else if (m_messageListener)
@@ -449,7 +449,7 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 
 							// If the received data targets a muted object, dont forward the message
 							if (IsRemoteObjectMuted(RemoteObject(newObjectId, newMsgData._addrVal)))
-								return;
+								continue;
 
 							// provide the received message to parent node
 							else if (m_messageListener)
