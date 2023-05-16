@@ -43,16 +43,16 @@ void PacketModuleTrackable::readData(std::vector<unsigned char>& data, int& read
 
 	if(GetModuleType() == WithTimestamp)
 	{
-		std::copy(readIter, readIter + 1, (uint8_t *)&m_nameLength);
+		std::copy(readIter, readIter + 1, (unsigned char *)&m_nameLength);
 		readIter += 1;
 
 		m_name = std::string((const char*)(&(*readIter)), m_nameLength);
 		readIter += m_nameLength;
 
-		std::copy(readIter, readIter + 4, (uint32_t*)&m_seqNumber);
+		std::copy(readIter, readIter + 4, ((unsigned char *)&m_seqNumber));
 		readIter += 4;
 
-		std::copy(readIter, readIter + 1, (int *)&m_numberOfSubModules);
+		std::copy(readIter, readIter + 1, (unsigned char *)&m_numberOfSubModules);
 		readIter += 1;
 
 		readPos += (1 + m_nameLength + 4 + 1);
@@ -60,13 +60,13 @@ void PacketModuleTrackable::readData(std::vector<unsigned char>& data, int& read
 
 	else if(GetModuleType() == WithoutTimestamp)
 	{
-		std::copy(readIter, readIter + 1, (uint8_t*)&m_nameLength);
+		std::copy(readIter, readIter + 1, (unsigned char *)&m_nameLength);
 		readIter += 1;
 
 		m_name = std::string((const char*)(&(*readIter)), m_nameLength);
 		readIter += m_nameLength;
 
-		std::copy(readIter, readIter + 1, (int*)&m_numberOfSubModules);
+		std::copy(readIter, readIter + 1, (unsigned char *)&m_numberOfSubModules);
 		readIter += 1;
 		
 		readPos += (1 + m_nameLength + 1);
@@ -93,7 +93,7 @@ std::string PacketModuleTrackable::GetName() const
  * Getter for the packet module sequence number
  * @return The sequence number
  */
-uint32_t PacketModuleTrackable::GetSeqNumber() const
+std::uint32_t PacketModuleTrackable::GetSeqNumber() const
 {
 	return m_seqNumber;
 }
@@ -102,7 +102,7 @@ uint32_t PacketModuleTrackable::GetSeqNumber() const
 * Returns the number of sub-modules
 * @return	Number of sub-modules
 */
-uint8_t PacketModuleTrackable::GetNumberOfSubModules() const
+std::uint8_t PacketModuleTrackable::GetNumberOfSubModules() const
 {
 	return m_numberOfSubModules;
 }

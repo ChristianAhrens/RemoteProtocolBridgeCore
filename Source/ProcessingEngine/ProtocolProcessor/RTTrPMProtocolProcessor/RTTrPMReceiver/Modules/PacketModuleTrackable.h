@@ -38,14 +38,14 @@ public:
 	void readData(std::vector<unsigned char>& data, int& readPos) override;
 
 	std::string GetName() const;
-	uint32_t GetSeqNumber() const;
-	uint8_t GetNumberOfSubModules() const;
+	std::uint32_t GetSeqNumber() const;
+	std::uint8_t GetNumberOfSubModules() const;
 
 	bool isValid() const override;
 
 private:
-	uint8_t		m_nameLength{ 0 };
-	std::string	m_name;
-	uint32_t	m_seqNumber{ 0 };
-	uint8_t		m_numberOfSubModules{ 0 };
+	std::uint8_t	m_nameLength{ 0 };
+	std::string		m_name;
+	std::uint32_t	m_seqNumber{ 0 };
+	std::uint8_t	m_numberOfSubModules{ 0 };
 };

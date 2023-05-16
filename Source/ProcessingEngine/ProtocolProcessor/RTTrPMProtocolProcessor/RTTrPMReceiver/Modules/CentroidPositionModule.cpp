@@ -39,7 +39,7 @@ void CentroidPositionModule::readData(std::vector<unsigned char>& data, int& rea
 {
 	auto readIter = data.begin() + readPos;
 
-	std::copy(readIter, readIter + 2, (unsigned char*)&m_latency);
+	std::copy(readIter, readIter + 2, (unsigned char *)&m_latency);
 	readIter += 2;
 
 	std::copy(readIter, readIter + 8, (unsigned char *)&m_coordinateX);
