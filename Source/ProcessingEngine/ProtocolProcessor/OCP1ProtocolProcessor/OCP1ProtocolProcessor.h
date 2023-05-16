@@ -21,10 +21,16 @@
 #include "../../../RemoteProtocolBridgeCommon.h"
 #include "../NetworkProtocolProcessorBase.h"
 
-#include <NanoOcp1.h>
-
 #include <JuceHeader.h>
 
+
+/**
+ * Fwd. decl.
+ */
+namespace NanoOcp1
+{
+	class NanoOcp1Base;
+};
 
 /**
  * Class OCP1ProtocolProcessor is a derived class for OCA protocol interaction. 
@@ -51,6 +57,10 @@ public:
 	static String GetRemoteObjectString(RemoteObjectIdentifier id);
 
 private:
+	//==============================================================================
+	bool ocp1MessageReceived(const juce::MemoryBlock& data);
+
+	//==============================================================================
 	std::unique_ptr<NanoOcp1::NanoOcp1Base>	m_nanoOcp;
 
 };
