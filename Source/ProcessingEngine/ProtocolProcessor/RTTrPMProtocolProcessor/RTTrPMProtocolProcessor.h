@@ -68,8 +68,8 @@ private:
 													 */
 	juce::Array<PacketModule::PacketModuleType>	m_packetModuleTypesForPositioning{ PacketModule::CentroidPosition };
 	
-	juce::Range<float>	m_mappingAreaRescaleRangeX{ 0.0f, 0.0f };
-	juce::Range<float>	m_mappingAreaRescaleRangeY{ 0.0f, 0.0f };
+	juce::Range<float>	m_mappingAreaRescaleRangeX{ 0.0f, 1.0f };
+	juce::Range<float>	m_mappingAreaRescaleRangeY{ 0.0f, 1.0f };
 
 	std::map<int, ChannelId>	m_beaconIdxToChannelMap;
 
