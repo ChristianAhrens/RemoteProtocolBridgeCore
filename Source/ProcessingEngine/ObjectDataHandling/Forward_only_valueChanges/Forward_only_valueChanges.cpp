@@ -166,11 +166,7 @@ bool Forward_only_valueChanges::IsChangedDataValue(const ProtocolId PId, const R
 			RemoteObjectValueType valType = currentVal._valType;
 			auto refData = currentVal._payload;
 			auto newData = msgData._payload;
-	
-			auto referencePrecisionValue = 0;
-			auto newPrecisionValue = 0;
 			
-			auto changeFound = false;
 			for (int i = 0; i < valCount; ++i)
 			{
 				switch (valType)
@@ -178,48 +174,47 @@ bool Forward_only_valueChanges::IsChangedDataValue(const ProtocolId PId, const R
 				case ROVT_INT:
 					{
 					// convert payload to correct pointer type
-					auto refVal = static_cast<int*>(refData);
-					auto newVal = static_cast<int*>(newData);
+					auto refValPtr = static_cast<int*>(refData);
+					auto newValPtr = static_cast<int*>(newData);
 					// grab actual value
-					referencePrecisionValue = *refVal;
-					newPrecisionValue = *newVal;
+					auto referenceValue = *refValPtr;
+					auto newValue = *newValPtr;
 					// increase pointer to next value (to access it in next valCount loop iteration)
-					refData = refVal+1;
-					newData = newVal+1;
+					refData = refValPtr +1;
+					newData = newValPtr +1;
+					// if integer values differ, precision is irrelevant
+					isChangedDataValue = (referenceValue != newValue);
 					}
 					break;
 				case ROVT_FLOAT:
 					{
 					// convert payload to correct pointer type
-					auto refVal = static_cast<float*>(refData);
-					auto newVal = static_cast<float*>(newData);
+					auto refValPtr = static_cast<float*>(refData);
+					auto newValPtr = static_cast<float*>(newData);
 					// grab actual value and apply precision to get a comparable value
-					referencePrecisionValue = static_cast<int>(std::roundf(*refVal / m_precision));
-					newPrecisionValue		= static_cast<int>(std::roundf(*newVal / m_precision));
+					auto referenceValue = *refValPtr;
+					auto newValue		= *newValPtr;
+					auto valueDifference = referenceValue - newValue;
 					// increase pointer to next value (to access it in next valCount loop iteration)
-					refData = refVal+1;
-					newData = newVal+1;
+					refData = refValPtr +1;
+					newData = newValPtr +1;
+					// if the float difference is up to equal of the configured precision, no change is signaled
+					isChangedDataValue = (std::fabs(valueDifference) > m_precision);
 					}
 					break;
 				case ROVT_STRING:
 					{
 					auto refVal = String(static_cast<char*>(currentVal._payload), currentVal._payloadSize);
 					auto newVal = String(static_cast<char*>(msgData._payload), msgData._payloadSize);
-					changeFound = (refVal != newVal);
+					isChangedDataValue = (refVal != newVal);
 					}
 					break;
 				case ROVT_NONE:
 				default:
-					changeFound = true;
+					isChangedDataValue = true;
 					break;
 				}
-	
-	
-				if (referencePrecisionValue != newPrecisionValue)
-					changeFound = true;
 			}
-	
-			isChangedDataValue = changeFound;
 		}
 	}
 
