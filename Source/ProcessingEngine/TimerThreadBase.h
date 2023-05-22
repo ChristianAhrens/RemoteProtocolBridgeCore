@@ -28,7 +28,7 @@ class TimerThreadBase :    private Thread
 {
 public:
 	TimerThreadBase();
-	~TimerThreadBase();
+	virtual ~TimerThreadBase();
 
 	void startTimerThread(int callbackInterval, int initialCallbackOffset = 0);
 	void stopTimerThread();
