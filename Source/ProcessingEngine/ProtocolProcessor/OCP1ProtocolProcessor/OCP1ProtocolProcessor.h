@@ -30,6 +30,8 @@
 namespace NanoOcp1
 {
 	class NanoOcp1Base;
+	class Ocp1Notification;
+	class Ocp1Response;
 };
 
 /**
@@ -58,9 +60,37 @@ public:
 
 private:
 	//==============================================================================
+	void timerThreadCallback() override;
+
+	//==============================================================================
+	void CreateKnownONosMap();
+
+	//==============================================================================
 	bool ocp1MessageReceived(const juce::MemoryBlock& data);
+	bool CreateObjectSubscriptions();
+	bool DeleteObjectSubscriptions();
+	bool QueryObjectValues();
+
+	//==============================================================================
+	void AddPendingSubscriptionHandle(const std::uint32_t handle);
+	bool PopPendingSubscriptionHandle(const std::uint32_t handle);
+	bool HasPendingSubscriptions();
+
+	//==============================================================================
+	void AddPendingGetValueHandle(const std::uint32_t handle, const std::uint32_t ONo);
+	const std::uint32_t PopPendingGetValueHandle(const std::uint32_t handle);
+	bool HasPendingGetValues();
+
+	//==============================================================================
+	bool UpdateObjectValues(const NanoOcp1::Ocp1Notification* notifObj);
+	bool UpdateObjectValues(const std::uint32_t ONo, const NanoOcp1::Ocp1Response* responseObj);
 
 	//==============================================================================
 	std::unique_ptr<NanoOcp1::NanoOcp1Base>	m_nanoOcp;
+	std::vector<std::uint32_t>				m_pendingSubscriptionHandles;
+	std::map<std::uint32_t, std::uint32_t>	m_pendingGetValueHandlesWithONo;
+
+	//==============================================================================
+	std::map<RemoteObjectIdentifier, std::map<std::pair<RecordId, ChannelId>, NanoOcp1::Ocp1CommandDefinition>>	m_ROIsToDefsMap;
 
 };
