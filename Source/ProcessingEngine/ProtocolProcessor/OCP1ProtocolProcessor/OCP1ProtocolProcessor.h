@@ -32,6 +32,7 @@ namespace NanoOcp1
 	class NanoOcp1Base;
 	class Ocp1Notification;
 	class Ocp1Response;
+	struct Ocp1CommandDefinition;
 };
 
 /**

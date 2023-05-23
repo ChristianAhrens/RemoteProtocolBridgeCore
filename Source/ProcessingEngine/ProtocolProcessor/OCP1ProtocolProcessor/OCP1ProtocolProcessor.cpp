@@ -220,6 +220,7 @@ bool OCP1ProtocolProcessor::ocp1MessageReceived(const juce::MemoryBlock& data)
                 {
                     if (notifObj->MatchesObject(&objDefKV->second))
                     {
+                        /*todo*/
                         return true;
                     }
                 }
@@ -245,6 +246,40 @@ bool OCP1ProtocolProcessor::ocp1MessageReceived(const juce::MemoryBlock& data)
         case NanoOcp1::Ocp1Message::Response:
         {
             NanoOcp1::Ocp1Response* responseObj = static_cast<NanoOcp1::Ocp1Response*>(msgObj.get());
+
+            auto handle = responseObj->GetResponseHandle();
+            if (responseObj->GetResponseStatus() != 0)
+            {
+                DBG("Got an OCA response for handle " << juce::String(handle) <<
+                    " with status " << NanoOcp1::StatusToString(responseObj->GetResponseStatus()));
+                return false;
+            }
+            else if (PopPendingSubscriptionHandle(handle) && !HasPendingSubscriptions())
+            {
+                // All subscriptions were confirmed
+                DBG("All NanoOcp1 subscriptions were confirmed");
+                return true;
+            }
+            else
+            {
+                auto ONo = PopPendingGetValueHandle(handle);
+                if (0x00 != ONo)
+                {
+                    if (!UpdateObjectValues(ONo, responseObj))
+                    {
+                        DBG("Got an unhandled OCA getvalue response message");
+                        return false;
+                    }
+                    else
+                        return true;
+                }
+
+                DBG("Got an OCA response for UNKNOWN handle " << NanoOcp1::HandleToString(responseObj->GetResponseHandle()) <<
+                    "; status " << NanoOcp1::StatusToString(responseObj->GetResponseStatus()) <<
+                    "; paramCount " << juce::String(responseObj->GetParamCount()));
+
+                return false;
+            }
 
             // Get the objDef matching the obtained response handle.
             //const auto iter = m_ocaHandleMap.find(responseObj->GetResponseHandle());
@@ -287,14 +322,7 @@ bool OCP1ProtocolProcessor::ocp1MessageReceived(const juce::MemoryBlock& data)
             //    // Finally remove handle from the list, as it has been processed.
             //    m_ocaHandleMap.erase(iter);
             //}
-            //else
-            {
-                DBG("Got an OCA response for UNKNOWN handle " << NanoOcp1::HandleToString(responseObj->GetResponseHandle()) <<
-                    "; status " << NanoOcp1::StatusToString(responseObj->GetResponseStatus()) <<
-                    "; paramCount " << juce::String(responseObj->GetParamCount()));
-            }
 
-            return true;
         }
         case NanoOcp1::Ocp1Message::KeepAlive:
         {
@@ -322,7 +350,7 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
 
     bool success = true;
 
-    std::uint32_t handle = 0;
+    //std::uint32_t handle = 0;
 
     //// subscribe pwrOn
     //success = success && m_nanoOcp1Client->sendData(
@@ -390,7 +418,7 @@ bool OCP1ProtocolProcessor::QueryObjectValues()
 
     bool success = true;
 
-    std::uint32_t handle = 0;
+    //std::uint32_t handle = 0;
 
     //auto pwrCmdDef = NanoOcp1::Dy::dbOcaObjectDef_Settings_PwrOn();
     //// query pwrOn
