@@ -214,33 +214,10 @@ bool OCP1ProtocolProcessor::ocp1MessageReceived(const juce::MemoryBlock& data)
         {
             NanoOcp1::Ocp1Notification* notifObj = static_cast<NanoOcp1::Ocp1Notification*>(msgObj.get());
 
-            for (auto roisKV = m_ROIsToDefsMap.begin(); roisKV != m_ROIsToDefsMap.end(); roisKV++)
-            {
-                for (auto objDefKV = roisKV->second.begin(); objDefKV != roisKV->second.end(); objDefKV++)
-                {
-                    if (notifObj->MatchesObject(&objDefKV->second))
-                    {
-                        /*todo*/
-                        return true;
-                    }
-                }
-            }
+            if (UpdateObjectValue(notifObj))
+                return true;
 
-            //// Update the right GUI element according to the definition of the object 
-            //// which triggered the notification.
-            //if (notifObj->MatchesObject(m_pwrOnObjDef.get()))
-            //{
-            //    std::uint16_t switchSetting = NanoOcp1::DataToUint16(notifObj->GetParameterData());
-            //    m_powerD40LED->setToggleState(switchSetting > 0, dontSendNotification);
-            //}
-            //else if (notifObj->MatchesObject(m_potiLevelObjDef.get()))
-            //{
-            //    std::float_t newGain = NanoOcp1::DataToFloat(notifObj->GetParameterData());
-            //    m_gainSlider->setValue(newGain, dontSendNotification);
-            //}
-
-            DBG("Got an OCA notification from ONo 0x" << juce::String::toHexString(notifObj->GetEmitterOno()));
-
+            DBG("Got an unhandled OCA notification for ONo 0x" << juce::String::toHexString(notifObj->GetEmitterOno()));
             return false;
         }
         case NanoOcp1::Ocp1Message::Response:
@@ -265,7 +242,7 @@ bool OCP1ProtocolProcessor::ocp1MessageReceived(const juce::MemoryBlock& data)
                 auto ONo = PopPendingGetValueHandle(handle);
                 if (0x00 != ONo)
                 {
-                    if (!UpdateObjectValues(ONo, responseObj))
+                    if (!UpdateObjectValue(ONo, responseObj))
                     {
                         DBG("Got an unhandled OCA getvalue response message");
                         return false;
@@ -280,49 +257,6 @@ bool OCP1ProtocolProcessor::ocp1MessageReceived(const juce::MemoryBlock& data)
 
                 return false;
             }
-
-            // Get the objDef matching the obtained response handle.
-            //const auto iter = m_ocaHandleMap.find(responseObj->GetResponseHandle());
-            //if (iter != m_ocaHandleMap.end())
-            //{
-            //    if (responseObj->GetResponseStatus() != 0)
-            //    {
-            //        DBG("Got an OCA response for handle " << NanoOcp1::HandleToString(responseObj->GetResponseHandle()) <<
-            //            " with status " << NanoOcp1::StatusToString(responseObj->GetResponseStatus()));
-            //    }
-            //    else if (responseObj->GetParamCount() == 0)
-            //    {
-            //        DBG("Got an empty \"OK\" OCA response for handle " << NanoOcp1::HandleToString(responseObj->GetResponseHandle()));
-            //    }
-            //    else
-            //    {
-            //        DBG("Got an OCA response for handle " << NanoOcp1::HandleToString(responseObj->GetResponseHandle()) <<
-            //            " and paramCount " << juce::String(responseObj->GetParamCount()));
-            //
-            //        // Update the right GUI element according to the definition of the object 
-            //        // which triggered the response.
-            //        NanoOcp1::Ocp1CommandDefinition* objDef = iter->second;
-            //        if (objDef == m_pwrOnObjDef.get())
-            //        {
-            //            std::uint16_t switchSetting = NanoOcp1::DataToUint16(responseObj->GetParameterData());
-            //            m_powerD40LED->setToggleState(switchSetting > 0, dontSendNotification);
-            //        }
-            //        else if (objDef == m_potiLevelObjDef.get())
-            //        {
-            //            std::float_t newGain = NanoOcp1::DataToFloat(responseObj->GetParameterData());
-            //            m_gainSlider->setValue(newGain, dontSendNotification);
-            //        }
-            //        else
-            //        {
-            //            DBG("Got an OCA response for handle " << NanoOcp1::HandleToString(responseObj->GetResponseHandle()) <<
-            //                " which could not be processed (unknown object)!");
-            //        }
-            //    }
-            //
-            //    // Finally remove handle from the list, as it has been processed.
-            //    m_ocaHandleMap.erase(iter);
-            //}
-
         }
         case NanoOcp1::Ocp1Message::KeepAlive:
         {
@@ -513,157 +447,128 @@ bool OCP1ProtocolProcessor::HasPendingGetValues()
     return m_pendingGetValueHandlesWithONo.empty();
 }
 
-bool OCP1ProtocolProcessor::UpdateObjectValues(const NanoOcp1::Ocp1Notification* notifObj)
+bool OCP1ProtocolProcessor::UpdateObjectValue(NanoOcp1::Ocp1Notification* notifObj)
 {
-    // Update the right GUI element according to the definition of the object 
-    // which triggered the notification.
-
-    //// Objects without any further addressing
-    //auto cmdDef = NanoOcp1::Dy::dbOcaObjectDef_Settings_PwrOn();
-    //if (notifObj->MatchesObject(&cmdDef))
-    //{
-    //    std::uint16_t switchSetting = NanoOcp1::DataToUint16(notifObj->GetParameterData());
-    //
-    //    if (onPwrOnOff)
-    //        onPwrOnOff(switchSetting > 0);
-    //
-    //    return true;
-    //}
-    //
-    //// Objects with additional channel addressing dimension
-    //for (std::uint16_t ch = 1; ch <= GetAmpChannelCount(); ch++)
-    //{
-    //    auto potCmdDef = NanoOcp1::Dy::dbOcaObjectDef_Config_PotiLevel(ch);
-    //    auto muteCmdDef = NanoOcp1::Dy::dbOcaObjectDef_Config_Mute(ch);
-    //    auto ispCmdDef = NanoOcp1::Dy::dbOcaObjectDef_ChStatus_Isp(ch);
-    //    auto grCmdDef = NanoOcp1::Dy::dbOcaObjectDef_ChStatus_Gr(ch);
-    //    auto ovlCmdDef = NanoOcp1::Dy::dbOcaObjectDef_ChStatus_Ovl(ch);
-    //    if (notifObj->MatchesObject(&potCmdDef))
-    //    {
-    //        std::float_t newGain = NanoOcp1::DataToFloat(notifObj->GetParameterData());
-    //
-    //        if (onChannelGain)
-    //            onChannelGain(ch, newGain);
-    //
-    //        return true;
-    //    }
-    //    else if (notifObj->MatchesObject(&muteCmdDef))
-    //    {
-    //        std::uint16_t switchSetting = NanoOcp1::DataToUint16(notifObj->GetParameterData());
-    //
-    //        if (onChannelMute)
-    //            onChannelMute(ch, switchSetting == 1);
-    //
-    //        return true;
-    //    }
-    //    else if (notifObj->MatchesObject(&ispCmdDef))
-    //    {
-    //        std::uint16_t switchSetting = NanoOcp1::DataToUint16(notifObj->GetParameterData());
-    //
-    //        if (onChannelISP)
-    //            onChannelISP(ch, switchSetting == 1);
-    //
-    //        return true;
-    //    }
-    //    else if (notifObj->MatchesObject(&grCmdDef))
-    //    {
-    //        std::uint16_t switchSetting = NanoOcp1::DataToUint16(notifObj->GetParameterData());
-    //
-    //        if (onChannelGR)
-    //            onChannelGR(ch, switchSetting == 1);
-    //
-    //        return true;
-    //    }
-    //    else if (notifObj->MatchesObject(&ovlCmdDef))
-    //    {
-    //        std::uint16_t switchSetting = NanoOcp1::DataToUint16(notifObj->GetParameterData());
-    //
-    //        if (onChannelOVL)
-    //            onChannelOVL(ch, switchSetting == 1);
-    //
-    //        return true;
-    //    }
-    //
-    //    //// Objects with additional record addressing dimension
-    //    //for (std::uint16_t rec = 1; rec <= GetAmpRecordCount(); ch++)
-    //    //{
-    //    //}
-    //}
+    for (auto roisKV = m_ROIsToDefsMap.begin(); roisKV != m_ROIsToDefsMap.end(); roisKV++)
+        for (auto objDefKV = roisKV->second.begin(); objDefKV != roisKV->second.end(); objDefKV++)
+            if (notifObj->MatchesObject(&objDefKV->second))
+                return UpdateObjectValue(roisKV->first, dynamic_cast<NanoOcp1::Ocp1Message*>(notifObj), *objDefKV);
 
     return false;
 }
 
-bool OCP1ProtocolProcessor::UpdateObjectValues(const std::uint32_t ONo, const NanoOcp1::Ocp1Response* responseObj)
+bool OCP1ProtocolProcessor::UpdateObjectValue(const std::uint32_t ONo, NanoOcp1::Ocp1Response* responseObj)
 {
-    // Update the right GUI element according to the definition of the object 
-    // to which the response refers.
-
-    //// Objects without any further addressing
-    //if (ONo == NanoOcp1::GetONo(1, 0, 0, NanoOcp1::Dy::Settings_PwrOn))
-    //{
-    //    std::uint16_t switchSetting = NanoOcp1::DataToUint16(responseObj->GetParameterData());
-    //
-    //    if (onPwrOnOff)
-    //        onPwrOnOff(switchSetting > 0);
-    //
-    //    return true;
-    //}
-    //
-    //// Objects with additional channel addressing dimension
-    //for (std::uint16_t ch = 1; ch <= GetAmpChannelCount(); ch++)
-    //{
-    //    if (ONo == NanoOcp1::GetONo(1, 0, ch, NanoOcp1::Dy::Config_PotiLevel))
-    //    {
-    //        std::float_t newGain = NanoOcp1::DataToFloat(responseObj->GetParameterData());
-    //
-    //        if (onChannelGain)
-    //            onChannelGain(ch, newGain);
-    //
-    //        return true;
-    //    }
-    //    else if (ONo == NanoOcp1::GetONo(1, 0, ch, NanoOcp1::Dy::Config_Mute))
-    //    {
-    //        std::uint16_t switchSetting = NanoOcp1::DataToUint16(responseObj->GetParameterData());
-    //
-    //        if (onChannelMute)
-    //            onChannelMute(ch, switchSetting == 1);
-    //
-    //        return true;
-    //    }
-    //    else if (ONo == NanoOcp1::GetONo(1, 0, ch, NanoOcp1::Dy::ChStatus_Isp))
-    //    {
-    //        std::uint16_t switchSetting = NanoOcp1::DataToUint16(responseObj->GetParameterData());
-    //
-    //        if (onChannelISP)
-    //            onChannelISP(ch, switchSetting == 1);
-    //
-    //        return true;
-    //    }
-    //    else if (ONo == NanoOcp1::GetONo(1, 0, ch, NanoOcp1::Dy::ChStatus_Gr))
-    //    {
-    //        std::uint16_t switchSetting = NanoOcp1::DataToUint16(responseObj->GetParameterData());
-    //
-    //        if (onChannelGR)
-    //            onChannelGR(ch, switchSetting == 1);
-    //
-    //        return true;
-    //    }
-    //    else if (ONo == NanoOcp1::GetONo(1, 0, ch, NanoOcp1::Dy::ChStatus_Ovl))
-    //    {
-    //        std::uint16_t switchSetting = NanoOcp1::DataToUint16(responseObj->GetParameterData());
-    //
-    //        if (onChannelOVL)
-    //            onChannelOVL(ch, switchSetting == 1);
-    //
-    //        return true;
-    //    }
-    //
-    //    //// Objects with additional record addressing dimension
-    //    //for (std::uint16_t rec = 1; rec <= GetAmpRecordCount(); ch++)
-    //    //{
-    //    //}
-    //}
+    for (auto roisKV = m_ROIsToDefsMap.begin(); roisKV != m_ROIsToDefsMap.end(); roisKV++)
+        for (auto objDefKV = roisKV->second.begin(); objDefKV != roisKV->second.end(); objDefKV++)
+            if (objDefKV->second.m_targetOno == ONo)
+                return UpdateObjectValue(roisKV->first, dynamic_cast<NanoOcp1::Ocp1Message*>(responseObj), *objDefKV);
 
     return false;
+}
+
+bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, NanoOcp1::Ocp1Message* msgObj, const std::pair<std::pair<RecordId, ChannelId>, NanoOcp1::Ocp1CommandDefinition>& objectDetails)
+{
+    auto objAddr = objectDetails.first;
+    auto cmdDef = objectDetails.second;
+
+    auto remObjMsgData = RemoteObjectMessageData();
+    remObjMsgData._addrVal = RemoteObjectAddressing(objAddr.second, objAddr.first);
+    auto targetRemObjId = roi;
+
+    int newIntValue[3];
+    float newFloatValue[3];
+
+    switch (roi)
+    {
+    case ROI_CoordinateMapping_SourcePosition:
+    {
+        if (!NanoOcp1::VariantToPosition(cmdDef.ToVariant(3, msgObj->GetParameterData()), newFloatValue[0], newFloatValue[1], newFloatValue[2]))
+            return false;
+        //remObjMsgData._payloadSize = 3 * sizeof(float);
+        //remObjMsgData._valCount = 3;
+        remObjMsgData._valType = ROVT_FLOAT;
+        remObjMsgData._payload = &newFloatValue;
+
+        /*testing*/remObjMsgData._payloadSize = 2 * sizeof(float);
+        /*testing*/remObjMsgData._valCount = 2;
+        /*testing*/targetRemObjId = ROI_CoordinateMapping_SourcePosition_XY;
+    }
+    break;
+    case ROI_Positioning_SourcePosition:
+    {
+        if (!NanoOcp1::VariantToPosition(cmdDef.ToVariant(3, msgObj->GetParameterData()), newFloatValue[0], newFloatValue[1], newFloatValue[2]))
+            return false;
+        //remObjMsgData._payloadSize = 3 * sizeof(float);
+        //remObjMsgData._valCount = 3;
+        remObjMsgData._valType = ROVT_FLOAT;
+        remObjMsgData._payload = &newFloatValue;
+
+        /*testing*/remObjMsgData._payloadSize = 2 * sizeof(float);
+        /*testing*/remObjMsgData._valCount = 2;
+        /*testing*/targetRemObjId = ROI_Positioning_SourcePosition_XY;
+    }
+    break;
+    case ROI_Positioning_SourceSpread:
+    {
+        *newFloatValue = NanoOcp1::DataToFloat(msgObj->GetParameterData());
+
+        remObjMsgData._payloadSize = sizeof(float);
+        remObjMsgData._valCount = 1;
+        remObjMsgData._valType = ROVT_FLOAT;
+        remObjMsgData._payload = &newFloatValue;
+    }
+    break;
+    case ROI_Positioning_SourceDelayMode:
+    {
+        *newIntValue = NanoOcp1::DataToUint16(msgObj->GetParameterData());
+
+        remObjMsgData._payloadSize = sizeof(int);
+        remObjMsgData._valCount = 1;
+        remObjMsgData._valType = ROVT_INT;
+        remObjMsgData._payload = &newIntValue;
+    }
+    break;
+    case ROI_MatrixInput_ReverbSendGain:
+    {
+        *newFloatValue = NanoOcp1::DataToFloat(msgObj->GetParameterData());
+
+        remObjMsgData._payloadSize = sizeof(float);
+        remObjMsgData._valCount = 1;
+        remObjMsgData._valType = ROVT_FLOAT;
+        remObjMsgData._payload = &newFloatValue;
+    }
+    break;
+    case ROI_MatrixInput_Gain:
+    {
+        *newFloatValue = NanoOcp1::DataToFloat(msgObj->GetParameterData());
+
+        remObjMsgData._payloadSize = sizeof(float);
+        remObjMsgData._valCount = 1;
+        remObjMsgData._valType = ROVT_FLOAT;
+        remObjMsgData._payload = &newFloatValue;
+    }
+    break;
+    case ROI_MatrixInput_Mute:
+    {
+        *newIntValue = NanoOcp1::DataToUint16(msgObj->GetParameterData());
+
+        remObjMsgData._payloadSize = sizeof(int);
+        remObjMsgData._valCount = 1;
+        remObjMsgData._valType = ROVT_INT;
+        remObjMsgData._payload = &newIntValue;
+    }
+    break;
+    default:
+        return false;
+    }
+
+    if (m_messageListener)
+    {
+        m_messageListener->OnProtocolMessageReceived(this, roi, remObjMsgData);
+        return true;
+    }
+    else
+        return false;
 }
 

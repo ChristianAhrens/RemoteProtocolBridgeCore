@@ -30,6 +30,7 @@
 namespace NanoOcp1
 {
 	class NanoOcp1Base;
+	class Ocp1Message;
 	class Ocp1Notification;
 	class Ocp1Response;
 	struct Ocp1CommandDefinition;
@@ -83,8 +84,10 @@ private:
 	bool HasPendingGetValues();
 
 	//==============================================================================
-	bool UpdateObjectValues(const NanoOcp1::Ocp1Notification* notifObj);
-	bool UpdateObjectValues(const std::uint32_t ONo, const NanoOcp1::Ocp1Response* responseObj);
+	bool UpdateObjectValue(NanoOcp1::Ocp1Notification* notifObj);
+	bool UpdateObjectValue(const std::uint32_t ONo, NanoOcp1::Ocp1Response* responseObj);
+	bool UpdateObjectValue(const RemoteObjectIdentifier roi, NanoOcp1::Ocp1Message* msgObj, 
+		const std::pair<std::pair<RecordId, ChannelId>, NanoOcp1::Ocp1CommandDefinition>& objectDetails);
 
 	//==============================================================================
 	std::unique_ptr<NanoOcp1::NanoOcp1Base>	m_nanoOcp;
