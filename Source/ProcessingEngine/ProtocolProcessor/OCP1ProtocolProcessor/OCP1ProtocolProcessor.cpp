@@ -51,33 +51,23 @@ bool OCP1ProtocolProcessor::Start()
 {
     if (m_nanoOcp)
     {
-        if (m_nanoOcp->start())
-        {
-            // Assign the callback functions AFTER internal handling is set up to not already get called before that is done
-            m_nanoOcp->onDataReceived = [=](const juce::MemoryBlock& data) {
-                return ocp1MessageReceived(data);
-            };
-            m_nanoOcp->onConnectionEstablished = [=]() {
-                startTimerThread(GetActiveRemoteObjectsInterval(), 100);
-                CreateObjectSubscriptions();
-                m_IsRunning = true;
-            };
-            m_nanoOcp->onConnectionLost = [=]() {
-                stopTimerThread();
-                m_IsRunning = false;
-                DeleteObjectSubscriptions();
-            };
+        m_nanoOcp->start();
+        // Assign the callback functions AFTER internal handling is set up to not already get called before that is done
+        m_nanoOcp->onDataReceived = [=](const juce::MemoryBlock& data) {
+            return ocp1MessageReceived(data);
+        };
+        m_nanoOcp->onConnectionEstablished = [=]() {
+            startTimerThread(GetActiveRemoteObjectsInterval(), 100);
+            CreateObjectSubscriptions();
+            m_IsRunning = true;
+        };
+        m_nanoOcp->onConnectionLost = [=]() {
+            stopTimerThread();
+            m_IsRunning = false;
+            DeleteObjectSubscriptions();
+        };
 
-            return true;
-        }
-        else
-        {
-            m_nanoOcp->onDataReceived = std::function<bool(const juce::MemoryBlock & data)>();
-            m_nanoOcp->onConnectionEstablished = std::function<void()>();
-            m_nanoOcp->onConnectionLost = std::function<void()>();
-
-            return false;
-        }
+        return true;
     }
     else
         return false;
