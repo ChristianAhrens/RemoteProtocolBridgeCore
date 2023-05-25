@@ -137,43 +137,114 @@ bool OCP1ProtocolProcessor::setStateXml(XmlElement* stateXml)
 }
 
 /**
+ * Public method to get OCA object specific ObjectName string
+ *
+ * @param id	The object id to get the OCA specific object name
+ * @return		The OCA specific object name
+ */
+String OCP1ProtocolProcessor::GetRemoteObjectString(RemoteObjectIdentifier id)
+{
+    switch (id)
+    {
+    case ROI_CoordinateMapping_SourcePosition:
+        return "CoordinateMapping_Source_Position";
+    case ROI_Positioning_SourcePosition:
+        return "Positioning_Source_Position";
+    case ROI_Positioning_SourceSpread:
+        return "Positioning_Source_Spread";
+    case ROI_Positioning_SourceDelayMode:
+        return "Positioning_Source_DelayMode";
+    case ROI_MatrixInput_Mute:
+        return "MatrixInput_Mute";
+    case ROI_MatrixInput_Gain:
+        return "MatrixInput_Gain";
+    case ROI_MatrixInput_ReverbSendGain:
+        return "MatrixInput_ReverbSendGain";
+    default:
+        return "";
+    }
+}
+
+/**
  * Method to trigger sending of a message
  * NOT YET IMPLEMENTED
  *
  * @param Id		The id of the object to send a message for
  * @param msgData	The message payload and metadata
  */
-bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
+bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData)
 {
-	ignoreUnused(Id);
-	ignoreUnused(msgData);
+    if (!m_nanoOcp || !m_IsRunning)
+        return false;
 
-	return false;
-}
+    auto& channel = msgData._addrVal._first;
+    auto& record = msgData._addrVal._second;
 
-/**
- * Public method to get OCA object specific ObjectName string
- * 
- * @param id	The object id to get the OCA specific object name
- * @return		The OCA specific object name
- */
-String OCP1ProtocolProcessor::GetRemoteObjectString(RemoteObjectIdentifier id)
-{
-	switch (id)
-	{
-	case ROI_CoordinateMapping_SourcePosition:
-		return "CoordinateMapping_Source_Position";
-	case ROI_Positioning_SourcePosition:
-		return "Positioning_Source_Position";
-	case ROI_Positioning_SourceSpread:
-		return "Positioning_Source_Spread";
-	case ROI_Positioning_SourceDelayMode:
-		return "Positioning_Source_DelayMode";
-	case ROI_MatrixInput_ReverbSendGain:
-		return "MatrixInput_ReverbSendGain";
-	default:
-		return "";
-	}
+    std::uint32_t handle;
+
+    switch (id)
+    {
+    case ROI_CoordinateMapping_SourcePosition:
+    {
+        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
+        if (msgData._payloadSize != 3 * sizeof(float))
+            return false;
+        auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(msgData._payload));
+        auto posVar = objDef.ToVariant(3, parameterData);
+        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+    }
+    case ROI_Positioning_SourcePosition:
+    {
+        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
+        if (msgData._payloadSize != 3 * sizeof(float))
+            return false;
+        auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(msgData._payload));
+        auto posVar = objDef.ToVariant(3, parameterData);
+        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+    }
+    case ROI_Positioning_SourceSpread:
+    {
+        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Spread(channel);
+        if (msgData._payloadSize == sizeof(float))
+            return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<float*>(msgData._payload)), handle).GetMemoryBlock());
+        else
+            return false;
+    }
+    case ROI_Positioning_SourceDelayMode:
+    {
+        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(channel);
+        if (msgData._payloadSize == sizeof(int))
+            return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<int*>(msgData._payload)), handle).GetMemoryBlock());
+        else
+            return false;
+    }
+    case ROI_MatrixInput_Mute:
+    {
+        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Mute(channel);
+        if (msgData._payloadSize == sizeof(int))
+            return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<int*>(msgData._payload)), handle).GetMemoryBlock());
+        else
+            return false;
+    }
+    case ROI_MatrixInput_ReverbSendGain:
+    {
+        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ReverbSendGain(channel);
+        if (msgData._payloadSize == sizeof(float))
+            return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<float*>(msgData._payload)), handle).GetMemoryBlock());
+        else
+            return false;
+    }
+    case ROI_MatrixInput_Gain:
+    {
+        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Gain(channel);
+        if (msgData._payloadSize == sizeof(float))
+            return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<float*>(msgData._payload)), handle).GetMemoryBlock());
+        else
+            return false;
+    }
+    default:
+        return false;
+    }
 }
 
 /**

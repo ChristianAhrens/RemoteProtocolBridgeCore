@@ -94,8 +94,8 @@ struct dbOcaObjectDef_Positioning_Source_Spread : Ocp1CommandDefinition
  */
 struct dbOcaObjectDef_Positioning_Source_DelayMode : Ocp1CommandDefinition
 {
-    dbOcaObjectDef_Positioning_Source_DelayMode(std::uint32_t record, std::uint32_t channel)
-        : Ocp1CommandDefinition(GetONoTy2(0x01, record, channel, Positioning_Box, Positioning_Source_DelayMode), // ONO of Positioning_Source_DelayMode
+    dbOcaObjectDef_Positioning_Source_DelayMode(std::uint32_t channel)
+        : Ocp1CommandDefinition(GetONoTy2(0x01, 0x00, channel, Positioning_Box, Positioning_Source_DelayMode), // ONO of Positioning_Source_DelayMode
             /*todo*/ OCP1DATATYPE_UINT16,   // Value type
             3,                              // OcaSwith level - root:
             1)                              // Prop_
