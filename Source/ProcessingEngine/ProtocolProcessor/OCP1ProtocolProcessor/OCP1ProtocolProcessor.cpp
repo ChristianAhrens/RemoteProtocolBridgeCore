@@ -33,6 +33,7 @@ OCP1ProtocolProcessor::OCP1ProtocolProcessor(const NodeId& parentNodeId)
 	: NetworkProtocolProcessorBase(parentNodeId)
 {
 	m_type = ProtocolType::PT_OCP1Protocol;
+    SetActiveRemoteObjectsInterval(5000); // used as 5s KeepAlive interval when NanoOcp connection is established
 }
 
 /**
@@ -232,6 +233,10 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         else
             return false;
     }
+    case ROI_HeartbeatPing:
+    {
+        return m_nanoOcp->sendData(NanoOcp1::Ocp1KeepAlive(static_cast<std::uint16_t>(GetActiveRemoteObjectsInterval()/1000)).GetMemoryBlock());
+    }
     default:
         return false;
     }
@@ -261,7 +266,8 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
  */
 void OCP1ProtocolProcessor::timerThreadCallback()
 {
-    /*todo*/
+    if (m_IsRunning)
+        SendRemoteObjectMessage(ROI_HeartbeatPing, RemoteObjectMessageData());
 }
 
 bool OCP1ProtocolProcessor::ocp1MessageReceived(const juce::MemoryBlock& data)
