@@ -183,7 +183,7 @@ bool Forward_only_valueChanges::IsChangedDataValue(const ProtocolId PId, const R
 					refData = refValPtr +1;
 					newData = newValPtr +1;
 					// if integer values differ, precision is irrelevant
-					isChangedDataValue = (referenceValue != newValue);
+					isChangedDataValue = isChangedDataValue || (referenceValue != newValue);
 					}
 					break;
 				case ROVT_FLOAT:
@@ -199,14 +199,14 @@ bool Forward_only_valueChanges::IsChangedDataValue(const ProtocolId PId, const R
 					refData = refValPtr +1;
 					newData = newValPtr +1;
 					// if the float difference is up to equal of the configured precision, no change is signaled
-					isChangedDataValue = (std::fabs(valueDifference) > m_precision);
+					isChangedDataValue = isChangedDataValue || (std::fabs(valueDifference) > m_precision);
 					}
 					break;
 				case ROVT_STRING:
 					{
 					auto refVal = String(static_cast<char*>(currentVal._payload), currentVal._payloadSize);
 					auto newVal = String(static_cast<char*>(msgData._payload), msgData._payloadSize);
-					isChangedDataValue = (refVal != newVal);
+					isChangedDataValue = isChangedDataValue || (refVal != newVal);
 					}
 					break;
 				case ROVT_NONE:
