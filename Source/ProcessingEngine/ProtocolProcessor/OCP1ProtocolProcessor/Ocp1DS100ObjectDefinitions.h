@@ -53,7 +53,7 @@ static constexpr BoxAndObjNo MatrixInput_ReverbSendGain = 0x0d;
 struct dbOcaObjectDef_CoordinateMapping_Source_Position : Ocp1CommandDefinition
 {
     dbOcaObjectDef_CoordinateMapping_Source_Position(std::uint32_t record, std::uint32_t channel)
-        : Ocp1CommandDefinition(GetONoTy2(0x01, record, channel, CoordinateMapping_Box, CoordinateMapping_Source_Position), // ONO of CoordinateMapping_Source_Position,
+        : Ocp1CommandDefinition(GetONoTy2(0x02, record, channel, CoordinateMapping_Box, CoordinateMapping_Source_Position), // ONO of CoordinateMapping_Source_Position,
             OCP1DATATYPE_DB_POSITION, // Value type
             3,                                  // CdbOcaPositionAgentDeprecated level
             1)                                  // Prop_Position
@@ -67,7 +67,7 @@ struct dbOcaObjectDef_CoordinateMapping_Source_Position : Ocp1CommandDefinition
 struct dbOcaObjectDef_Positioning_Source_Position : Ocp1CommandDefinition
 {
     dbOcaObjectDef_Positioning_Source_Position(std::uint32_t channel)
-        : Ocp1CommandDefinition(GetONoTy2(0x01, 0x00, channel, Positioning_Box, Positioning_Source_Position), // ONO of Positioning_Source_Position
+        : Ocp1CommandDefinition(GetONoTy2(0x02, 0x00, channel, Positioning_Box, Positioning_Source_Position), // ONO of Positioning_Source_Position
             OCP1DATATYPE_DB_POSITION, // Value type
             3,                        // CdbOcaPositionAgentDeprecated level
             1)                        // Prop_Position
@@ -81,7 +81,7 @@ struct dbOcaObjectDef_Positioning_Source_Position : Ocp1CommandDefinition
 struct dbOcaObjectDef_Positioning_Source_Spread : Ocp1CommandDefinition
 {
     dbOcaObjectDef_Positioning_Source_Spread(std::uint32_t channel)
-        : Ocp1CommandDefinition(GetONoTy2(0x01, 0x00, channel, Positioning_Box, Positioning_Source_Spread), // ONO of Positioning_Source_Spread
+        : Ocp1CommandDefinition(GetONoTy2(0x02, 0x00, channel, Positioning_Box, Positioning_Source_Spread), // ONO of Positioning_Source_Spread
             OCP1DATATYPE_FLOAT32,           // Value type
             5,                              // OcaFloat32Actuator level - root:worker:actuator:basicactuator:float32actuator
             1)                              // Prop_Setting
@@ -95,10 +95,10 @@ struct dbOcaObjectDef_Positioning_Source_Spread : Ocp1CommandDefinition
 struct dbOcaObjectDef_Positioning_Source_DelayMode : Ocp1CommandDefinition
 {
     dbOcaObjectDef_Positioning_Source_DelayMode(std::uint32_t channel)
-        : Ocp1CommandDefinition(GetONoTy2(0x01, 0x00, channel, Positioning_Box, Positioning_Source_DelayMode), // ONO of Positioning_Source_DelayMode
-            /*todo*/ OCP1DATATYPE_UINT16,   // Value type
-            3,                              // OcaSwith level - root:
-            1)                              // Prop_
+        : Ocp1CommandDefinition(GetONoTy2(0x02, 0x00, channel, Positioning_Box, Positioning_Source_DelayMode), // ONO of Positioning_Source_DelayMode
+            OCP1DATATYPE_UINT8, // Value type
+            4,                  // OcaSwith level - root:worker:actuator:switch
+            1)                  // Prop_Position
     {
     }
 };
@@ -109,7 +109,7 @@ struct dbOcaObjectDef_Positioning_Source_DelayMode : Ocp1CommandDefinition
 struct dbOcaObjectDef_Positioning_Speaker_Position : Ocp1CommandDefinition
 {
     dbOcaObjectDef_Positioning_Speaker_Position(std::uint32_t record, std::uint32_t channel)
-        : Ocp1CommandDefinition(GetONoTy2(0x01, record, channel, Positioning_Box, Positioning_Speaker_Position), // ONO of Positioning_Speaker_Position
+        : Ocp1CommandDefinition(GetONoTy2(0x02, record, channel, Positioning_Box, Positioning_Speaker_Position), // ONO of Positioning_Speaker_Position
             OCP1DATATYPE_DB_POSITION, // Value type
             3,                        // CdbOcaPositionAgentDeprecated level
             1)                        // Prop_Position
@@ -124,7 +124,7 @@ struct dbOcaObjectDef_Positioning_Speaker_Position : Ocp1CommandDefinition
 struct dbOcaObjectDef_MatrixInput_Mute : Ocp1CommandDefinition
 {
     dbOcaObjectDef_MatrixInput_Mute(std::uint32_t channel)
-        : Ocp1CommandDefinition(GetONoTy2(0x01, 0x00, channel, MatrixInput_Box, MatrixInput_Mute), // ONO of MatrixInput_Mute
+        : Ocp1CommandDefinition(GetONoTy2(0x02, 0x00, channel, MatrixInput_Box, MatrixInput_Mute), // ONO of MatrixInput_Mute
             OCP1DATATYPE_UINT8,             // Value type
             4,                              // OcaMute level - root:worker:actuator:mute
             1)                              // Prop_Setting
@@ -138,7 +138,7 @@ struct dbOcaObjectDef_MatrixInput_Mute : Ocp1CommandDefinition
 struct dbOcaObjectDef_MatrixInput_Gain : Ocp1CommandDefinition
 {
     dbOcaObjectDef_MatrixInput_Gain(std::uint32_t channel)
-        : Ocp1CommandDefinition(GetONoTy2(0x01, 0x00, channel, MatrixInput_Box, MatrixInput_Gain), // ONO of MatrixInput_Gain
+        : Ocp1CommandDefinition(GetONoTy2(0x02, 0x00, channel, MatrixInput_Box, MatrixInput_Gain), // ONO of MatrixInput_Gain
             OCP1DATATYPE_FLOAT32,           // Value type
             4,                              // OcaGain level - root:worker:actuator:gain
             1)                              // Prop_Gain
@@ -152,7 +152,7 @@ struct dbOcaObjectDef_MatrixInput_Gain : Ocp1CommandDefinition
 struct dbOcaObjectDef_MatrixInput_ReverbSendGain : Ocp1CommandDefinition
 {
     dbOcaObjectDef_MatrixInput_ReverbSendGain(std::uint32_t channel)
-        : Ocp1CommandDefinition(GetONoTy2(0x01, 0x00, channel, MatrixInput_Box, MatrixInput_ReverbSendGain), // ONO of MatrixInput_ReverbSendGain
+        : Ocp1CommandDefinition(GetONoTy2(0x02, 0x00, channel, MatrixInput_Box, MatrixInput_ReverbSendGain), // ONO of MatrixInput_ReverbSendGain
             OCP1DATATYPE_FLOAT32,           // Value type
             4,                              // OcaGain level
             1)                              // Prop_Gain
