@@ -106,6 +106,10 @@ public:
 	virtual bool setStateXml(XmlElement* stateXml) override;								
 
 protected:
+	//==============================================================================
+	const std::vector<RemoteObject>& GetActiveRemoteObjects();
+
+	//==============================================================================
 	Listener				*m_messageListener;				/**< The parent node object. Needed for e.g. triggering receive notifications. */
 	ProtocolType			m_type;							/**< Processor type regarding the protocol being handled */
 	NodeId					m_parentNodeId;					/**< The id of the objects' parent node. */
@@ -114,7 +118,7 @@ protected:
 	bool					m_IsRunning;					/**< Bool indication if the processor is successfully running. */
 
 private:
-	void timerThreadCallback() override;
+	virtual void timerThreadCallback() override;
 
 	std::vector<RemoteObject>	m_mutedRemoteObjects;			/**< List of remote objects to be muted. */
 	std::vector<RemoteObject>	m_activeRemoteObjects;			/**< List of remote objects to be activly handled. */

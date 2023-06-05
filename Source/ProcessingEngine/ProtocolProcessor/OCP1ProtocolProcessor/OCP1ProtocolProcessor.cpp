@@ -33,7 +33,9 @@ OCP1ProtocolProcessor::OCP1ProtocolProcessor(const NodeId& parentNodeId)
 	: NetworkProtocolProcessorBase(parentNodeId)
 {
 	m_type = ProtocolType::PT_OCP1Protocol;
+
     SetActiveRemoteObjectsInterval(5000); // used as 5s KeepAlive interval when NanoOcp connection is established
+    CreateKnownONosMap();
 }
 
 /**
@@ -59,8 +61,9 @@ bool OCP1ProtocolProcessor::Start()
         };
         m_nanoOcp->onConnectionEstablished = [=]() {
             startTimerThread(GetActiveRemoteObjectsInterval(), 100);
-            CreateObjectSubscriptions();
             m_IsRunning = true;
+            CreateObjectSubscriptions();
+            QueryObjectValues();
         };
         m_nanoOcp->onConnectionLost = [=]() {
             stopTimerThread();
@@ -267,7 +270,10 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
 void OCP1ProtocolProcessor::timerThreadCallback()
 {
     if (m_IsRunning)
-        SendRemoteObjectMessage(ROI_HeartbeatPing, RemoteObjectMessageData());
+    {
+        if (!SendRemoteObjectMessage(ROI_HeartbeatPing, RemoteObjectMessageData()))
+            DBG(juce::String(__FUNCTION__) + " sending Ocp1 heartbeat failed.");
+    }
 }
 
 bool OCP1ProtocolProcessor::ocp1MessageReceived(const juce::MemoryBlock& data)
@@ -349,60 +355,84 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
     if (!m_nanoOcp || !m_IsRunning)
         return false;
 
-    bool success = true;
+    auto handle = std::uint32_t(0);
+    auto success = true;
 
-    //std::uint32_t handle = 0;
+    for (auto const& activeObj : GetActiveRemoteObjects())
+    {
+        auto& channel = activeObj._Addr._first;
+        auto& record = activeObj._Addr._second;
 
-    //// subscribe pwrOn
-    //success = success && m_nanoOcp1Client->sendData(
-    //    NanoOcp1::Ocp1CommandResponseRequired(
-    //        NanoOcp1::Dy::dbOcaObjectDef_Settings_PwrOn().AddSubscriptionCommand(), handle).GetMemoryBlock());
-    //AddPendingSubscriptionHandle(handle);
-    //
-    //// subscribe potilevel for all channels
-    //for (std::uint16_t ch = 1; ch <= GetAmpChannelCount(); ch++)
-    //{
-    //    success = success && m_nanoOcp1Client->sendData(
-    //        NanoOcp1::Ocp1CommandResponseRequired(
-    //            NanoOcp1::Dy::dbOcaObjectDef_Config_PotiLevel(ch).AddSubscriptionCommand(), handle).GetMemoryBlock());
-    //    AddPendingSubscriptionHandle(handle);
-    //}
-    //
-    //// subscribe mute for all channels
-    //for (std::uint16_t ch = 1; ch <= GetAmpChannelCount(); ch++)
-    //{
-    //    success = success && m_nanoOcp1Client->sendData(
-    //        NanoOcp1::Ocp1CommandResponseRequired(
-    //            NanoOcp1::Dy::dbOcaObjectDef_Config_Mute(ch).AddSubscriptionCommand(), handle).GetMemoryBlock());
-    //    AddPendingSubscriptionHandle(handle);
-    //}
-    //
-    //// subscribe isp for all channels
-    //for (std::uint16_t ch = 1; ch <= GetAmpChannelCount(); ch++)
-    //{
-    //    success = success && m_nanoOcp1Client->sendData(
-    //        NanoOcp1::Ocp1CommandResponseRequired(
-    //            NanoOcp1::Dy::dbOcaObjectDef_ChStatus_Isp(ch).AddSubscriptionCommand(), handle).GetMemoryBlock());
-    //    AddPendingSubscriptionHandle(handle);
-    //}
-    //
-    //// subscribe gr for all channels
-    //for (std::uint16_t ch = 1; ch <= GetAmpChannelCount(); ch++)
-    //{
-    //    success = success && m_nanoOcp1Client->sendData(
-    //        NanoOcp1::Ocp1CommandResponseRequired(
-    //            NanoOcp1::Dy::dbOcaObjectDef_ChStatus_Gr(ch).AddSubscriptionCommand(), handle).GetMemoryBlock());
-    //    AddPendingSubscriptionHandle(handle);
-    //}
-    //
-    //// subscribe ovl for all channels
-    //for (std::uint16_t ch = 1; ch <= GetAmpChannelCount(); ch++)
-    //{
-    //    success = success && m_nanoOcp1Client->sendData(
-    //        NanoOcp1::Ocp1CommandResponseRequired(
-    //            NanoOcp1::Dy::dbOcaObjectDef_ChStatus_Ovl(ch).AddSubscriptionCommand(), handle).GetMemoryBlock());
-    //    AddPendingSubscriptionHandle(handle);
-    //}
+        switch (activeObj._Id)
+        {
+        case ROI_CoordinateMapping_SourcePosition:
+        case ROI_CoordinateMapping_SourcePosition_XY:
+        case ROI_CoordinateMapping_SourcePosition_X:
+        case ROI_CoordinateMapping_SourcePosition_Y:
+        {
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+            DBG(juce::String(__FUNCTION__) + " ROI_CoordinateMapping_SourcePosition " + juce::String(handle));
+        }
+        break;
+        case ROI_Positioning_SourcePosition:
+        case ROI_Positioning_SourcePosition_XY:
+        case ROI_Positioning_SourcePosition_X:
+        case ROI_Positioning_SourcePosition_Y:
+        {
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+            DBG(juce::String(__FUNCTION__) + " ROI_Positioning_SourcePosition " + juce::String(handle));
+        }
+        break;
+        case ROI_Positioning_SourceSpread:
+        {
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Spread(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+            DBG(juce::String(__FUNCTION__) + " ROI_Positioning_SourceSpread " + juce::String(handle));
+        }
+        break;
+        case ROI_Positioning_SourceDelayMode:
+        {
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+            DBG(juce::String(__FUNCTION__) + " ROI_Positioning_SourceDelayMode " + juce::String(handle));
+        }
+        break;
+        case ROI_MatrixInput_Mute:
+        {
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Mute(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+            DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_Mute " + juce::String(handle));
+        }
+        break;
+        case ROI_MatrixInput_ReverbSendGain:
+        {
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ReverbSendGain(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+            DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_ReverbSendGain " + juce::String(handle));
+        }
+        break;
+        case ROI_MatrixInput_Gain:
+        {
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Gain(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+            DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_Gain " + juce::String(handle));
+        }
+        break;
+        default:
+            continue; // skip adding a pending subscription handle below
+        }
+
+        AddPendingSubscriptionHandle(handle);
+    }
 
     return success;
 }
@@ -417,54 +447,96 @@ bool OCP1ProtocolProcessor::QueryObjectValues()
     if (!m_nanoOcp || !m_IsRunning)
         return false;
 
-    bool success = true;
+    auto handle = std::uint32_t(0);
+    auto success = true;
 
-    //std::uint32_t handle = 0;
+    for (auto const& activeObj : GetActiveRemoteObjects())
+    {
+        auto& channel = activeObj._Addr._first;
+        auto& record = activeObj._Addr._second;
 
-    //auto pwrCmdDef = NanoOcp1::Dy::dbOcaObjectDef_Settings_PwrOn();
-    //// query pwrOn
-    //success = success && m_nanoOcp1Client->sendData(NanoOcp1::Ocp1CommandResponseRequired(pwrCmdDef, handle).GetMemoryBlock());
-    //AddPendingGetValueHandle(handle, pwrCmdDef.m_targetOno);
-    //
-    //// query potilevel for all channels
-    //for (std::uint16_t ch = 1; ch <= GetAmpChannelCount(); ch++)
-    //{
-    //    auto potCmdDef = NanoOcp1::Dy::dbOcaObjectDef_Config_PotiLevel(ch);
-    //    success = success && m_nanoOcp1Client->sendData(NanoOcp1::Ocp1CommandResponseRequired(potCmdDef, handle).GetMemoryBlock());
-    //    AddPendingGetValueHandle(handle, potCmdDef.m_targetOno);
-    //}
-    //
-    //// query mute for all channels
-    //for (std::uint16_t ch = 1; ch <= GetAmpChannelCount(); ch++)
-    //{
-    //    auto muteCmdDef = NanoOcp1::Dy::dbOcaObjectDef_Config_Mute(ch);
-    //    success = success && m_nanoOcp1Client->sendData(NanoOcp1::Ocp1CommandResponseRequired(muteCmdDef, handle).GetMemoryBlock());
-    //    AddPendingGetValueHandle(handle, muteCmdDef.m_targetOno);
-    //}
-    //
-    //// query isp for all channels
-    //for (std::uint16_t ch = 1; ch <= GetAmpChannelCount(); ch++)
-    //{
-    //    auto ispCmdDef = NanoOcp1::Dy::dbOcaObjectDef_ChStatus_Isp(ch);
-    //    success = success && m_nanoOcp1Client->sendData(NanoOcp1::Ocp1CommandResponseRequired(ispCmdDef, handle).GetMemoryBlock());
-    //    AddPendingGetValueHandle(handle, ispCmdDef.m_targetOno);
-    //}
-    //
-    //// query gr for all channels
-    //for (std::uint16_t ch = 1; ch <= GetAmpChannelCount(); ch++)
-    //{
-    //    auto grCmdDef = NanoOcp1::Dy::dbOcaObjectDef_ChStatus_Gr(ch);
-    //    success = success && m_nanoOcp1Client->sendData(NanoOcp1::Ocp1CommandResponseRequired(grCmdDef, handle).GetMemoryBlock());
-    //    AddPendingGetValueHandle(handle, grCmdDef.m_targetOno);
-    //}
-    //
-    //// query ovl for all channels
-    //for (std::uint16_t ch = 1; ch <= GetAmpChannelCount(); ch++)
-    //{
-    //    auto ovlCmdDef = NanoOcp1::Dy::dbOcaObjectDef_ChStatus_Ovl(ch);
-    //    success = success && m_nanoOcp1Client->sendData(NanoOcp1::Ocp1CommandResponseRequired(ovlCmdDef, handle).GetMemoryBlock());
-    //    AddPendingGetValueHandle(handle, ovlCmdDef.m_targetOno);
-    //}
+        switch (activeObj._Id)
+        {
+        case ROI_CoordinateMapping_SourcePosition:
+        case ROI_CoordinateMapping_SourcePosition_XY:
+        case ROI_CoordinateMapping_SourcePosition_X:
+        case ROI_CoordinateMapping_SourcePosition_Y:
+        {
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    objDef.GetValueCommand(), handle).GetMemoryBlock());
+            AddPendingGetValueHandle(handle, objDef.m_targetOno);
+            DBG(juce::String(__FUNCTION__) + " ROI_CoordinateMapping_SourcePosition " + juce::String(handle));
+        }
+        break;
+        case ROI_Positioning_SourcePosition:
+        case ROI_Positioning_SourcePosition_XY:
+        case ROI_Positioning_SourcePosition_X:
+        case ROI_Positioning_SourcePosition_Y:
+        {
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    objDef.GetValueCommand(), handle).GetMemoryBlock());
+            AddPendingGetValueHandle(handle, objDef.m_targetOno);
+            DBG(juce::String(__FUNCTION__) + " ROI_Positioning_SourcePosition " + juce::String(handle));
+        }
+        break;
+        case ROI_Positioning_SourceSpread:
+        {
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Spread(channel);
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    objDef.GetValueCommand(), handle).GetMemoryBlock());
+            AddPendingGetValueHandle(handle, objDef.m_targetOno);
+            DBG(juce::String(__FUNCTION__) + " ROI_Positioning_SourceSpread " + juce::String(handle));
+        }
+        break;
+        case ROI_Positioning_SourceDelayMode:
+        {
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(channel);
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    objDef.GetValueCommand(), handle).GetMemoryBlock());
+            AddPendingGetValueHandle(handle, objDef.m_targetOno);
+            DBG(juce::String(__FUNCTION__) + " ROI_Positioning_SourceDelayMode " + juce::String(handle));
+        }
+        break;
+        case ROI_MatrixInput_Mute:
+        {
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Mute(channel);
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    objDef.GetValueCommand(), handle).GetMemoryBlock());
+            AddPendingGetValueHandle(handle, objDef.m_targetOno);
+            DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_Mute " + juce::String(handle));
+        }
+        break;
+        case ROI_MatrixInput_ReverbSendGain:
+        {
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ReverbSendGain(channel);
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    objDef.GetValueCommand(), handle).GetMemoryBlock());
+            AddPendingGetValueHandle(handle, objDef.m_targetOno);
+            DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_ReverbSendGain " + juce::String(handle));
+        }
+        break;
+        case ROI_MatrixInput_Gain:
+        {
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Gain(channel);
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    objDef.GetValueCommand(), handle).GetMemoryBlock());
+            AddPendingGetValueHandle(handle, objDef.m_targetOno);
+            DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_Gain " + juce::String(handle));
+        }
+        break;
+        default:
+            continue; // skip adding a pending subscription handle below
+        }
+    }
 
     return success;
 }
@@ -517,9 +589,15 @@ bool OCP1ProtocolProcessor::HasPendingGetValues()
 bool OCP1ProtocolProcessor::UpdateObjectValue(NanoOcp1::Ocp1Notification* notifObj)
 {
     for (auto roisKV = m_ROIsToDefsMap.begin(); roisKV != m_ROIsToDefsMap.end(); roisKV++)
+    {
         for (auto objDefKV = roisKV->second.begin(); objDefKV != roisKV->second.end(); objDefKV++)
+        {
             if (notifObj->MatchesObject(&objDefKV->second))
+            {
                 return UpdateObjectValue(roisKV->first, dynamic_cast<NanoOcp1::Ocp1Message*>(notifObj), *objDefKV);
+            }
+        }
+    }
 
     return false;
 }
@@ -527,9 +605,15 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(NanoOcp1::Ocp1Notification* notifO
 bool OCP1ProtocolProcessor::UpdateObjectValue(const std::uint32_t ONo, NanoOcp1::Ocp1Response* responseObj)
 {
     for (auto roisKV = m_ROIsToDefsMap.begin(); roisKV != m_ROIsToDefsMap.end(); roisKV++)
+    {
         for (auto objDefKV = roisKV->second.begin(); objDefKV != roisKV->second.end(); objDefKV++)
+        {
             if (objDefKV->second.m_targetOno == ONo)
+            {
                 return UpdateObjectValue(roisKV->first, dynamic_cast<NanoOcp1::Ocp1Message*>(responseObj), *objDefKV);
+            }
+        }
+    }
 
     return false;
 }

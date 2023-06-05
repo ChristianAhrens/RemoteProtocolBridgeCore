@@ -181,7 +181,7 @@ void ProtocolProcessorBase::SetRemoteObjectsActive(XmlElement* activeObjsXmlElem
 	// Start timer callback if objects are to be polled
 	if (m_IsRunning)
 	{
-		if (m_activeRemoteObjects.size() > 0)
+		if (GetActiveRemoteObjects().size() > 0)
 		{
 			startTimerThread(m_activeRemoteObjectsInterval);
 		}
@@ -374,4 +374,13 @@ bool ProtocolProcessorBase::MapMessageDataToTargetRangeAndType(const RemoteObjec
 	}
 
 	return false;
+}
+
+/**
+ * Getter for the internal list of remote objects to actively handle.
+ * @return		The requested reference to internal list.
+ */
+const std::vector<RemoteObject>& ProtocolProcessorBase::GetActiveRemoteObjects()
+{
+	return m_activeRemoteObjects;
 }
