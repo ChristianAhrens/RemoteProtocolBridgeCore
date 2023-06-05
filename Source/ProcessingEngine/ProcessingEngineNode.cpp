@@ -309,6 +309,7 @@ bool ProcessingEngineNode::setStateXml(XmlElement* stateXml)
 				protocol->setStateXml(protocolXmlElement);
 				if (protocol->GetRole() == ProtocolRole::PR_A)
 				{
+					m_typeAProtocols.erase(protocolId);
 					m_typeAProtocols.insert(std::make_pair(protocolId, std::move(protocol)));
 
 					// add the protocolnodetype A to datahandlings' list of ProtocolIds for A protocols
@@ -319,6 +320,7 @@ bool ProcessingEngineNode::setStateXml(XmlElement* stateXml)
 				}
 				else if (protocol->GetRole() == ProtocolRole::PR_B)
 				{
+					m_typeBProtocols.erase(protocolId);
 					m_typeBProtocols.insert(std::make_pair(protocolId, std::move(protocol)));
 
 					// add the protocolnodetype B to datahandlings' list of ProtocolIds for B protocols
