@@ -38,7 +38,7 @@ Mirror_dualA_withValFilter::Mirror_dualA_withValFilter(ProcessingEngineNode* par
 	m_currentMaster = static_cast<ProtocolId>(INVALID_ADDRESS_VALUE);
 	m_currentSlave = static_cast<ProtocolId>(INVALID_ADDRESS_VALUE);
 	
-	SetProtocolReactionTimeout(1000.0f);
+	SetProtoFailoverTime(1000.0f);
 }
 
 /**
@@ -94,7 +94,7 @@ bool Mirror_dualA_withValFilter::setStateXml(XmlElement* stateXml)
 
 	auto protoFailoverTimeElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::FAILOVERTIME));
 	if (protoFailoverTimeElement)
-		SetProtocolReactionTimeout(protoFailoverTimeElement->getAllSubText().getDoubleValue());
+		SetProtoFailoverTime(protoFailoverTimeElement->getAllSubText().getDoubleValue());
 	else
 		return false;
 
@@ -173,7 +173,7 @@ void Mirror_dualA_withValFilter::UpdateOnlineState(ProtocolId id)
 	if (id == m_currentSlave && GetLastProtocolReactionTSMap().count(m_currentMaster) > 0)
 	{
 		auto masterStaleTime = Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(m_currentMaster);
-		if (masterStaleTime > GetProtocolReactionTimeout())
+		if (masterStaleTime > GetProtoFailoverTime())
 		{
 			SetChangedProtocolState(m_currentMaster, OHS_Protocol_Slave);
 			SetChangedProtocolState(m_currentSlave, OHS_Protocol_Master);
@@ -209,4 +209,22 @@ bool Mirror_dualA_withValFilter::MirrorDataIfRequired(ProtocolId PId, RemoteObje
 	}
 	else
 		return false;
+}
+
+/**
+ * Setter for the protocol failover time value member.
+ * @param	timeout		The new value to set as failover time (ms)
+ */
+void Mirror_dualA_withValFilter::SetProtoFailoverTime(double timeout)
+{
+	m_protoFailoverTime = timeout;
+}
+
+/**
+ * Getter for the protocol failover time value member.
+ * @return	The current value for failover time (ms)
+ */
+double Mirror_dualA_withValFilter::GetProtoFailoverTime()
+{
+	return m_protoFailoverTime;
 }
