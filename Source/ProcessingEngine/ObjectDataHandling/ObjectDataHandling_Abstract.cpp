@@ -225,7 +225,6 @@ void ObjectDataHandling_Abstract::SetChangedProtocolState(ProtocolId id, ObjectH
 {
 	if (m_currentStateMap.count(id) <= 0 || m_currentStateMap.at(id) != state)
 	{
-		DBG(juce::String(__FUNCTION__) + " id:" + juce::String(id) + " state:" + juce::String(state));
 		// if new state includes down, remove up from hashed states
 		if ((state & OHS_Protocol_Down) == OHS_Protocol_Down)
 			m_currentStateMap[id] &= ~OHS_Protocol_Up;
