@@ -187,10 +187,28 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         auto posVar = objDef.ToVariant(3, parameterData);
         return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
     }
+    case ROI_CoordinateMapping_SourcePosition_XY:
+    {
+        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
+        if (msgData._payloadSize != 2 * sizeof(float))
+            return false;
+        auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(msgData._payload));
+        auto posVar = objDef.ToVariant(3, parameterData);
+        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+    }
     case ROI_Positioning_SourcePosition:
     {
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
         if (msgData._payloadSize != 3 * sizeof(float))
+            return false;
+        auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(msgData._payload));
+        auto posVar = objDef.ToVariant(3, parameterData);
+        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+    }
+    case ROI_Positioning_SourcePosition_XY:
+    {
+        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
+        if (msgData._payloadSize != 2 * sizeof(float))
             return false;
         auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(msgData._payload));
         auto posVar = objDef.ToVariant(3, parameterData);
@@ -365,10 +383,7 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
 
         switch (activeObj._Id)
         {
-        case ROI_CoordinateMapping_SourcePosition:
         case ROI_CoordinateMapping_SourcePosition_XY:
-        case ROI_CoordinateMapping_SourcePosition_X:
-        case ROI_CoordinateMapping_SourcePosition_Y:
         {
             success = success && m_nanoOcp->sendData(
                 NanoOcp1::Ocp1CommandResponseRequired(
@@ -376,10 +391,7 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
             DBG(juce::String(__FUNCTION__) + " ROI_CoordinateMapping_SourcePosition " + juce::String(handle));
         }
         break;
-        case ROI_Positioning_SourcePosition:
         case ROI_Positioning_SourcePosition_XY:
-        case ROI_Positioning_SourcePosition_X:
-        case ROI_Positioning_SourcePosition_Y:
         {
             success = success && m_nanoOcp->sendData(
                 NanoOcp1::Ocp1CommandResponseRequired(
@@ -427,6 +439,24 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
             DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_Gain " + juce::String(handle));
         }
         break;
+        case ROI_CoordinateMapping_SourcePosition:
+        case ROI_CoordinateMapping_SourcePosition_X:
+        case ROI_CoordinateMapping_SourcePosition_Y:
+        {
+            DBG(juce::String(__FUNCTION__) << " skipping ROI_CoordinateMapping_SourcePosition subscriptions that are not supported ("
+                << "record:" << juce::String(record)
+                << " channel:" << juce::String(channel) << ")");
+        }
+        break;
+        case ROI_Positioning_SourcePosition:
+        case ROI_Positioning_SourcePosition_X:
+        case ROI_Positioning_SourcePosition_Y:
+        {            
+            DBG(juce::String(__FUNCTION__) << " skipping ROI_Positioning_SourcePosition subscriptions that are not supported ("
+            << "record:" << juce::String(record)
+            << " channel:" << juce::String(channel) << ")");
+        }
+        break;
         default:
             continue; // skip adding a pending subscription handle below
         }
@@ -457,10 +487,7 @@ bool OCP1ProtocolProcessor::QueryObjectValues()
 
         switch (activeObj._Id)
         {
-        case ROI_CoordinateMapping_SourcePosition:
         case ROI_CoordinateMapping_SourcePosition_XY:
-        case ROI_CoordinateMapping_SourcePosition_X:
-        case ROI_CoordinateMapping_SourcePosition_Y:
         {
             auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
             success = success && m_nanoOcp->sendData(
@@ -470,10 +497,7 @@ bool OCP1ProtocolProcessor::QueryObjectValues()
             DBG(juce::String(__FUNCTION__) + " ROI_CoordinateMapping_SourcePosition " + juce::String(handle));
         }
         break;
-        case ROI_Positioning_SourcePosition:
         case ROI_Positioning_SourcePosition_XY:
-        case ROI_Positioning_SourcePosition_X:
-        case ROI_Positioning_SourcePosition_Y:
         {
             auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
             success = success && m_nanoOcp->sendData(
@@ -531,6 +555,20 @@ bool OCP1ProtocolProcessor::QueryObjectValues()
                     objDef.GetValueCommand(), handle).GetMemoryBlock());
             AddPendingGetValueHandle(handle, objDef.m_targetOno);
             DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_Gain " + juce::String(handle));
+        }
+        break;
+        case ROI_CoordinateMapping_SourcePosition:
+        case ROI_CoordinateMapping_SourcePosition_X:
+        case ROI_CoordinateMapping_SourcePosition_Y:
+        {
+            DBG(juce::String(__FUNCTION__) + " skipping ROI_CoordinateMapping_SourcePosition");
+        }
+        break;
+        case ROI_Positioning_SourcePosition:
+        case ROI_Positioning_SourcePosition_X:
+        case ROI_Positioning_SourcePosition_Y:
+        {
+            DBG(juce::String(__FUNCTION__) + " skipping ROI_Positioning_SourcePosition");
         }
         break;
         default:
