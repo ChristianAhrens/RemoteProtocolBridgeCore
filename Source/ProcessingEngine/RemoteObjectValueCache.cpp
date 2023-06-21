@@ -50,7 +50,7 @@ int RemoteObjectValueCache::GetIntValue(const RemoteObject& ro) const
 {
 	if (m_cachedValues.count(ro) != 0)
 	{
-		if (m_cachedValues.at(ro)._valType == ROVT_INT)
+		if (m_cachedValues.at(ro)._valType == ROVT_INT && m_cachedValues.at(ro)._valCount == 1 && m_cachedValues.at(ro)._payloadSize == sizeof(int))
 			return *static_cast<int*>(m_cachedValues.at(ro)._payload);
 		else
 			jassertfalse;
@@ -69,7 +69,7 @@ float RemoteObjectValueCache::GetFloatValue(const RemoteObject& ro) const
 {
 	if (m_cachedValues.count(ro) != 0)
 	{
-		if (m_cachedValues.at(ro)._valType == ROVT_FLOAT)
+		if (m_cachedValues.at(ro)._valType == ROVT_FLOAT && m_cachedValues.at(ro)._valCount == 1 && m_cachedValues.at(ro)._payloadSize == sizeof(float))
 			return *static_cast<float*>(m_cachedValues.at(ro)._payload);
 		else
 			jassertfalse;
@@ -77,6 +77,46 @@ float RemoteObjectValueCache::GetFloatValue(const RemoteObject& ro) const
 
 	DBG(String(__FUNCTION__) + " no ROVT_FLOAT value available for requested RO");
 	return 0.0f;
+}
+
+/**
+ * Gets the two float values cached for a given remote object if available.
+ * @param	ro	The remote object to get the cached float value for
+ * @return	The cached dual float values if available, 0 if not available
+ */
+std::tuple<float, float> RemoteObjectValueCache::GetDualFloatValues(const RemoteObject& ro) const
+{
+	if (m_cachedValues.count(ro) != 0)
+	{
+		auto plptr = static_cast<float*>(m_cachedValues.at(ro)._payload);
+		if (m_cachedValues.at(ro)._valType == ROVT_FLOAT && m_cachedValues.at(ro)._valCount == 2 && m_cachedValues.at(ro)._payloadSize == 2 * sizeof(float))
+			return { plptr[0], plptr[1] };
+		else
+			jassertfalse;
+	}
+
+	DBG(String(__FUNCTION__) + " no two ROVT_FLOAT values available for requested RO");
+	return { 0.0f, 0.0f };
+}
+
+/**
+ * Gets the three float values cached for a given remote object if available.
+ * @param	ro	The remote object to get the cached float value for
+ * @return	The cached float values if available, 0 if not available
+ */
+std::tuple<float, float, float> RemoteObjectValueCache::GetTripleFloatValues(const RemoteObject& ro) const
+{
+	if (m_cachedValues.count(ro) != 0)
+	{
+		auto plptr = static_cast<float*>(m_cachedValues.at(ro)._payload);
+		if (m_cachedValues.at(ro)._valType == ROVT_FLOAT && m_cachedValues.at(ro)._valCount == 3 && m_cachedValues.at(ro)._payloadSize == 3 * sizeof(float))
+			return { plptr[0], plptr[1], plptr[2] };
+		else
+			jassertfalse;
+	}
+
+	DBG(String(__FUNCTION__) + " no three ROVT_FLOAT values available for requested RO");
+	return { 0.0f, 0.0f, 0.0f };
 }
 
 /**
@@ -110,6 +150,16 @@ void RemoteObjectValueCache::SetValue(const RemoteObject& ro, const RemoteObject
 //#ifdef DEBUG
 //	DbgPrintCacheContent();
 //#endif
+}
+
+/**
+ * Gets the data value for a given remote object in the cache map
+ * @param	ro			The remote object to set the value for
+ * @return	The value to get
+ */
+const RemoteObjectMessageData& RemoteObjectValueCache::GetValue(const RemoteObject& ro)
+{
+	return m_cachedValues[ro];
 }
 
 #ifdef DEBUG

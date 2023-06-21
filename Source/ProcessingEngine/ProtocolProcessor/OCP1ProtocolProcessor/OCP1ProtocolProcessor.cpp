@@ -180,79 +180,175 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
     {
     case ROI_CoordinateMapping_SourcePosition:
     {
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
-        if (msgData._payloadSize != 3 * sizeof(float))
+        if (msgData._valCount != 3 || msgData._payloadSize != 3 * sizeof(float))
             return false;
+
+        GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+
+        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
         auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(msgData._payload));
         auto posVar = objDef.ToVariant(3, parameterData);
         return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
     }
     case ROI_CoordinateMapping_SourcePosition_XY:
     {
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
-        if (msgData._payloadSize != 2 * sizeof(float))
+        if (msgData._valCount != 2 || msgData._payloadSize != 2 * sizeof(float))
             return false;
-        auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(msgData._payload));
+
+        // get the xyz data from cache to insert the new xy data and send the xyz out
+        auto& refMsgData = GetValueCache().GetValue(RemoteObject(ROI_CoordinateMapping_SourcePosition, RemoteObjectAddressing(channel, record)));
+        if (refMsgData._valCount != 3 || refMsgData._payloadSize != 3 * sizeof(float))
+            return false;
+        reinterpret_cast<float*>(refMsgData._payload)[0] = reinterpret_cast<float*>(msgData._payload)[0];
+        reinterpret_cast<float*>(refMsgData._payload)[1] = reinterpret_cast<float*>(msgData._payload)[1];
+
+        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
+        auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(refMsgData._payload));
+        auto posVar = objDef.ToVariant(3, parameterData);
+        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+    }
+    case ROI_CoordinateMapping_SourcePosition_X:
+    {
+        if (msgData._valCount != 1 || msgData._payloadSize != 1 * sizeof(float))
+            return false;
+
+        // get the xyz data from cache to insert the new x data and send the xyz out
+        auto& refMsgData = GetValueCache().GetValue(RemoteObject(ROI_CoordinateMapping_SourcePosition, RemoteObjectAddressing(channel, record)));
+        if (refMsgData._valCount != 3 || refMsgData._payloadSize != 3 * sizeof(float))
+            return false;
+        reinterpret_cast<float*>(refMsgData._payload)[0] = reinterpret_cast<float*>(msgData._payload)[0];
+
+        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
+        auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(refMsgData._payload));
+        auto posVar = objDef.ToVariant(3, parameterData);
+        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+    }
+    case ROI_CoordinateMapping_SourcePosition_Y:
+    {
+        if (msgData._valCount != 1 || msgData._payloadSize != 1 * sizeof(float))
+            return false;
+
+        // get the xyz data from cache to insert the new x data and send the xyz out
+        auto& refMsgData = GetValueCache().GetValue(RemoteObject(ROI_CoordinateMapping_SourcePosition, RemoteObjectAddressing(channel, record)));
+        if (refMsgData._valCount != 3 || refMsgData._payloadSize != 3 * sizeof(float))
+            return false;
+        reinterpret_cast<float*>(refMsgData._payload)[1] = reinterpret_cast<float*>(msgData._payload)[1];
+
+        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
+        auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(refMsgData._payload));
         auto posVar = objDef.ToVariant(3, parameterData);
         return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
     }
     case ROI_Positioning_SourcePosition:
     {
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
-        if (msgData._payloadSize != 3 * sizeof(float))
+        if (msgData._valCount != 1 || msgData._payloadSize != 3 * sizeof(float))
             return false;
+
+        GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+
+        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
         auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(msgData._payload));
         auto posVar = objDef.ToVariant(3, parameterData);
         return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
     }
     case ROI_Positioning_SourcePosition_XY:
     {
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
-        if (msgData._payloadSize != 2 * sizeof(float))
+        if (msgData._valCount != 2 || msgData._payloadSize != 2 * sizeof(float))
             return false;
+
+        // get the xyz data from cache to insert the new xy data and send the xyz out
+        auto& refMsgData = GetValueCache().GetValue(RemoteObject(ROI_Positioning_SourcePosition, RemoteObjectAddressing(channel, record)));
+        if (refMsgData._valCount != 3 || refMsgData._payloadSize != 3 * sizeof(float))
+            return false;
+        reinterpret_cast<float*>(refMsgData._payload)[0] = reinterpret_cast<float*>(msgData._payload)[0];
+        reinterpret_cast<float*>(refMsgData._payload)[1] = reinterpret_cast<float*>(msgData._payload)[1];
+
+        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
+        auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(msgData._payload));
+        auto posVar = objDef.ToVariant(3, parameterData);
+        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+    }
+    case ROI_Positioning_SourcePosition_X:
+    {
+        if (msgData._valCount != 1 || msgData._payloadSize != 1 * sizeof(float))
+            return false;
+
+        // get the xyz data from cache to insert the new xy data and send the xyz out
+        auto& refMsgData = GetValueCache().GetValue(RemoteObject(ROI_Positioning_SourcePosition, RemoteObjectAddressing(channel, record)));
+        if (refMsgData._valCount != 3 || refMsgData._payloadSize != 3 * sizeof(float))
+            return false;
+        reinterpret_cast<float*>(refMsgData._payload)[0] = reinterpret_cast<float*>(msgData._payload)[0];
+
+        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
+        auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(msgData._payload));
+        auto posVar = objDef.ToVariant(3, parameterData);
+        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+    }
+    case ROI_Positioning_SourcePosition_Y:
+    {
+        if (msgData._valCount != 1 || msgData._payloadSize != 1 * sizeof(float))
+            return false;
+
+        // get the xyz data from cache to insert the new xy data and send the xyz out
+        auto& refMsgData = GetValueCache().GetValue(RemoteObject(ROI_Positioning_SourcePosition, RemoteObjectAddressing(channel, record)));
+        if (refMsgData._valCount != 3 || refMsgData._payloadSize != 3 * sizeof(float))
+            return false;
+        reinterpret_cast<float*>(refMsgData._payload)[1] = reinterpret_cast<float*>(msgData._payload)[1];
+
+        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
         auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(msgData._payload));
         auto posVar = objDef.ToVariant(3, parameterData);
         return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
     }
     case ROI_Positioning_SourceSpread:
     {
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Spread(channel);
-        if (msgData._payloadSize == sizeof(float))
-            return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<float*>(msgData._payload)), handle).GetMemoryBlock());
-        else
+        if (msgData._valCount != 1 || msgData._payloadSize != sizeof(float))
             return false;
+
+        GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+
+        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Spread(channel);
+        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<float*>(msgData._payload)), handle).GetMemoryBlock());
     }
     case ROI_Positioning_SourceDelayMode:
     {
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(channel);
-        if (msgData._payloadSize == sizeof(int))
-            return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<int*>(msgData._payload)), handle).GetMemoryBlock());
-        else
+        if (msgData._valCount != 1 || msgData._payloadSize != sizeof(int))
             return false;
+
+        GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+
+        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(channel);
+        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<int*>(msgData._payload)), handle).GetMemoryBlock());
     }
     case ROI_MatrixInput_Mute:
     {
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Mute(channel);
-        if (msgData._payloadSize == sizeof(int))
-            return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<int*>(msgData._payload)), handle).GetMemoryBlock());
-        else
+        if (msgData._valCount != 1 || msgData._payloadSize == sizeof(int))
             return false;
+
+        GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+
+        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Mute(channel);
+        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<int*>(msgData._payload)), handle).GetMemoryBlock());
     }
     case ROI_MatrixInput_ReverbSendGain:
     {
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ReverbSendGain(channel);
-        if (msgData._payloadSize == sizeof(float))
-            return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<float*>(msgData._payload)), handle).GetMemoryBlock());
-        else
+        if (msgData._valCount != 1 || msgData._payloadSize == sizeof(float))
             return false;
+
+        GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+
+        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ReverbSendGain(channel);
+        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<float*>(msgData._payload)), handle).GetMemoryBlock());
     }
     case ROI_MatrixInput_Gain:
     {
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Gain(channel);
-        if (msgData._payloadSize == sizeof(float))
-            return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<float*>(msgData._payload)), handle).GetMemoryBlock());
-        else
+        if (msgData._valCount != 1 || msgData._payloadSize == sizeof(float))
             return false;
+
+        GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+
+        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Gain(channel);
+        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<float*>(msgData._payload)), handle).GetMemoryBlock());
     }
     case ROI_HeartbeatPing:
     {
@@ -278,7 +374,7 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
         m_ROIsToDefsMap[ROI_MatrixInput_Gain][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Gain(channel);
         m_ROIsToDefsMap[ROI_MatrixInput_Mute][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Mute(channel);
         for (record = RecordId(MappingAreaId::MAI_First); record <= MappingAreaId::MAI_Fourth; record++)
-            m_ROIsToDefsMap[ROI_CoordinateMapping_SourcePosition_XY][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
+            m_ROIsToDefsMap[ROI_CoordinateMapping_SourcePosition][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
     }
 }
 
@@ -386,7 +482,7 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
 
         switch (activeObj._Id)
         {
-        case ROI_CoordinateMapping_SourcePosition_XY:
+        case ROI_CoordinateMapping_SourcePosition:
         {
             success = success && m_nanoOcp->sendData(
                 NanoOcp1::Ocp1CommandResponseRequired(
@@ -397,7 +493,7 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
                 << " handle:" << NanoOcp1::HandleToString(handle) << ")");
         }
         break;
-        case ROI_Positioning_SourcePosition_XY:
+        case ROI_Positioning_SourcePosition:
         {
             success = success && m_nanoOcp->sendData(
                 NanoOcp1::Ocp1CommandResponseRequired(
@@ -463,7 +559,7 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
                 << " handle:" << NanoOcp1::HandleToString(handle) << ")");
         }
         break;
-        case ROI_CoordinateMapping_SourcePosition:
+        case ROI_CoordinateMapping_SourcePosition_XY:
         case ROI_CoordinateMapping_SourcePosition_X:
         case ROI_CoordinateMapping_SourcePosition_Y:
         {
@@ -472,7 +568,7 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
                 << " channel:" << juce::String(channel) << ")");
         }
         break;
-        case ROI_Positioning_SourcePosition:
+        case ROI_Positioning_SourcePosition_XY:
         case ROI_Positioning_SourcePosition_X:
         case ROI_Positioning_SourcePosition_Y:
         {            
@@ -511,7 +607,7 @@ bool OCP1ProtocolProcessor::QueryObjectValues()
 
         switch (activeObj._Id)
         {
-        case ROI_CoordinateMapping_SourcePosition_XY:
+        case ROI_CoordinateMapping_SourcePosition:
         {
             auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
             success = success && m_nanoOcp->sendData(
@@ -521,7 +617,7 @@ bool OCP1ProtocolProcessor::QueryObjectValues()
             DBG(juce::String(__FUNCTION__) + " ROI_CoordinateMapping_SourcePosition (handle:" + NanoOcp1::HandleToString(handle) + ")");
         }
         break;
-        case ROI_Positioning_SourcePosition_XY:
+        case ROI_Positioning_SourcePosition:
         {
             auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
             success = success && m_nanoOcp->sendData(
@@ -581,18 +677,18 @@ bool OCP1ProtocolProcessor::QueryObjectValues()
             DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_Gain(handle: " + NanoOcp1::HandleToString(handle) + ")");
         }
         break;
-        case ROI_CoordinateMapping_SourcePosition:
+        case ROI_CoordinateMapping_SourcePosition_XY:
         case ROI_CoordinateMapping_SourcePosition_X:
         case ROI_CoordinateMapping_SourcePosition_Y:
         {
-            DBG(juce::String(__FUNCTION__) + " skipping ROI_CoordinateMapping_SourcePosition");
+            DBG(juce::String(__FUNCTION__) + " skipping ROI_CoordinateMapping_SourcePosition X Y XY");
         }
         break;
-        case ROI_Positioning_SourcePosition:
+        case ROI_Positioning_SourcePosition_XY:
         case ROI_Positioning_SourcePosition_X:
         case ROI_Positioning_SourcePosition_Y:
         {
-            DBG(juce::String(__FUNCTION__) + " skipping ROI_Positioning_SourcePosition");
+            DBG(juce::String(__FUNCTION__) + " skipping ROI_Positioning_SourcePosition X Y XY");
         }
         break;
         default:
@@ -690,39 +786,42 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
 
     auto remObjMsgData = RemoteObjectMessageData();
     remObjMsgData._addrVal = RemoteObjectAddressing(objAddr.second, objAddr.first);
-    auto targetRemObjId = roi;
+
+    auto objectsDataToForward = std::map<RemoteObjectIdentifier, RemoteObjectMessageData>();
 
     int newIntValue[3];
     float newFloatValue[3];
 
     switch (roi)
     {
-    case ROI_CoordinateMapping_SourcePosition_XY:
+    case ROI_CoordinateMapping_SourcePosition:
     {
         if (!NanoOcp1::VariantToPosition(cmdDef.ToVariant(3, msgObj->GetParameterData()), newFloatValue[0], newFloatValue[1], newFloatValue[2]))
             return false;
-        //remObjMsgData._payloadSize = 3 * sizeof(float);
-        //remObjMsgData._valCount = 3;
+        remObjMsgData._payloadSize = 3 * sizeof(float);
+        remObjMsgData._valCount = 3;
         remObjMsgData._valType = ROVT_FLOAT;
         remObjMsgData._payload = &newFloatValue;
 
-        /*testing*/remObjMsgData._payloadSize = 2 * sizeof(float);
-        /*testing*/remObjMsgData._valCount = 2;
-        /*testing*/targetRemObjId = ROI_CoordinateMapping_SourcePosition_XY;
+        objectsDataToForward[ROI_CoordinateMapping_SourcePosition_XY] = RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 2, &newFloatValue, 2 * sizeof(float));
+        objectsDataToForward[ROI_CoordinateMapping_SourcePosition_X].payloadCopy(RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 1, &newFloatValue, sizeof(float)));
+        newFloatValue[0] = newFloatValue[1]; // hacky bit - move the y value to the first (x) position to be able to reuse the newFloatValue array for Y forwarding
+        objectsDataToForward[ROI_CoordinateMapping_SourcePosition_Y] = RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 1, &newFloatValue, sizeof(float));
     }
     break;
-    case ROI_Positioning_SourcePosition_XY:
+    case ROI_Positioning_SourcePosition:
     {
         if (!NanoOcp1::VariantToPosition(cmdDef.ToVariant(3, msgObj->GetParameterData()), newFloatValue[0], newFloatValue[1], newFloatValue[2]))
             return false;
-        //remObjMsgData._payloadSize = 3 * sizeof(float);
-        //remObjMsgData._valCount = 3;
+        remObjMsgData._payloadSize = 3 * sizeof(float);
+        remObjMsgData._valCount = 3;
         remObjMsgData._valType = ROVT_FLOAT;
         remObjMsgData._payload = &newFloatValue;
 
-        /*testing*/remObjMsgData._payloadSize = 2 * sizeof(float);
-        /*testing*/remObjMsgData._valCount = 2;
-        /*testing*/targetRemObjId = ROI_Positioning_SourcePosition_XY;
+        objectsDataToForward[ROI_Positioning_SourcePosition_XY] = RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 2, &newFloatValue, 2 * sizeof(float));
+        objectsDataToForward[ROI_Positioning_SourcePosition_X].payloadCopy(RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 1, &newFloatValue, sizeof(float)));
+        newFloatValue[0] = newFloatValue[1]; // hacky bit - move the y value to the first (x) position to be able to reuse the newFloatValue array for Y forwarding
+        objectsDataToForward[ROI_Positioning_SourcePosition_Y] = RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 1, &newFloatValue, sizeof(float));
     }
     break;
     case ROI_Positioning_SourceSpread:
@@ -733,6 +832,8 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
         remObjMsgData._valCount = 1;
         remObjMsgData._valType = ROVT_FLOAT;
         remObjMsgData._payload = &newFloatValue;
+
+        objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
     }
     break;
     case ROI_Positioning_SourceDelayMode:
@@ -743,6 +844,8 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
         remObjMsgData._valCount = 1;
         remObjMsgData._valType = ROVT_INT;
         remObjMsgData._payload = &newIntValue;
+
+        objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
     }
     break;
     case ROI_MatrixInput_ReverbSendGain:
@@ -753,6 +856,8 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
         remObjMsgData._valCount = 1;
         remObjMsgData._valType = ROVT_FLOAT;
         remObjMsgData._payload = &newFloatValue;
+
+        objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
     }
     break;
     case ROI_MatrixInput_Gain:
@@ -763,6 +868,8 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
         remObjMsgData._valCount = 1;
         remObjMsgData._valType = ROVT_FLOAT;
         remObjMsgData._payload = &newFloatValue;
+
+        objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
     }
     break;
     case ROI_MatrixInput_Mute:
@@ -773,15 +880,20 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
         remObjMsgData._valCount = 1;
         remObjMsgData._valType = ROVT_INT;
         remObjMsgData._payload = &newIntValue;
+
+        objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
     }
     break;
     default:
         return false;
     }
 
+    GetValueCache().SetValue(RemoteObject(roi, remObjMsgData._addrVal), remObjMsgData);
+
     if (m_messageListener)
     {
-        m_messageListener->OnProtocolMessageReceived(this, roi, remObjMsgData);
+        for (auto const& objData : objectsDataToForward)
+            m_messageListener->OnProtocolMessageReceived(this, objData.first, objData.second);
         return true;
     }
     else
@@ -799,10 +911,30 @@ const std::vector<RemoteObject> OCP1ProtocolProcessor::GetOcp1SupportedActiveRem
 
         switch (activeObj._Id)
         {
-        case ROI_CoordinateMapping_SourcePosition:
+        case ROI_CoordinateMapping_SourcePosition_XY:
+            {                
+                DBG(juce::String(__FUNCTION__) << " modifying unsupported ROI_CoordinateMapping_SourcePosition_XY to ROI_CoordinateMapping_SourcePosition in 'active' list ("
+                    << "record:" << juce::String(record)
+                    << " channel:" << juce::String(channel) << ")");
+
+                auto modActiveObj = activeObj;
+                modActiveObj._Id = ROI_CoordinateMapping_SourcePosition;
+                ocp1SupportedActiveObjects.push_back(modActiveObj);
+            }
+            break;
+        case ROI_Positioning_SourcePosition_XY:
+            {
+                DBG(juce::String(__FUNCTION__) << " modifying unsupported ROI_Positioning_SourcePosition_XY to ROI_Positioning_SourcePosition in 'active' list ("
+                    << "record:" << juce::String(record)
+                    << " channel:" << juce::String(channel) << ")");
+
+                auto modActiveObj = activeObj;
+                modActiveObj._Id = ROI_Positioning_SourcePosition;
+                ocp1SupportedActiveObjects.push_back(modActiveObj);
+            }
+            break;
         case ROI_CoordinateMapping_SourcePosition_X:
         case ROI_CoordinateMapping_SourcePosition_Y:
-        case ROI_Positioning_SourcePosition:
         case ROI_Positioning_SourcePosition_X:
         case ROI_Positioning_SourcePosition_Y:
             {
