@@ -379,7 +379,7 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
     auto handle = std::uint32_t(0);
     auto success = true;
 
-    for (auto const& activeObj : GetActiveRemoteObjects())
+    for (auto const& activeObj : GetOcp1SupportedActiveRemoteObjects())
     {
         auto& channel = activeObj._Addr._first;
         auto& record = activeObj._Addr._second;
@@ -504,7 +504,7 @@ bool OCP1ProtocolProcessor::QueryObjectValues()
     auto handle = std::uint32_t(0);
     auto success = true;
 
-    for (auto const& activeObj : GetActiveRemoteObjects())
+    for (auto const& activeObj : GetOcp1SupportedActiveRemoteObjects())
     {
         auto& channel = activeObj._Addr._first;
         auto& record = activeObj._Addr._second;
@@ -786,5 +786,37 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
     }
     else
         return false;
+}
+
+const std::vector<RemoteObject> OCP1ProtocolProcessor::GetOcp1SupportedActiveRemoteObjects()
+{
+    auto ocp1SupportedActiveObjects = std::vector<RemoteObject>();
+
+    for (auto const& activeObj : GetActiveRemoteObjects())
+    {
+        auto& channel = activeObj._Addr._first;
+        auto& record = activeObj._Addr._second;
+
+        switch (activeObj._Id)
+        {
+        case ROI_CoordinateMapping_SourcePosition:
+        case ROI_CoordinateMapping_SourcePosition_X:
+        case ROI_CoordinateMapping_SourcePosition_Y:
+        case ROI_Positioning_SourcePosition:
+        case ROI_Positioning_SourcePosition_X:
+        case ROI_Positioning_SourcePosition_Y:
+            {
+                DBG(juce::String(__FUNCTION__) << " filtering unsupported ROI (" << activeObj._Id << ") from 'active' list ("
+                    << "record:" << juce::String(record)
+                    << " channel:" << juce::String(channel) << ")");
+            }
+            break;
+        default:
+            ocp1SupportedActiveObjects.push_back(activeObj);
+            break;
+        }
+    }
+
+    return ocp1SupportedActiveObjects;
 }
 

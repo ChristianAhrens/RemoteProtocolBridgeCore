@@ -74,6 +74,9 @@ private:
 	bool QueryObjectValues();
 
 	//==============================================================================
+	const std::vector<RemoteObject> GetOcp1SupportedActiveRemoteObjects();
+
+	//==============================================================================
 	void AddPendingSubscriptionHandle(const std::uint32_t handle);
 	bool PopPendingSubscriptionHandle(const std::uint32_t handle);
 	bool HasPendingSubscriptions();
