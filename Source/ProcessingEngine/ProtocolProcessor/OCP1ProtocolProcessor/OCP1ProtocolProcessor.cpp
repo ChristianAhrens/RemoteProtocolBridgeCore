@@ -69,6 +69,7 @@ bool OCP1ProtocolProcessor::Start()
             stopTimerThread();
             m_IsRunning = false;
             DeleteObjectSubscriptions();
+            ClearPendingHandles();
         };
 
         return true;
@@ -174,7 +175,8 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
     auto& channel = msgData._addrVal._first;
     auto& record = msgData._addrVal._second;
 
-    std::uint32_t handle;
+    auto handle = std::uint32_t(0x00);
+    auto sendSuccess = false;
 
     switch (id)
     {
@@ -188,7 +190,9 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
         auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(msgData._payload));
         auto posVar = objDef.ToVariant(3, parameterData);
-        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+        AddPendingSetValueHandle(handle, objDef.m_targetOno);
+        break;
     }
     case ROI_CoordinateMapping_SourcePosition_XY:
     {
@@ -205,7 +209,9 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
         auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(refMsgData._payload));
         auto posVar = objDef.ToVariant(3, parameterData);
-        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+        AddPendingSetValueHandle(handle, objDef.m_targetOno);
+        break;
     }
     case ROI_CoordinateMapping_SourcePosition_X:
     {
@@ -221,7 +227,9 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
         auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(refMsgData._payload));
         auto posVar = objDef.ToVariant(3, parameterData);
-        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+        AddPendingSetValueHandle(handle, objDef.m_targetOno);
+        break;
     }
     case ROI_CoordinateMapping_SourcePosition_Y:
     {
@@ -237,7 +245,9 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
         auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(refMsgData._payload));
         auto posVar = objDef.ToVariant(3, parameterData);
-        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+        AddPendingSetValueHandle(handle, objDef.m_targetOno);
+        break;
     }
     case ROI_Positioning_SourcePosition:
     {
@@ -249,7 +259,9 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
         auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(msgData._payload));
         auto posVar = objDef.ToVariant(3, parameterData);
-        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+        AddPendingSetValueHandle(handle, objDef.m_targetOno);
+        break;
     }
     case ROI_Positioning_SourcePosition_XY:
     {
@@ -266,7 +278,9 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
         auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(msgData._payload));
         auto posVar = objDef.ToVariant(3, parameterData);
-        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+        AddPendingSetValueHandle(handle, objDef.m_targetOno);
+        break;
     }
     case ROI_Positioning_SourcePosition_X:
     {
@@ -282,7 +296,9 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
         auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(msgData._payload));
         auto posVar = objDef.ToVariant(3, parameterData);
-        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+        AddPendingSetValueHandle(handle, objDef.m_targetOno);
+        break;
     }
     case ROI_Positioning_SourcePosition_Y:
     {
@@ -298,7 +314,9 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
         auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(msgData._payload));
         auto posVar = objDef.ToVariant(3, parameterData);
-        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+        AddPendingSetValueHandle(handle, objDef.m_targetOno);
+        break;
     }
     case ROI_Positioning_SourceSpread:
     {
@@ -308,7 +326,9 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
 
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Spread(channel);
-        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<float*>(msgData._payload)), handle).GetMemoryBlock());
+        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<float*>(msgData._payload)), handle).GetMemoryBlock());
+        AddPendingSetValueHandle(handle, objDef.m_targetOno);
+        break;
     }
     case ROI_Positioning_SourceDelayMode:
     {
@@ -318,7 +338,9 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
 
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(channel);
-        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<int*>(msgData._payload)), handle).GetMemoryBlock());
+        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<int*>(msgData._payload)), handle).GetMemoryBlock());
+        AddPendingSetValueHandle(handle, objDef.m_targetOno);
+        break;
     }
     case ROI_MatrixInput_Mute:
     {
@@ -328,7 +350,9 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
 
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Mute(channel);
-        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<int*>(msgData._payload)), handle).GetMemoryBlock());
+        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<int*>(msgData._payload)), handle).GetMemoryBlock());
+        AddPendingSetValueHandle(handle, objDef.m_targetOno);
+        break;
     }
     case ROI_MatrixInput_ReverbSendGain:
     {
@@ -338,7 +362,9 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
 
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ReverbSendGain(channel);
-        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<float*>(msgData._payload)), handle).GetMemoryBlock());
+        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<float*>(msgData._payload)), handle).GetMemoryBlock());
+        AddPendingSetValueHandle(handle, objDef.m_targetOno);
+        break;
     }
     case ROI_MatrixInput_Gain:
     {
@@ -348,15 +374,20 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
 
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Gain(channel);
-        return m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<float*>(msgData._payload)), handle).GetMemoryBlock());
+        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(*static_cast<float*>(msgData._payload)), handle).GetMemoryBlock());
+        AddPendingSetValueHandle(handle, objDef.m_targetOno);
+        break;
     }
     case ROI_HeartbeatPing:
     {
-        return m_nanoOcp->sendData(NanoOcp1::Ocp1KeepAlive(static_cast<std::uint16_t>(GetActiveRemoteObjectsInterval()/1000)).GetMemoryBlock());
+        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1KeepAlive(static_cast<std::uint16_t>(GetActiveRemoteObjectsInterval()/1000)).GetMemoryBlock());
+        break;
     }
     default:
-        return false;
+        break;
     }
+
+    return sendSuccess;
 }
 
 /**
@@ -431,17 +462,37 @@ bool OCP1ProtocolProcessor::ocp1MessageReceived(const juce::MemoryBlock& data)
             }
             else
             {
-                auto ONo = PopPendingGetValueHandle(handle);
-                if (0x00 != ONo)
+                auto GetValONo = PopPendingGetValueHandle(handle);
+                if (0x00 != GetValONo)
                 {
-                    if (!UpdateObjectValue(ONo, responseObj))
+                    if (!UpdateObjectValue(GetValONo, responseObj))
                     {
                         DBG(juce::String(__FUNCTION__) << " Got an unhandled OCA getvalue response message (handle:" 
-                            << NanoOcp1::HandleToString(handle) + ", targetONo:0x" << juce::String::toHexString(ONo) << ")");
+                            << NanoOcp1::HandleToString(handle) + ", targetONo:0x" << juce::String::toHexString(GetValONo) << ")");
                         return false;
                     }
                     else
+                    {
+                        if (!HasPendingGetValues())
+                        {
+                            // All subscriptions were confirmed
+                            DBG(juce::String(__FUNCTION__) << " All pending NanoOcp1 getvalue commands were confirmed (handle:"
+                                << NanoOcp1::HandleToString(handle) << ")");
+                        }
                         return true;
+                    }
+                }
+
+                auto SetValONo = PopPendingSetValueHandle(handle);
+                if (0x00 != SetValONo)
+                {
+                    if (!HasPendingSetValues())
+                    {
+                        // All subscriptions were confirmed
+                        DBG(juce::String(__FUNCTION__) << " All pending NanoOcp1 setvalue commands were confirmed (handle:"
+                            << NanoOcp1::HandleToString(handle) << ")");
+                    }
+                    return true;
                 }
 
                 DBG(juce::String(__FUNCTION__) << " Got an OCA response for UNKNOWN handle " << NanoOcp1::HandleToString(handle) <<
@@ -748,6 +799,39 @@ const std::uint32_t OCP1ProtocolProcessor::PopPendingGetValueHandle(const std::u
 bool OCP1ProtocolProcessor::HasPendingGetValues()
 {
     return m_pendingGetValueHandlesWithONo.empty();
+}
+
+void OCP1ProtocolProcessor::AddPendingSetValueHandle(const std::uint32_t handle, const std::uint32_t ONo)
+{
+    DBG(juce::String(__FUNCTION__)
+        << " (handle:" << NanoOcp1::HandleToString(handle)
+        << ", targetONo:0x" << juce::String::toHexString(ONo) << ")");
+    m_pendingSetValueHandlesWithONo.insert(std::make_pair(handle, ONo));
+}
+
+const std::uint32_t OCP1ProtocolProcessor::PopPendingSetValueHandle(const std::uint32_t handle)
+{
+    auto it = std::find_if(m_pendingSetValueHandlesWithONo.begin(), m_pendingSetValueHandlesWithONo.end(), [handle](const auto& val) { return val.first == handle; });
+    if (it != m_pendingSetValueHandlesWithONo.end())
+    {
+        auto ONo = it->second;
+        m_pendingSetValueHandlesWithONo.erase(it);
+        return ONo;
+    }
+    else
+        return 0x00;
+}
+
+bool OCP1ProtocolProcessor::HasPendingSetValues()
+{
+    return m_pendingGetValueHandlesWithONo.empty();
+}
+
+void OCP1ProtocolProcessor::ClearPendingHandles()
+{
+    m_pendingSubscriptionHandles.clear();
+    m_pendingGetValueHandlesWithONo.clear();
+    m_pendingSetValueHandlesWithONo.clear();
 }
 
 bool OCP1ProtocolProcessor::UpdateObjectValue(NanoOcp1::Ocp1Notification* notifObj)

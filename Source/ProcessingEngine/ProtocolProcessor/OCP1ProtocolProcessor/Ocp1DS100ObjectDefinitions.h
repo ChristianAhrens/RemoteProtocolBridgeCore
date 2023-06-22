@@ -97,7 +97,7 @@ struct dbOcaObjectDef_Positioning_Source_DelayMode : Ocp1CommandDefinition
     dbOcaObjectDef_Positioning_Source_DelayMode(std::uint32_t channel)
         : Ocp1CommandDefinition(GetONoTy2(0x02, 0x00, channel, Positioning_Box, Positioning_Source_DelayMode), // ONO of Positioning_Source_DelayMode
             OCP1DATATYPE_UINT8, // Value type
-            4,                  // OcaSwith level - root:worker:actuator:switch
+            4,                  // OcaSwitch level - root:worker:actuator:switch
             1)                  // Prop_Position
     {
     }

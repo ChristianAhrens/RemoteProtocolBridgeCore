@@ -87,6 +87,14 @@ private:
 	bool HasPendingGetValues();
 
 	//==============================================================================
+	void AddPendingSetValueHandle(const std::uint32_t handle, const std::uint32_t ONo);
+	const std::uint32_t PopPendingSetValueHandle(const std::uint32_t handle);
+	bool HasPendingSetValues();
+
+	//==============================================================================
+	void ClearPendingHandles();
+
+	//==============================================================================
 	bool UpdateObjectValue(NanoOcp1::Ocp1Notification* notifObj);
 	bool UpdateObjectValue(const std::uint32_t ONo, NanoOcp1::Ocp1Response* responseObj);
 	bool UpdateObjectValue(const RemoteObjectIdentifier roi, NanoOcp1::Ocp1Message* msgObj, 
@@ -96,6 +104,7 @@ private:
 	std::unique_ptr<NanoOcp1::NanoOcp1Base>	m_nanoOcp;
 	std::vector<std::uint32_t>				m_pendingSubscriptionHandles;
 	std::map<std::uint32_t, std::uint32_t>	m_pendingGetValueHandlesWithONo;
+	std::map<std::uint32_t, std::uint32_t>	m_pendingSetValueHandlesWithONo;
 
 	//==============================================================================
 	std::map<RemoteObjectIdentifier, std::map<std::pair<RecordId, ChannelId>, NanoOcp1::Ocp1CommandDefinition>>	m_ROIsToDefsMap;
