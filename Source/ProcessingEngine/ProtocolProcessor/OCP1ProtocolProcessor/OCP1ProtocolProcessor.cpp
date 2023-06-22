@@ -322,7 +322,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
     }
     case ROI_MatrixInput_Mute:
     {
-        if (msgData._valCount != 1 || msgData._payloadSize == sizeof(int))
+        if (msgData._valCount != 1 || msgData._payloadSize != sizeof(int))
             return false;
 
         GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
@@ -332,7 +332,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
     }
     case ROI_MatrixInput_ReverbSendGain:
     {
-        if (msgData._valCount != 1 || msgData._payloadSize == sizeof(float))
+        if (msgData._valCount != 1 || msgData._payloadSize != sizeof(float))
             return false;
 
         GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
@@ -342,7 +342,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
     }
     case ROI_MatrixInput_Gain:
     {
-        if (msgData._valCount != 1 || msgData._payloadSize == sizeof(float))
+        if (msgData._valCount != 1 || msgData._payloadSize != sizeof(float))
             return false;
 
         GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
