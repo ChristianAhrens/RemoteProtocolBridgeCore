@@ -419,11 +419,14 @@ bool OCP1ProtocolProcessor::ocp1MessageReceived(const juce::MemoryBlock& data)
                     ") with status " << NanoOcp1::StatusToString(responseObj->GetResponseStatus()));
                 return false;
             }
-            else if (PopPendingSubscriptionHandle(handle) && !HasPendingSubscriptions())
+            else if (PopPendingSubscriptionHandle(handle))
             {
-                // All subscriptions were confirmed
-                DBG(juce::String(__FUNCTION__) << " All NanoOcp1 subscriptions were confirmed (handle:" 
-                    << NanoOcp1::HandleToString(handle) << ")");
+                if (!HasPendingSubscriptions())
+                {
+                    // All subscriptions were confirmed
+                    DBG(juce::String(__FUNCTION__) << " All NanoOcp1 subscriptions were confirmed (handle:"
+                        << NanoOcp1::HandleToString(handle) << ")");
+                }
                 return true;
             }
             else
@@ -718,7 +721,7 @@ bool OCP1ProtocolProcessor::PopPendingSubscriptionHandle(const std::uint32_t han
 
 bool OCP1ProtocolProcessor::HasPendingSubscriptions()
 {
-    return m_pendingSubscriptionHandles.empty();
+    return !m_pendingSubscriptionHandles.empty();
 }
 
 void OCP1ProtocolProcessor::AddPendingGetValueHandle(const std::uint32_t handle, const std::uint32_t ONo)
