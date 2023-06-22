@@ -455,8 +455,8 @@ bool OCP1ProtocolProcessor::ocp1MessageReceived(const juce::MemoryBlock& data)
                 if (!HasPendingSubscriptions())
                 {
                     // All subscriptions were confirmed
-                    DBG(juce::String(__FUNCTION__) << " All NanoOcp1 subscriptions were confirmed (handle:"
-                        << NanoOcp1::HandleToString(handle) << ")");
+                    //DBG(juce::String(__FUNCTION__) << " All NanoOcp1 subscriptions were confirmed (handle:"
+                    //    << NanoOcp1::HandleToString(handle) << ")");
                 }
                 return true;
             }
@@ -476,8 +476,8 @@ bool OCP1ProtocolProcessor::ocp1MessageReceived(const juce::MemoryBlock& data)
                         if (!HasPendingGetValues())
                         {
                             // All subscriptions were confirmed
-                            DBG(juce::String(__FUNCTION__) << " All pending NanoOcp1 getvalue commands were confirmed (handle:"
-                                << NanoOcp1::HandleToString(handle) << ")");
+                            //DBG(juce::String(__FUNCTION__) << " All pending NanoOcp1 getvalue commands were confirmed (handle:"
+                            //    << NanoOcp1::HandleToString(handle) << ")");
                         }
                         return true;
                     }
@@ -489,8 +489,8 @@ bool OCP1ProtocolProcessor::ocp1MessageReceived(const juce::MemoryBlock& data)
                     if (!HasPendingSetValues())
                     {
                         // All subscriptions were confirmed
-                        DBG(juce::String(__FUNCTION__) << " All pending NanoOcp1 setvalue commands were confirmed (handle:"
-                            << NanoOcp1::HandleToString(handle) << ")");
+                        //DBG(juce::String(__FUNCTION__) << " All pending NanoOcp1 setvalue commands were confirmed (handle:"
+                        //    << NanoOcp1::HandleToString(handle) << ")");
                     }
                     return true;
                 }
@@ -541,10 +541,10 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
             success = success && m_nanoOcp->sendData(
                 NanoOcp1::Ocp1CommandResponseRequired(
                     NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
-            DBG(juce::String(__FUNCTION__) << " ROI_CoordinateMapping_SourcePosition ("
-                << "record:" << juce::String(record)
-                << " channel:" << juce::String(channel)
-                << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            //DBG(juce::String(__FUNCTION__) << " ROI_CoordinateMapping_SourcePosition ("
+            //    << "record:" << juce::String(record)
+            //    << " channel:" << juce::String(channel)
+            //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
         }
         break;
         case ROI_Positioning_SourcePosition:
@@ -552,10 +552,10 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
             success = success && m_nanoOcp->sendData(
                 NanoOcp1::Ocp1CommandResponseRequired(
                     NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
-            DBG(juce::String(__FUNCTION__) << " ROI_Positioning_SourcePosition (" 
-                << "record:" << juce::String(record)
-                << " channel:" << juce::String(channel)
-                << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            //DBG(juce::String(__FUNCTION__) << " ROI_Positioning_SourcePosition (" 
+            //    << "record:" << juce::String(record)
+            //    << " channel:" << juce::String(channel)
+            //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
         }
         break;
         case ROI_Positioning_SourceSpread:
@@ -563,10 +563,10 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
             success = success && m_nanoOcp->sendData(
                 NanoOcp1::Ocp1CommandResponseRequired(
                     NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Spread(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
-            DBG(juce::String(__FUNCTION__) << " ROI_Positioning_SourceSpread (" 
-                << "record:" << juce::String(record)
-                << " channel:" << juce::String(channel)
-                << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            //DBG(juce::String(__FUNCTION__) << " ROI_Positioning_SourceSpread (" 
+            //    << "record:" << juce::String(record)
+            //    << " channel:" << juce::String(channel)
+            //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
         }
         break;
         case ROI_Positioning_SourceDelayMode:
@@ -574,10 +574,10 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
             success = success && m_nanoOcp->sendData(
                 NanoOcp1::Ocp1CommandResponseRequired(
                     NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
-            DBG(juce::String(__FUNCTION__) << " ROI_Positioning_SourceDelayMode (" 
-                << "record:" << juce::String(record)
-                << " channel:" << juce::String(channel)
-                << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            //DBG(juce::String(__FUNCTION__) << " ROI_Positioning_SourceDelayMode (" 
+            //    << "record:" << juce::String(record)
+            //    << " channel:" << juce::String(channel)
+            //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
         }
         break;
         case ROI_MatrixInput_Mute:
@@ -585,10 +585,10 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
             success = success && m_nanoOcp->sendData(
                 NanoOcp1::Ocp1CommandResponseRequired(
                     NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Mute(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
-            DBG(juce::String(__FUNCTION__) << " ROI_MatrixInput_Mute (" 
-                << "record:" << juce::String(record)
-                << " channel:" << juce::String(channel)
-                << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            //DBG(juce::String(__FUNCTION__) << " ROI_MatrixInput_Mute (" 
+            //    << "record:" << juce::String(record)
+            //    << " channel:" << juce::String(channel)
+            //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
         }
         break;
         case ROI_MatrixInput_ReverbSendGain:
@@ -596,10 +596,10 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
             success = success && m_nanoOcp->sendData(
                 NanoOcp1::Ocp1CommandResponseRequired(
                     NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ReverbSendGain(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
-            DBG(juce::String(__FUNCTION__) << " ROI_MatrixInput_ReverbSendGain (" 
-                << "record:" << juce::String(record)
-                << " channel:" << juce::String(channel)
-                << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            //DBG(juce::String(__FUNCTION__) << " ROI_MatrixInput_ReverbSendGain (" 
+            //    << "record:" << juce::String(record)
+            //    << " channel:" << juce::String(channel)
+            //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
         }
         break;
         case ROI_MatrixInput_Gain:
@@ -607,28 +607,28 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
             success = success && m_nanoOcp->sendData(
                 NanoOcp1::Ocp1CommandResponseRequired(
                     NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Gain(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
-            DBG(juce::String(__FUNCTION__) << " ROI_MatrixInput_Gain (" 
-                << "record:" << juce::String(record)
-                << " channel:" << juce::String(channel)
-                << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            //DBG(juce::String(__FUNCTION__) << " ROI_MatrixInput_Gain (" 
+            //    << "record:" << juce::String(record)
+            //    << " channel:" << juce::String(channel)
+            //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
         }
         break;
         case ROI_CoordinateMapping_SourcePosition_XY:
         case ROI_CoordinateMapping_SourcePosition_X:
         case ROI_CoordinateMapping_SourcePosition_Y:
         {
-            DBG(juce::String(__FUNCTION__) << " skipping ROI_CoordinateMapping_SourcePosition subscriptions that are not supported ("
-                << "record:" << juce::String(record)
-                << " channel:" << juce::String(channel) << ")");
+            //DBG(juce::String(__FUNCTION__) << " skipping ROI_CoordinateMapping_SourcePosition subscriptions that are not supported ("
+            //    << "record:" << juce::String(record)
+            //    << " channel:" << juce::String(channel) << ")");
         }
         break;
         case ROI_Positioning_SourcePosition_XY:
         case ROI_Positioning_SourcePosition_X:
         case ROI_Positioning_SourcePosition_Y:
         {            
-            DBG(juce::String(__FUNCTION__) << " skipping ROI_Positioning_SourcePosition subscriptions that are not supported ("
-            << "record:" << juce::String(record)
-            << " channel:" << juce::String(channel) << ")");
+            //DBG(juce::String(__FUNCTION__) << " skipping ROI_Positioning_SourcePosition subscriptions that are not supported ("
+            //  << "record:" << juce::String(record)
+            //  << " channel:" << juce::String(channel) << ")");
         }
         break;
         default:
@@ -668,7 +668,7 @@ bool OCP1ProtocolProcessor::QueryObjectValues()
                 NanoOcp1::Ocp1CommandResponseRequired(
                     objDef.GetValueCommand(), handle).GetMemoryBlock());
             AddPendingGetValueHandle(handle, objDef.m_targetOno);
-            DBG(juce::String(__FUNCTION__) + " ROI_CoordinateMapping_SourcePosition (handle:" + NanoOcp1::HandleToString(handle) + ")");
+            //DBG(juce::String(__FUNCTION__) + " ROI_CoordinateMapping_SourcePosition (handle:" + NanoOcp1::HandleToString(handle) + ")");
         }
         break;
         case ROI_Positioning_SourcePosition:
@@ -678,7 +678,7 @@ bool OCP1ProtocolProcessor::QueryObjectValues()
                 NanoOcp1::Ocp1CommandResponseRequired(
                     objDef.GetValueCommand(), handle).GetMemoryBlock());
             AddPendingGetValueHandle(handle, objDef.m_targetOno);
-            DBG(juce::String(__FUNCTION__) + " ROI_Positioning_SourcePosition (handle:" + NanoOcp1::HandleToString(handle) + ")");
+            //DBG(juce::String(__FUNCTION__) + " ROI_Positioning_SourcePosition (handle:" + NanoOcp1::HandleToString(handle) + ")");
         }
         break;
         case ROI_Positioning_SourceSpread:
@@ -688,7 +688,7 @@ bool OCP1ProtocolProcessor::QueryObjectValues()
                 NanoOcp1::Ocp1CommandResponseRequired(
                     objDef.GetValueCommand(), handle).GetMemoryBlock());
             AddPendingGetValueHandle(handle, objDef.m_targetOno);
-            DBG(juce::String(__FUNCTION__) + " ROI_Positioning_SourceSpread (handle:" + NanoOcp1::HandleToString(handle) + ")");
+            //DBG(juce::String(__FUNCTION__) + " ROI_Positioning_SourceSpread (handle:" + NanoOcp1::HandleToString(handle) + ")");
         }
         break;
         case ROI_Positioning_SourceDelayMode:
@@ -698,7 +698,7 @@ bool OCP1ProtocolProcessor::QueryObjectValues()
                 NanoOcp1::Ocp1CommandResponseRequired(
                     objDef.GetValueCommand(), handle).GetMemoryBlock());
             AddPendingGetValueHandle(handle, objDef.m_targetOno);
-            DBG(juce::String(__FUNCTION__) + " ROI_Positioning_SourceDelayMode (handle:" + NanoOcp1::HandleToString(handle) + ")");
+            //DBG(juce::String(__FUNCTION__) + " ROI_Positioning_SourceDelayMode (handle:" + NanoOcp1::HandleToString(handle) + ")");
         }
         break;
         case ROI_MatrixInput_Mute:
@@ -708,7 +708,7 @@ bool OCP1ProtocolProcessor::QueryObjectValues()
                 NanoOcp1::Ocp1CommandResponseRequired(
                     objDef.GetValueCommand(), handle).GetMemoryBlock());
             AddPendingGetValueHandle(handle, objDef.m_targetOno);
-            DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_Mute (handle:" + NanoOcp1::HandleToString(handle) + ")");
+            //DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_Mute (handle:" + NanoOcp1::HandleToString(handle) + ")");
         }
         break;
         case ROI_MatrixInput_ReverbSendGain:
@@ -718,7 +718,7 @@ bool OCP1ProtocolProcessor::QueryObjectValues()
                 NanoOcp1::Ocp1CommandResponseRequired(
                     objDef.GetValueCommand(), handle).GetMemoryBlock());
             AddPendingGetValueHandle(handle, objDef.m_targetOno);
-            DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_ReverbSendGain (handle:" + NanoOcp1::HandleToString(handle) + ")");
+            //DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_ReverbSendGain (handle:" + NanoOcp1::HandleToString(handle) + ")");
         }
         break;
         case ROI_MatrixInput_Gain:
@@ -728,21 +728,21 @@ bool OCP1ProtocolProcessor::QueryObjectValues()
                 NanoOcp1::Ocp1CommandResponseRequired(
                     objDef.GetValueCommand(), handle).GetMemoryBlock());
             AddPendingGetValueHandle(handle, objDef.m_targetOno);
-            DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_Gain(handle: " + NanoOcp1::HandleToString(handle) + ")");
+            //DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_Gain(handle: " + NanoOcp1::HandleToString(handle) + ")");
         }
         break;
         case ROI_CoordinateMapping_SourcePosition_XY:
         case ROI_CoordinateMapping_SourcePosition_X:
         case ROI_CoordinateMapping_SourcePosition_Y:
         {
-            DBG(juce::String(__FUNCTION__) + " skipping ROI_CoordinateMapping_SourcePosition X Y XY");
+            //DBG(juce::String(__FUNCTION__) + " skipping ROI_CoordinateMapping_SourcePosition X Y XY");
         }
         break;
         case ROI_Positioning_SourcePosition_XY:
         case ROI_Positioning_SourcePosition_X:
         case ROI_Positioning_SourcePosition_Y:
         {
-            DBG(juce::String(__FUNCTION__) + " skipping ROI_Positioning_SourcePosition X Y XY");
+            //DBG(juce::String(__FUNCTION__) + " skipping ROI_Positioning_SourcePosition X Y XY");
         }
         break;
         default:
@@ -755,6 +755,8 @@ bool OCP1ProtocolProcessor::QueryObjectValues()
 
 void OCP1ProtocolProcessor::AddPendingSubscriptionHandle(const std::uint32_t handle)
 {
+    //DBG(juce::String(__FUNCTION__)
+    //    << " (handle:" << NanoOcp1::HandleToString(handle) << ")");
     m_pendingSubscriptionHandles.push_back(handle);
 }
 
@@ -777,9 +779,9 @@ bool OCP1ProtocolProcessor::HasPendingSubscriptions()
 
 void OCP1ProtocolProcessor::AddPendingGetValueHandle(const std::uint32_t handle, const std::uint32_t ONo)
 {
-    DBG(juce::String(__FUNCTION__)
-        << " (handle:" << NanoOcp1::HandleToString(handle)
-        << ", targetONo:0x" << juce::String::toHexString(ONo) << ")");
+    //DBG(juce::String(__FUNCTION__)
+    //    << " (handle:" << NanoOcp1::HandleToString(handle)
+    //    << ", targetONo:0x" << juce::String::toHexString(ONo) << ")");
     m_pendingGetValueHandlesWithONo.insert(std::make_pair(handle, ONo));
 }
 
@@ -789,6 +791,9 @@ const std::uint32_t OCP1ProtocolProcessor::PopPendingGetValueHandle(const std::u
     if (it != m_pendingGetValueHandlesWithONo.end())
     {
         auto ONo = it->second;
+        //DBG(juce::String(__FUNCTION__)
+        //    << " (handle:" << NanoOcp1::HandleToString(handle)
+        //    << ", targetONo:0x" << juce::String::toHexString(ONo) << ")");
         m_pendingGetValueHandlesWithONo.erase(it);
         return ONo;
     }
@@ -803,9 +808,9 @@ bool OCP1ProtocolProcessor::HasPendingGetValues()
 
 void OCP1ProtocolProcessor::AddPendingSetValueHandle(const std::uint32_t handle, const std::uint32_t ONo)
 {
-    DBG(juce::String(__FUNCTION__)
-        << " (handle:" << NanoOcp1::HandleToString(handle)
-        << ", targetONo:0x" << juce::String::toHexString(ONo) << ")");
+    //DBG(juce::String(__FUNCTION__)
+    //    << " (handle:" << NanoOcp1::HandleToString(handle)
+    //    << ", targetONo:0x" << juce::String::toHexString(ONo) << ")");
     m_pendingSetValueHandlesWithONo.insert(std::make_pair(handle, ONo));
 }
 
@@ -815,6 +820,9 @@ const std::uint32_t OCP1ProtocolProcessor::PopPendingSetValueHandle(const std::u
     if (it != m_pendingSetValueHandlesWithONo.end())
     {
         auto ONo = it->second;
+        //DBG(juce::String(__FUNCTION__)
+        //    << " (handle:" << NanoOcp1::HandleToString(handle)
+        //    << ", targetONo:0x" << juce::String::toHexString(ONo) << ")");
         m_pendingSetValueHandlesWithONo.erase(it);
         return ONo;
     }
@@ -870,6 +878,9 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
 {
     auto objAddr = objectDetails.first;
     auto cmdDef = objectDetails.second;
+
+    //DBG(juce::String(__FUNCTION__)
+    //    << " (targetONo:0x" << juce::String::toHexString(cmdDef.m_targetOno) << ")");
 
     auto remObjMsgData = RemoteObjectMessageData();
     remObjMsgData._addrVal = RemoteObjectAddressing(objAddr.second, objAddr.first);
@@ -1000,9 +1011,9 @@ const std::vector<RemoteObject> OCP1ProtocolProcessor::GetOcp1SupportedActiveRem
         {
         case ROI_CoordinateMapping_SourcePosition_XY:
             {                
-                DBG(juce::String(__FUNCTION__) << " modifying unsupported ROI_CoordinateMapping_SourcePosition_XY to ROI_CoordinateMapping_SourcePosition in 'active' list ("
-                    << "record:" << juce::String(record)
-                    << " channel:" << juce::String(channel) << ")");
+                //DBG(juce::String(__FUNCTION__) << " modifying unsupported ROI_CoordinateMapping_SourcePosition_XY to ROI_CoordinateMapping_SourcePosition in 'active' list ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel) << ")");
 
                 auto modActiveObj = activeObj;
                 modActiveObj._Id = ROI_CoordinateMapping_SourcePosition;
@@ -1011,9 +1022,9 @@ const std::vector<RemoteObject> OCP1ProtocolProcessor::GetOcp1SupportedActiveRem
             break;
         case ROI_Positioning_SourcePosition_XY:
             {
-                DBG(juce::String(__FUNCTION__) << " modifying unsupported ROI_Positioning_SourcePosition_XY to ROI_Positioning_SourcePosition in 'active' list ("
-                    << "record:" << juce::String(record)
-                    << " channel:" << juce::String(channel) << ")");
+                //DBG(juce::String(__FUNCTION__) << " modifying unsupported ROI_Positioning_SourcePosition_XY to ROI_Positioning_SourcePosition in 'active' list ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel) << ")");
 
                 auto modActiveObj = activeObj;
                 modActiveObj._Id = ROI_Positioning_SourcePosition;
@@ -1025,9 +1036,9 @@ const std::vector<RemoteObject> OCP1ProtocolProcessor::GetOcp1SupportedActiveRem
         case ROI_Positioning_SourcePosition_X:
         case ROI_Positioning_SourcePosition_Y:
             {
-                DBG(juce::String(__FUNCTION__) << " filtering unsupported ROI (" << activeObj._Id << ") from 'active' list ("
-                    << "record:" << juce::String(record)
-                    << " channel:" << juce::String(channel) << ")");
+                //DBG(juce::String(__FUNCTION__) << " filtering unsupported ROI (" << activeObj._Id << ") from 'active' list ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel) << ")");
             }
             break;
         default:
