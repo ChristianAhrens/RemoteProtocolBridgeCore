@@ -206,6 +206,11 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         reinterpret_cast<float*>(refMsgData._payload)[0] = reinterpret_cast<float*>(msgData._payload)[0];
         reinterpret_cast<float*>(refMsgData._payload)[1] = reinterpret_cast<float*>(msgData._payload)[1];
 
+        //auto x = reinterpret_cast<float*>(refMsgData._payload)[0];
+        //auto y = reinterpret_cast<float*>(refMsgData._payload)[1];
+        //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
+        //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
+
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
         auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(refMsgData._payload));
         auto posVar = objDef.ToVariant(3, parameterData);
@@ -224,6 +229,11 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
             return false;
         reinterpret_cast<float*>(refMsgData._payload)[0] = reinterpret_cast<float*>(msgData._payload)[0];
 
+        //auto x = reinterpret_cast<float*>(refMsgData._payload)[0];
+        //auto y = reinterpret_cast<float*>(refMsgData._payload)[1];
+        //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
+        //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
+
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
         auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(refMsgData._payload));
         auto posVar = objDef.ToVariant(3, parameterData);
@@ -241,6 +251,11 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         if (refMsgData._valCount != 3 || refMsgData._payloadSize != 3 * sizeof(float))
             return false;
         reinterpret_cast<float*>(refMsgData._payload)[1] = reinterpret_cast<float*>(msgData._payload)[1];
+
+        //auto x = reinterpret_cast<float*>(refMsgData._payload)[0];
+        //auto y = reinterpret_cast<float*>(refMsgData._payload)[1];
+        //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
+        //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
 
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
         auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(refMsgData._payload));
@@ -275,6 +290,11 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         reinterpret_cast<float*>(refMsgData._payload)[0] = reinterpret_cast<float*>(msgData._payload)[0];
         reinterpret_cast<float*>(refMsgData._payload)[1] = reinterpret_cast<float*>(msgData._payload)[1];
 
+        //auto x = reinterpret_cast<float*>(refMsgData._payload)[0];
+        //auto y = reinterpret_cast<float*>(refMsgData._payload)[1];
+        //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
+        //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
+
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
         auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(msgData._payload));
         auto posVar = objDef.ToVariant(3, parameterData);
@@ -292,6 +312,11 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         if (refMsgData._valCount != 3 || refMsgData._payloadSize != 3 * sizeof(float))
             return false;
         reinterpret_cast<float*>(refMsgData._payload)[0] = reinterpret_cast<float*>(msgData._payload)[0];
+
+        //auto x = reinterpret_cast<float*>(refMsgData._payload)[0];
+        //auto y = reinterpret_cast<float*>(refMsgData._payload)[1];
+        //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
+        //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
 
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
         auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(msgData._payload));
