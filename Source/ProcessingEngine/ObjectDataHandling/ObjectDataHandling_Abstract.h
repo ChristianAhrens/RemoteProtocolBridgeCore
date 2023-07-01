@@ -107,7 +107,7 @@ public:
 	ObjectHandlingState GetProtocolState(ProtocolId id);
 
 	//==============================================================================
-	virtual bool OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData) = 0;
+	virtual bool OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta) = 0;
 
 	//==============================================================================
 	virtual std::unique_ptr<XmlElement> createStateXml() override;

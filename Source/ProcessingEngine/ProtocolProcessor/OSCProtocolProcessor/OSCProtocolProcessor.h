@@ -58,7 +58,7 @@ public:
 	bool Start() override;
 	bool Stop() override;
 
-	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData) override;
+	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData, const int externalId = -1) override;
 
 	bool SendAddressedMessage(const String& addressString, const RemoteObjectMessageData& msgData);
 

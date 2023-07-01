@@ -73,9 +73,10 @@ bool Forward_only_valueChanges::setStateXml(XmlElement* stateXml)
  * @param PId		The id of the protocol that received the data
  * @param Id		The object id to send a message for
  * @param msgData	The actual message value/content data
+ * @param msgMeta	The meta information on the message data that was received
  * @return	True if successful sent/forwarded, false if not
  */
-bool Forward_only_valueChanges::OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
+bool Forward_only_valueChanges::OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta)
 {
 	const ProcessingEngineNode* parentNode = ObjectDataHandling_Abstract::GetParentNode();
 	if (!parentNode)

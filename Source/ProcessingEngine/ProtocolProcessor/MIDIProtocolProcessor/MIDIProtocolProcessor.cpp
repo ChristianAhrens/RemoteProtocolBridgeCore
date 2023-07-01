@@ -729,9 +729,13 @@ bool MIDIProtocolProcessor::Stop()
  *
  * @param Id		The id of the object to send a message for
  * @param msgData	The message payload and metadata
+ * @param externalId	An optional external id for identification of replies, etc. 
+ *						(unused in this protocolprocessor impl)
  */
-bool MIDIProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
+bool MIDIProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData, const int externalId)
 {
+	ignoreUnused(externalId);
+
 	// keep our MIDI specific value cache in sync with what is going on in the rest of the world first
 	GetValueCache().SetValue(RemoteObject(Id, msgData._addrVal), msgData);
 

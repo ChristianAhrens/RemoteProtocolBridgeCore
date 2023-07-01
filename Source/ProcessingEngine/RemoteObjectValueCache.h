@@ -29,6 +29,8 @@ public:
 	RemoteObjectValueCache();
 	~RemoteObjectValueCache();
 
+	bool Contains(const RemoteObject& ro) const;
+
 	int GetIntValue(const RemoteObject& ro) const;
 	float GetFloatValue(const RemoteObject& ro) const;
 	std::tuple<float, float> GetDualFloatValues(const RemoteObject& ro) const;

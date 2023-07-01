@@ -468,10 +468,11 @@ ObjectDataHandling_Abstract* ProcessingEngineNode::GetObjectDataHandling()
  * @param receiver	The protocol processing object that has received the message
  * @param id		The message object id that corresponds to the received message
  * @param msgData	The actual message data that was received
+ * @param msgMeta	Meta information on the message data that was received
  */
-void ProcessingEngineNode::OnProtocolMessageReceived(ProtocolProcessorBase* receiver, RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData)
+void ProcessingEngineNode::OnProtocolMessageReceived(ProtocolProcessorBase* receiver, RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta)
 {
-	m_messageQueue.enqueueMessage(InterProtocolMessage(this->GetId(), receiver->GetId(), receiver->GetType(), id, msgData));
+	m_messageQueue.enqueueMessage(InterProtocolMessage(this->GetId(), receiver->GetId(), receiver->GetType(), id, msgData, msgMeta));
 }
 
 /**
@@ -522,13 +523,17 @@ void ProcessingEngineNode::run()
 		if (m_messageQueue.waitForMessage(25) && m_messageQueue.dequeueMessage(protocolMessage))
 		{
 			// send the message data to any listeners - asynchronous
-			postMessage(new NodeCallbackMessage(protocolMessage));
+			if (protocolMessage._msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement // if either we do not deal with a reply of SET data
+				|| protocolMessage._msgMeta._ExternalId != -2)													// or the SET data was not initiated by listeners but protocols instead
+			{
+				postMessage(new NodeCallbackMessage(protocolMessage));
+			}
 
 			// perform internal bridging forwarding of message - synchronous
 			auto isBridgingObject = (protocolMessage._Id < ROI_BridgingMAX);
 			auto isOHMCtrlObject = (protocolMessage._Id == ROI_RemoteProtocolBridge_GetAllKnownValues);
 			if (m_dataHandling && (isBridgingObject || isOHMCtrlObject))
-				m_dataHandling->OnReceivedMessageFromProtocol(protocolMessage._senderProtocolId, protocolMessage._Id, protocolMessage._msgData);
+				m_dataHandling->OnReceivedMessageFromProtocol(protocolMessage._senderProtocolId, protocolMessage._Id, protocolMessage._msgData, protocolMessage._msgMeta);
 		}
 	}
 

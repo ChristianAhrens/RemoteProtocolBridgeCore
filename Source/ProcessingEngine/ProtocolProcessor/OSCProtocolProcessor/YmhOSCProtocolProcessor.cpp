@@ -57,11 +57,15 @@ bool YmhOSCProtocolProcessor::setStateXml(XmlElement* stateXml)
 /**
  * Method to trigger sending of a message
  *
- * @param Id		The id of the object to send a message for
- * @param msgData	The message payload and metadata
+ * @param Id			The id of the object to send a message for
+ * @param msgData		The message payload and metadata
+ * @param externalId	An optional external id for identification of replies, etc. 
+ *						(unused in this protocolprocessor impl)
  */
-bool YmhOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
+bool YmhOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData, const int externalId)
 {
+	ignoreUnused(externalId);
+
 	// do not send any values if they relate to a mapping id differing from the one configured for this protocol
 	if (msgData._addrVal._second != m_mappingAreaId)
 		return false;

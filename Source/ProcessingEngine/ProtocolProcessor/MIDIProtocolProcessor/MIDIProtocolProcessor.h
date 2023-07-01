@@ -51,7 +51,7 @@ public:
 	bool Stop() override;
 
 	//==============================================================================
-	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData) override;
+	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData, const int externalId = -1) override;
 
 private:
 	// This is used to dispach an incoming midi message to the message thread

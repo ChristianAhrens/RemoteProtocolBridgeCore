@@ -59,7 +59,7 @@ public:
 
 	bool Stop() override;
 
-	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData) override;
+	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData, const int externalId = -1) override;
 
 	static String GetADMMessageDomainString();
 	static String GetADMMessageTypeString(const ADMOSCProtocolProcessor::ADMMessageType& msgType);

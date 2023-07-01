@@ -98,9 +98,13 @@ bool ADMOSCProtocolProcessor::setStateXml(XmlElement* stateXml)
  *
  * @param Id		The id of the object to send a message for
  * @param msgData	The message payload and metadata
+ * @param externalId	An optional external id for identification of replies, etc. 
+ *						(unused in this protocolprocessor impl)
  */
-bool ADMOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
+bool ADMOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData, const int externalId)
 {
+	ignoreUnused(externalId);
+
 	// do not send any values if the config forbids data sending
 	if (m_dataSendindDisabled)
 		return false;

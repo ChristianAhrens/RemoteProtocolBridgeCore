@@ -55,7 +55,7 @@ public:
 	bool Stop() override;
 
 	//==============================================================================
-	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData) override;
+	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData, const int externalId = -1) override;
 
 	//==============================================================================
 	static String GetRemoteObjectString(RemoteObjectIdentifier id);
@@ -87,9 +87,10 @@ private:
 	bool HasPendingGetValues();
 
 	//==============================================================================
-	void AddPendingSetValueHandle(const std::uint32_t handle, const std::uint32_t ONo);
-	const std::uint32_t PopPendingSetValueHandle(const std::uint32_t handle);
+	void AddPendingSetValueHandle(const std::uint32_t handle, const std::uint32_t ONo, const int externalId);
+	const std::uint32_t PopPendingSetValueHandle(const std::uint32_t handle, int& externalId);
 	bool HasPendingSetValues();
+	const std::optional<std::pair<std::uint32_t, int>> HasPendingSetValue(const std::uint32_t ONo);
 
 	//==============================================================================
 	void ClearPendingHandles();
@@ -101,10 +102,10 @@ private:
 		const std::pair<std::pair<RecordId, ChannelId>, NanoOcp1::Ocp1CommandDefinition>& objectDetails);
 
 	//==============================================================================
-	std::unique_ptr<NanoOcp1::NanoOcp1Base>	m_nanoOcp;
-	std::vector<std::uint32_t>				m_pendingSubscriptionHandles;
-	std::map<std::uint32_t, std::uint32_t>	m_pendingGetValueHandlesWithONo;
-	std::map<std::uint32_t, std::uint32_t>	m_pendingSetValueHandlesWithONo;
+	std::unique_ptr<NanoOcp1::NanoOcp1Base>					m_nanoOcp;
+	std::vector<std::uint32_t>								m_pendingSubscriptionHandles;
+	std::map<std::uint32_t, std::uint32_t>					m_pendingGetValueHandlesWithONo;
+	std::map<std::uint32_t, std::pair<std::uint32_t, int>>	m_pendingSetValueHandlesWithONo;
 
 	//==============================================================================
 	std::map<RemoteObjectIdentifier, std::map<std::pair<RecordId, ChannelId>, NanoOcp1::Ocp1CommandDefinition>>	m_ROIsToDefsMap;

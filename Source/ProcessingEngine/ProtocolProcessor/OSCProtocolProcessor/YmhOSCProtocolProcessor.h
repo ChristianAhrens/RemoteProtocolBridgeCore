@@ -25,7 +25,7 @@ public:
 
 	bool setStateXml(XmlElement* stateXml) override;
 
-	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData) override;
+	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData, const int externalId = -1) override;
 
 	static String GetRemoteObjectDomainString();
 	static String GetRemoteObjectParameterTypeString(RemoteObjectIdentifier id);

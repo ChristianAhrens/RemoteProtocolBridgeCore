@@ -171,9 +171,13 @@ bool OSCProtocolProcessor::connectSenderIfRequired()
  *
  * @param Id		The id of the object to send a message for
  * @param msgData	The message payload and metadata
+ * @param externalId	An optional external id for identification of replies, etc. 
+ *						(unused in this protocolprocessor impl)
  */
-bool OSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
+bool OSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData, const int externalId)
 {
+	ignoreUnused(externalId);
+
 	String addressString = GetRemoteObjectString(Id);
 	if (addressString.isEmpty())
 		return false;

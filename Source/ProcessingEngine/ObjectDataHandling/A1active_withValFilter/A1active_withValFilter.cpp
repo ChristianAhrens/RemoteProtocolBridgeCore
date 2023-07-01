@@ -67,9 +67,10 @@ void A1active_withValFilter::AddProtocolAId(ProtocolId PAId)
  * @param PId		The id of the protocol that received the data
  * @param Id		The object id to send a message for
  * @param msgData	The actual message value/content data
+ * @param msgMeta	The meta information on the message data that was received
  * @return	True if successful sent/forwarded, false if not
  */
-bool A1active_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
+bool A1active_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta)
 {
 	auto parentNode = ObjectDataHandling_Abstract::GetParentNode();
 	if (!parentNode)
@@ -81,7 +82,7 @@ bool A1active_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId PId,
 	auto isFirstProtocolAId = GetProtocolAIds().size() >= 1 && PId == GetProtocolAIds().at(0);
 
 	if (isProtocolBId || isFirstProtocolAId)
-		return Forward_only_valueChanges::OnReceivedMessageFromProtocol(PId, Id, msgData);
+		return Forward_only_valueChanges::OnReceivedMessageFromProtocol(PId, Id, msgData, msgMeta);
 	else
 		return false;
 }

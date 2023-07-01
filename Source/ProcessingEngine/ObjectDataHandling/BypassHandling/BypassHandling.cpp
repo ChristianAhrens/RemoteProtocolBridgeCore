@@ -49,10 +49,13 @@ BypassHandling::~BypassHandling()
  * @param PId		The id of the protocol that received the data
  * @param Id		The object id to send a message for
  * @param msgData	The actual message value/content data
+ * @param msgMeta	The meta information on the message data that was received
  * @return	True if successful sent/forwarded, false if not
  */
-bool BypassHandling::OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
+bool BypassHandling::OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta)
 {
+	ignoreUnused(msgMeta);
+
 	auto parentNode = ObjectDataHandling_Abstract::GetParentNode();
 	if (!parentNode)
 		return false;

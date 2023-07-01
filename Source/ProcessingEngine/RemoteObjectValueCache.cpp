@@ -42,6 +42,20 @@ RemoteObjectValueCache::~RemoteObjectValueCache()
 }
 
 /**
+ * Checks if the given remote object is already present in the cache.
+ * @param	ro	The remote object to test for existance in cache
+ * @return	True if the given object is available in the cache
+ */
+bool RemoteObjectValueCache::Contains(const RemoteObject& ro) const
+{
+	if (m_cachedValues.count(ro) != 0)
+		return true;
+
+	DBG(String(__FUNCTION__) + " no value available for requested RO");
+	return false;
+}
+
+/**
  * Gets the int value cached for a given remote object if available.
  * @param	ro	The remote object to get the cached int value for
  * @return	The cached int value if available, 0 if not available
@@ -150,6 +164,27 @@ void RemoteObjectValueCache::SetValue(const RemoteObject& ro, const RemoteObject
 //#ifdef DEBUG
 //	DbgPrintCacheContent();
 //#endif
+
+#ifdef DEBUG
+	auto val = m_cachedValues[ro];
+	auto valString = juce::String();
+
+	switch (val._valType)
+	{
+	case ROVT_FLOAT:
+	{
+		jassert(val._valCount * sizeof(float) == val._payloadSize);
+		auto p = static_cast<float*>(val._payload);
+		for (auto i = 0; i < val._valCount; i++)
+			valString += String(*(p + i)) + ";";
+	}
+	break;
+	default:
+		break;
+	}
+
+	DBG(juce::String(__FUNCTION__) << " " << ro._Id << " (" << static_cast<int>(ro._Addr._first) << "," << static_cast<int>(ro._Addr._second) << ") " << valString);
+#endif
 }
 
 /**
@@ -159,6 +194,30 @@ void RemoteObjectValueCache::SetValue(const RemoteObject& ro, const RemoteObject
  */
 const RemoteObjectMessageData& RemoteObjectValueCache::GetValue(const RemoteObject& ro)
 {
+	if (!Contains(ro))
+		m_cachedValues[ro] = RemoteObjectMessageData(ro._Addr, ROVT_NONE, 0, nullptr, 0);
+
+	#ifdef DEBUG
+		auto val = m_cachedValues[ro];
+		auto valString = juce::String();
+
+		switch (val._valType)
+		{
+		case ROVT_FLOAT:
+		{
+			jassert(val._valCount * sizeof(float) == val._payloadSize);
+			auto p = static_cast<float*>(val._payload);
+			for (auto i = 0; i < val._valCount; i++)
+				valString += String(*(p + i)) + ";";
+		}
+		break;
+		default:
+			break;
+		}
+
+		DBG(juce::String(__FUNCTION__) << " " << ro._Id << " (" << static_cast<int>(ro._Addr._first) << "," << static_cast<int>(ro._Addr._second) << ") " << valString);
+	#endif
+
 	return m_cachedValues[ro];
 }
 
