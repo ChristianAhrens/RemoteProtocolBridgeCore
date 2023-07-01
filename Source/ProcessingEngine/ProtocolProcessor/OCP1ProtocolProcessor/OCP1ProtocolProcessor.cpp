@@ -70,6 +70,7 @@ bool OCP1ProtocolProcessor::Start()
             m_IsRunning = false;
             DeleteObjectSubscriptions();
             ClearPendingHandles();
+            GetValueCache().Clear();
         };
 
         return true;

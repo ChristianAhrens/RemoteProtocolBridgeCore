@@ -42,6 +42,14 @@ RemoteObjectValueCache::~RemoteObjectValueCache()
 }
 
 /**
+ * Clears the internal value cache map. No questions asked.
+ */
+void RemoteObjectValueCache::Clear()
+{
+	m_cachedValues.clear();
+}
+
+/**
  * Checks if the given remote object is already present in the cache.
  * @param	ro	The remote object to test for existance in cache
  * @return	True if the given object is available in the cache

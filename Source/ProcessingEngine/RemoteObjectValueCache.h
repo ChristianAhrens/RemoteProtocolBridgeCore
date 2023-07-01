@@ -29,6 +29,8 @@ public:
 	RemoteObjectValueCache();
 	~RemoteObjectValueCache();
 
+	void Clear();
+
 	bool Contains(const RemoteObject& ro) const;
 
 	int GetIntValue(const RemoteObject& ro) const;
