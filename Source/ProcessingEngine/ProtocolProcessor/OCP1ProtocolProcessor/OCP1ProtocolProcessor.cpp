@@ -169,7 +169,9 @@ String OCP1ProtocolProcessor::GetRemoteObjectString(RemoteObjectIdentifier id)
 
 /**
  * Method to trigger sending of a message
- * NOT YET IMPLEMENTED
+ * This method implements special handling for single or dual float value 
+ * positioning ROIs by mapping them to the triple float value equivalent and uses
+ * the value cache to fill in the missing data.
  *
  * @param Id		    The id of the object to send a message for
  * @param msgData	    The message payload and metadata
@@ -198,7 +200,10 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
 
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
-        auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(msgData._payload));
+        auto parameterData = NanoOcp1::DataFromPosition(
+            reinterpret_cast<float*>(msgData._payload)[0],
+            reinterpret_cast<float*>(msgData._payload)[1],
+            reinterpret_cast<float*>(msgData._payload)[2]);
         auto posVar = objDef.ToVariant(3, parameterData);
         sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
         AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
@@ -228,8 +233,12 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         GetValueCache().SetValue(targetObj, refMsgData);
 
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
-        auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(refMsgData._payload));
+        auto parameterData = NanoOcp1::DataFromPosition(
+            reinterpret_cast<float*>(refMsgData._payload)[0], 
+            reinterpret_cast<float*>(refMsgData._payload)[1],
+            reinterpret_cast<float*>(refMsgData._payload)[2]);
         auto posVar = objDef.ToVariant(3, parameterData);
+
         sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
         AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
         break;
@@ -257,7 +266,10 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         GetValueCache().SetValue(targetObj, refMsgData);
 
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
-        auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(refMsgData._payload));
+        auto parameterData = NanoOcp1::DataFromPosition(
+            reinterpret_cast<float*>(refMsgData._payload)[0],
+            reinterpret_cast<float*>(refMsgData._payload)[1],
+            reinterpret_cast<float*>(refMsgData._payload)[2]);
         auto posVar = objDef.ToVariant(3, parameterData);
         sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
         AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
@@ -286,7 +298,10 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         GetValueCache().SetValue(targetObj, refMsgData);
 
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
-        auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(refMsgData._payload));
+        auto parameterData = NanoOcp1::DataFromPosition(
+            reinterpret_cast<float*>(refMsgData._payload)[0],
+            reinterpret_cast<float*>(refMsgData._payload)[1],
+            reinterpret_cast<float*>(refMsgData._payload)[2]);
         auto posVar = objDef.ToVariant(3, parameterData);
         sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
         AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
@@ -300,7 +315,10 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
 
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
-        auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(msgData._payload));
+        auto parameterData = NanoOcp1::DataFromPosition(
+            reinterpret_cast<float*>(msgData._payload)[0],
+            reinterpret_cast<float*>(msgData._payload)[1],
+            reinterpret_cast<float*>(msgData._payload)[2]);
         auto posVar = objDef.ToVariant(3, parameterData);
         sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
         AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
@@ -330,7 +348,10 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         GetValueCache().SetValue(targetObj, refMsgData);
 
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
-        auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(msgData._payload));
+        auto parameterData = NanoOcp1::DataFromPosition(
+            reinterpret_cast<float*>(refMsgData._payload)[0],
+            reinterpret_cast<float*>(refMsgData._payload)[1],
+            reinterpret_cast<float*>(refMsgData._payload)[2]);
         auto posVar = objDef.ToVariant(3, parameterData);
         sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
         AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
@@ -359,7 +380,10 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         GetValueCache().SetValue(targetObj, refMsgData);
 
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
-        auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(msgData._payload));
+        auto parameterData = NanoOcp1::DataFromPosition(
+            reinterpret_cast<float*>(refMsgData._payload)[0],
+            reinterpret_cast<float*>(refMsgData._payload)[1],
+            reinterpret_cast<float*>(refMsgData._payload)[2]);
         auto posVar = objDef.ToVariant(3, parameterData);
         sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
         AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
@@ -388,7 +412,10 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         GetValueCache().SetValue(targetObj, refMsgData);
 
         auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
-        auto parameterData = std::vector<std::uint8_t>(3 * sizeof(float), *static_cast<std::uint8_t*>(msgData._payload));
+        auto parameterData = NanoOcp1::DataFromPosition(
+            reinterpret_cast<float*>(refMsgData._payload)[0],
+            reinterpret_cast<float*>(refMsgData._payload)[1],
+            reinterpret_cast<float*>(refMsgData._payload)[2]);
         auto posVar = objDef.ToVariant(3, parameterData);
         sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
         AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
@@ -994,6 +1021,10 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
         remObjMsgData._valType = ROVT_FLOAT;
         remObjMsgData._payload = &newFloatValue;
 
+        //DBG(juce::String(__FUNCTION__) << " " << roi 
+        //    << " (" << static_cast<int>(objAddr.first) << "," << static_cast<int>(objAddr.second) << ") " 
+        //    << newFloatValue[0] << "," << newFloatValue[1] << "," << newFloatValue[2] << ";");
+
         objectsDataToForward[ROI_CoordinateMapping_SourcePosition].payloadCopy(RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 3, &newFloatValue, 3 * sizeof(float)));
         objectsDataToForward[ROI_CoordinateMapping_SourcePosition_XY].payloadCopy(RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 2, &newFloatValue, 2 * sizeof(float)));
         objectsDataToForward[ROI_CoordinateMapping_SourcePosition_X].payloadCopy(RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 1, &newFloatValue, sizeof(float)));
@@ -1009,6 +1040,10 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
         remObjMsgData._valCount = 3;
         remObjMsgData._valType = ROVT_FLOAT;
         remObjMsgData._payload = &newFloatValue;
+
+        //DBG(juce::String(__FUNCTION__) << " " << roi
+        //    << " (" << static_cast<int>(objAddr.first) << "," << static_cast<int>(objAddr.second) << ") "
+        //    << newFloatValue[0] << "," << newFloatValue[1] << "," << newFloatValue[2] << ";");
 
         objectsDataToForward[ROI_Positioning_SourcePosition].payloadCopy(RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 3, &newFloatValue, 3 * sizeof(float)));
         objectsDataToForward[ROI_Positioning_SourcePosition_XY].payloadCopy(RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 2, &newFloatValue, 2 * sizeof(float)));
@@ -1094,12 +1129,12 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
             auto msgMetaInfo = RemoteObjectMessageMetaInfo();
             if (SetValueReplyInfo)
             {
-                DBG(juce::String(__FUNCTION__) << " forwarding " << GetRemoteObjectString(objData.first) << " flagged as SetMessageAcknowledgement");
+                //DBG(juce::String(__FUNCTION__) << " forwarding " << GetRemoteObjectString(objData.first) << " flagged as SetMessageAcknowledgement");
                 msgMetaInfo = RemoteObjectMessageMetaInfo(RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement, SetValueReplyInfo.value().second);
             }
             else
             {
-                DBG(juce::String(__FUNCTION__) << " forwarding " << GetRemoteObjectString(objData.first) << " flagged as Unsolicited");
+                //DBG(juce::String(__FUNCTION__) << " forwarding " << GetRemoteObjectString(objData.first) << " flagged as Unsolicited");
                 msgMetaInfo = RemoteObjectMessageMetaInfo(RemoteObjectMessageMetaInfo::MC_UnsolicitedMessage, -1);
             }
             m_messageListener->OnProtocolMessageReceived(this, objData.first, objData.second, msgMetaInfo);

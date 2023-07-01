@@ -173,26 +173,26 @@ void RemoteObjectValueCache::SetValue(const RemoteObject& ro, const RemoteObject
 //	DbgPrintCacheContent();
 //#endif
 
-#ifdef DEBUG
-	auto val = m_cachedValues[ro];
-	auto valString = juce::String();
-
-	switch (val._valType)
-	{
-	case ROVT_FLOAT:
-	{
-		jassert(val._valCount * sizeof(float) == val._payloadSize);
-		auto p = static_cast<float*>(val._payload);
-		for (auto i = 0; i < val._valCount; i++)
-			valString += String(*(p + i)) + ";";
-	}
-	break;
-	default:
-		break;
-	}
-
-	DBG(juce::String(__FUNCTION__) << " " << ro._Id << " (" << static_cast<int>(ro._Addr._first) << "," << static_cast<int>(ro._Addr._second) << ") " << valString);
-#endif
+//	#ifdef DEBUG
+//		auto val = m_cachedValues[ro];
+//		auto valString = juce::String();
+//	
+//		switch (val._valType)
+//		{
+//		case ROVT_FLOAT:
+//		{
+//			jassert(val._valCount * sizeof(float) == val._payloadSize);
+//			auto p = static_cast<float*>(val._payload);
+//			for (auto i = 0; i < val._valCount; i++)
+//				valString += String(*(p + i)) + ";";
+//		}
+//		break;
+//		default:
+//			break;
+//		}
+//	
+//		DBG(juce::String(__FUNCTION__) << " " << ro._Id << " (" << static_cast<int>(ro._Addr._first) << "," << static_cast<int>(ro._Addr._second) << ") " << valString);
+//	#endif
 }
 
 /**
@@ -205,26 +205,26 @@ const RemoteObjectMessageData& RemoteObjectValueCache::GetValue(const RemoteObje
 	if (!Contains(ro))
 		m_cachedValues[ro] = RemoteObjectMessageData(ro._Addr, ROVT_NONE, 0, nullptr, 0);
 
-	#ifdef DEBUG
-		auto val = m_cachedValues[ro];
-		auto valString = juce::String();
-
-		switch (val._valType)
-		{
-		case ROVT_FLOAT:
-		{
-			jassert(val._valCount * sizeof(float) == val._payloadSize);
-			auto p = static_cast<float*>(val._payload);
-			for (auto i = 0; i < val._valCount; i++)
-				valString += String(*(p + i)) + ";";
-		}
-		break;
-		default:
-			break;
-		}
-
-		DBG(juce::String(__FUNCTION__) << " " << ro._Id << " (" << static_cast<int>(ro._Addr._first) << "," << static_cast<int>(ro._Addr._second) << ") " << valString);
-	#endif
+	//#ifdef DEBUG
+	//	auto val = m_cachedValues[ro];
+	//	auto valString = juce::String();
+	//
+	//	switch (val._valType)
+	//	{
+	//	case ROVT_FLOAT:
+	//	{
+	//		jassert(val._valCount * sizeof(float) == val._payloadSize);
+	//		auto p = static_cast<float*>(val._payload);
+	//		for (auto i = 0; i < val._valCount; i++)
+	//			valString += String(*(p + i)) + ";";
+	//	}
+	//	break;
+	//	default:
+	//		break;
+	//	}
+	//
+	//	DBG(juce::String(__FUNCTION__) << " " << ro._Id << " (" << static_cast<int>(ro._Addr._first) << "," << static_cast<int>(ro._Addr._second) << ") " << valString);
+	//#endif
 
 	return m_cachedValues[ro];
 }
