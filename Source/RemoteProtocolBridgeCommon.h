@@ -56,6 +56,8 @@ typedef std::int8_t		RecordId;
 #define INVALID_IPADDRESS_VALUE String()
 #define INVALID_RATE_VALUE -1
 #define INVALID_PORT_VALUE -1
+#define INVALID_EXTID -1
+#define ASYNC_EXTID -2
 
 /**
  * Known Protocol Processor Types

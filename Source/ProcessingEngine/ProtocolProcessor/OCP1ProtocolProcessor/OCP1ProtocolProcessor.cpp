@@ -1135,7 +1135,7 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
             else
             {
                 //DBG(juce::String(__FUNCTION__) << " forwarding " << GetRemoteObjectString(objData.first) << " flagged as Unsolicited");
-                msgMetaInfo = RemoteObjectMessageMetaInfo(RemoteObjectMessageMetaInfo::MC_UnsolicitedMessage, -1);
+                msgMetaInfo = RemoteObjectMessageMetaInfo(RemoteObjectMessageMetaInfo::MC_UnsolicitedMessage, INVALID_EXTID);
             }
             m_messageListener->OnProtocolMessageReceived(this, objData.first, objData.second, msgMetaInfo);
 #else

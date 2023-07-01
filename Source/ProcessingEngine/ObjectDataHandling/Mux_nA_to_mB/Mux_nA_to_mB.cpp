@@ -111,7 +111,10 @@ bool Mux_nA_to_mB::OnReceivedMessageFromProtocol(const ProtocolId PId, const Rem
 
             modMsgData._addrVal._first = chForB;
 			if (GetProtocolBIds().size() >= protocolBIndex + 1)
-				return parentNode->SendMessageTo(GetProtocolBIds()[protocolBIndex], Id, modMsgData);
+				if (msgMeta._ExternalId != GetProtocolBIds()[protocolBIndex] || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
+					return parentNode->SendMessageTo(GetProtocolBIds()[protocolBIndex], Id, modMsgData);
+				else
+					return true;
 		}
 		else if (PIdBIter != GetProtocolBIds().end())
 		{
@@ -125,7 +128,10 @@ bool Mux_nA_to_mB::OnReceivedMessageFromProtocol(const ProtocolId PId, const Rem
 
             modMsgData._addrVal._first = chForA;
 			if (GetProtocolAIds().size() >= protocolAIndex + 1)
-				return parentNode->SendMessageTo(GetProtocolAIds()[protocolAIndex], Id, modMsgData);
+				if (msgMeta._ExternalId != GetProtocolAIds()[protocolAIndex] || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
+					return parentNode->SendMessageTo(GetProtocolAIds()[protocolAIndex], Id, modMsgData);
+				else
+					return true;
 		}
 	}
 

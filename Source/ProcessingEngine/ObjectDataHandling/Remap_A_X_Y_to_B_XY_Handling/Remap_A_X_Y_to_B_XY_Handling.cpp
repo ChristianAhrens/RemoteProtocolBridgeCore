@@ -118,7 +118,8 @@ bool Remap_A_X_Y_to_B_XY_Handling::OnReceivedMessageFromProtocol(const ProtocolI
 		// Send to all typeB protocols
 		auto sendSuccess = true;
 		for (auto const& protocolB : GetProtocolBIds())
-			sendSuccess = parentNode->SendMessageTo(protocolB, ObjIdToSend, modMsgData) && sendSuccess;
+			if (msgMeta._ExternalId != protocolB || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
+				sendSuccess = parentNode->SendMessageTo(protocolB, ObjIdToSend, modMsgData) && sendSuccess;
 
 		return sendSuccess;
 			
@@ -149,11 +150,14 @@ bool Remap_A_X_Y_to_B_XY_Handling::OnReceivedMessageFromProtocol(const ProtocolI
 			auto sendSuccess = true;
 			for (auto const& protocolA : GetProtocolAIds())
 			{
-				modMsgData._payload = &newXVal;
-				sendSuccess = parentNode->SendMessageTo(protocolA, ROI_CoordinateMapping_SourcePosition_X, modMsgData) && sendSuccess;
+				if (msgMeta._ExternalId != protocolA || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
+				{
+					modMsgData._payload = &newXVal;
+					sendSuccess = parentNode->SendMessageTo(protocolA, ROI_CoordinateMapping_SourcePosition_X, modMsgData) && sendSuccess;
 
-				modMsgData._payload = &newYVal;
-				sendSuccess = parentNode->SendMessageTo(protocolA, ROI_CoordinateMapping_SourcePosition_Y, modMsgData) && sendSuccess;
+					modMsgData._payload = &newYVal;
+					sendSuccess = parentNode->SendMessageTo(protocolA, ROI_CoordinateMapping_SourcePosition_Y, modMsgData) && sendSuccess;
+				}
 			}
 
 			return sendSuccess;
@@ -163,7 +167,8 @@ bool Remap_A_X_Y_to_B_XY_Handling::OnReceivedMessageFromProtocol(const ProtocolI
 			// Send to all typeA protocols
 			auto sendSuccess = true;
 			for (auto const& protocolA : GetProtocolAIds())
-				sendSuccess = parentNode->SendMessageTo(protocolA, Id, modMsgData) && sendSuccess;
+				if (msgMeta._ExternalId != protocolA || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
+					sendSuccess = parentNode->SendMessageTo(protocolA, Id, modMsgData) && sendSuccess;
 
 			return sendSuccess;
 		}

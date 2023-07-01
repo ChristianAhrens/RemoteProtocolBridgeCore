@@ -69,14 +69,14 @@ bool BypassHandling::OnReceivedMessageFromProtocol(const ProtocolId PId, const R
 		// Send to all typeB protocols
 		sendSuccess = true;
 		for (auto const& protocolB : GetProtocolBIds())
-			sendSuccess = parentNode->SendMessageTo(protocolB, Id, msgData) && sendSuccess;
+			sendSuccess = parentNode->SendMessageTo(protocolB, Id, msgData, ASYNC_EXTID) && sendSuccess;
 	}
 	else if (std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) != GetProtocolBIds().end())
 	{
 		// Send to all typeA protocols
 		sendSuccess = true;
 		for (auto const& protocolA : GetProtocolAIds())
-			sendSuccess = parentNode->SendMessageTo(protocolA, Id, msgData) && sendSuccess;
+			sendSuccess = parentNode->SendMessageTo(protocolA, Id, msgData, ASYNC_EXTID) && sendSuccess;
 	}
 
 	return sendSuccess;

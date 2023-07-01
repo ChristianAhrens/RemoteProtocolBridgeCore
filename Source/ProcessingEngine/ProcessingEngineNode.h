@@ -184,7 +184,7 @@ public:
 	NodeId GetId();
 	Thread::ThreadID GetNodeThreadId();
 
-	bool SendMessageTo(ProtocolId PId, RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData) const;
+	bool SendMessageTo(ProtocolId PId, RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData, const int externalId = INVALID_EXTID) const;
 
 	bool Start();
 	bool Stop();

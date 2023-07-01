@@ -481,13 +481,15 @@ void ProcessingEngineNode::OnProtocolMessageReceived(ProtocolProcessorBase* rece
  * @param PId		The id of the protocol to send the RemoteObject to
  * @param Id		The message object id that corresponds to the message to be sent
  * @param msgData	The actual message data that was received
+ * @param externalId	An optional integer id that might be used by protocol implementations to track IO data.
+ * @return	True on success, false if a failure occurred
  */
-bool ProcessingEngineNode::SendMessageTo(ProtocolId PId, RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData) const
+bool ProcessingEngineNode::SendMessageTo(ProtocolId PId, RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData, const int externalId) const
 {
 	if (m_typeAProtocols.count(PId))
-		return m_typeAProtocols.at(PId)->SendRemoteObjectMessage(Id, msgData);
+		return m_typeAProtocols.at(PId)->SendRemoteObjectMessage(Id, msgData, externalId);
 	else if (m_typeBProtocols.count(PId))
-		return m_typeBProtocols.at(PId)->SendRemoteObjectMessage(Id, msgData);
+		return m_typeBProtocols.at(PId)->SendRemoteObjectMessage(Id, msgData, externalId);
 	else
 		return false;
 }
@@ -524,7 +526,7 @@ void ProcessingEngineNode::run()
 		{
 			// send the message data to any listeners - asynchronous
 			if (protocolMessage._msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement // if either we do not deal with a reply of SET data
-				|| protocolMessage._msgMeta._ExternalId != -2)													// or the SET data was not initiated by listeners but protocols instead
+				|| protocolMessage._msgMeta._ExternalId != ASYNC_EXTID)										// or the SET data was not initiated by async listeners but protocols instead
 			{
 				postMessage(new NodeCallbackMessage(protocolMessage));
 			}

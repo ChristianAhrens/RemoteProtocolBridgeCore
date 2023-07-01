@@ -95,7 +95,8 @@ bool Forward_only_valueChanges::OnReceivedMessageFromProtocol(const ProtocolId P
 		// Send to all typeB protocols
 		auto sendSuccess = true;
 		for (auto const& protocolB : GetProtocolBIds())
-			sendSuccess = parentNode->SendMessageTo(protocolB, Id, msgData) && sendSuccess;
+			if (msgMeta._ExternalId != protocolB || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
+				sendSuccess = parentNode->SendMessageTo(protocolB, Id, msgData) && sendSuccess;
 
 		return sendSuccess;
 	}
@@ -104,7 +105,8 @@ bool Forward_only_valueChanges::OnReceivedMessageFromProtocol(const ProtocolId P
 		// Send to all typeA protocols
 		auto sendSuccess = true;
 		for (auto const& protocolA : GetProtocolAIds())
-			sendSuccess = parentNode->SendMessageTo(protocolA, Id, msgData) && sendSuccess;
+			if (msgMeta._ExternalId != protocolA || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
+				sendSuccess = parentNode->SendMessageTo(protocolA, Id, msgData) && sendSuccess;
 
 		return sendSuccess;
 	}
