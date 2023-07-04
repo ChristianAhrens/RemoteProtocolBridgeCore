@@ -123,7 +123,8 @@ bool Mux_nA_to_mB_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
         modMsgData._addrVal._first = targetProtoSrc.second;
 		auto sendSuccess = true;
 		for (auto const& targetPId : targetProtoSrc.first)
-			sendSuccess = parentNode->SendMessageTo(targetPId, Id, modMsgData) && sendSuccess;
+			if (msgMeta._ExternalId != targetPId || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
+				sendSuccess = parentNode->SendMessageTo(targetPId, Id, modMsgData) && sendSuccess;
 		return sendSuccess;
 	}
 	else
