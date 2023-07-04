@@ -72,6 +72,7 @@ private:
 	bool CreateObjectSubscriptions();
 	bool DeleteObjectSubscriptions();
 	bool QueryObjectValues();
+	bool QueryObjectValue(const RemoteObjectIdentifier& roi, const ChannelId& channel, const RecordId& record);
 
 	//==============================================================================
 	const std::vector<RemoteObject> GetOcp1SupportedActiveRemoteObjects();

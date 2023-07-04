@@ -518,6 +518,13 @@ struct RemoteObjectMessageData
 
 		return *this;
 	}
+	/**
+	 * Method to check if the internal data is empty.
+	 */
+	bool isDataEmpty() const
+	{
+		return (_payloadSize == 0 && _valCount == 0 && _payload == nullptr);
+	}
 
 	JUCE_LEAK_DETECTOR(RemoteObjectMessageData)
 };
