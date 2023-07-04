@@ -1473,8 +1473,8 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
 #else
             m_messageListener->OnProtocolMessageReceived(this, objData.first, objData.second,
                 SetValueReplyInfo ?
-                std::make_pair(ProtocolProcessorBase::Listener::MC_SetMessageAcknowledgement, SetValueReplyInfo.value().second) :
-                std::make_pair(ProtocolProcessorBase::Listener::MC_UnsolicitedMessage, -1));
+                RemoteObjectMessageMetaInfo(RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement, SetValueReplyInfo.value().second) :
+                RemoteObjectMessageMetaInfo(RemoteObjectMessageMetaInfo::MC_UnsolicitedMessage, INVALID_EXTID));
 #endif
         }
         return true;
