@@ -1338,7 +1338,7 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
     break;
     case ROI_MatrixInput_Mute:
     {
-        auto ocaMuteValue = NanoOcp1::DataToUint16(msgObj->GetParameterData());
+        auto ocaMuteValue = NanoOcp1::DataToUint8(msgObj->GetParameterData());
 
         // internal value 0=unmute, 1=mute; OcaMute uses 2=unmute, 1=mute
         switch (ocaMuteValue)
@@ -1398,7 +1398,7 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
     break;
     case ROI_MatrixOutput_Mute:
     {
-        auto ocaMuteValue = NanoOcp1::DataToUint16(msgObj->GetParameterData());
+        auto ocaMuteValue = NanoOcp1::DataToUint8(msgObj->GetParameterData());
 
         // internal value 0=unmute, 1=mute; OcaMute uses 2=unmute, 1=mute
         switch (ocaMuteValue)
