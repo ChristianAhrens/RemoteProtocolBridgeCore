@@ -202,377 +202,378 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
     switch (id)
     {
     case ROI_CoordinateMapping_SourcePosition:
-    {
-        if (msgData._valCount != 3 || msgData._payloadSize != 3 * sizeof(float))
-            return false;
+        {
+            if (msgData._valCount != 3 || msgData._payloadSize != 3 * sizeof(float))
+                return false;
 
-        GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
 
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
-        auto parameterData = NanoOcp1::DataFromPosition(
-            reinterpret_cast<float*>(msgData._payload)[0],
-            reinterpret_cast<float*>(msgData._payload)[1],
-            reinterpret_cast<float*>(msgData._payload)[2]);
-        auto posVar = objDef.ToVariant(3, parameterData);
-        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
-        AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
+            auto parameterData = NanoOcp1::DataFromPosition(
+                reinterpret_cast<float*>(msgData._payload)[0],
+                reinterpret_cast<float*>(msgData._payload)[1],
+                reinterpret_cast<float*>(msgData._payload)[2]);
+            auto posVar = objDef.ToVariant(3, parameterData);
+            sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+            AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+        }
         break;
-    }
     case ROI_CoordinateMapping_SourcePosition_XY:
-    {
-        if (msgData._valCount != 2 || msgData._payloadSize != 2 * sizeof(float))
-            return false;
+        {
+            if (msgData._valCount != 2 || msgData._payloadSize != 2 * sizeof(float))
+                return false;
 
-        auto targetObj = RemoteObject(ROI_CoordinateMapping_SourcePosition, RemoteObjectAddressing(channel, record));
-        if (!GetValueCache().Contains(targetObj))
-            GetValueCache().SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
+            auto targetObj = RemoteObject(ROI_CoordinateMapping_SourcePosition, RemoteObjectAddressing(channel, record));
+            if (!GetValueCache().Contains(targetObj))
+                GetValueCache().SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
 
-        // get the xyz data from cache to insert the new xy data and send the xyz out
-        auto& refMsgData = GetValueCache().GetValue(targetObj);
-        if (refMsgData._valCount != 3 || refMsgData._payloadSize != 3 * sizeof(float))
-            return false;
-        reinterpret_cast<float*>(refMsgData._payload)[0] = reinterpret_cast<float*>(msgData._payload)[0];
-        reinterpret_cast<float*>(refMsgData._payload)[1] = reinterpret_cast<float*>(msgData._payload)[1];
+            // get the xyz data from cache to insert the new xy data and send the xyz out
+            auto& refMsgData = GetValueCache().GetValue(targetObj);
+            if (refMsgData._valCount != 3 || refMsgData._payloadSize != 3 * sizeof(float))
+                return false;
+            reinterpret_cast<float*>(refMsgData._payload)[0] = reinterpret_cast<float*>(msgData._payload)[0];
+            reinterpret_cast<float*>(refMsgData._payload)[1] = reinterpret_cast<float*>(msgData._payload)[1];
 
-        //auto x = reinterpret_cast<float*>(refMsgData._payload)[0];
-        //auto y = reinterpret_cast<float*>(refMsgData._payload)[1];
-        //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
-        //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
+            //auto x = reinterpret_cast<float*>(refMsgData._payload)[0];
+            //auto y = reinterpret_cast<float*>(refMsgData._payload)[1];
+            //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
+            //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
 
-        GetValueCache().SetValue(targetObj, refMsgData);
+            GetValueCache().SetValue(targetObj, refMsgData);
 
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
-        auto parameterData = NanoOcp1::DataFromPosition(
-            reinterpret_cast<float*>(refMsgData._payload)[0], 
-            reinterpret_cast<float*>(refMsgData._payload)[1],
-            reinterpret_cast<float*>(refMsgData._payload)[2]);
-        auto posVar = objDef.ToVariant(3, parameterData);
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
+            auto parameterData = NanoOcp1::DataFromPosition(
+                reinterpret_cast<float*>(refMsgData._payload)[0], 
+                reinterpret_cast<float*>(refMsgData._payload)[1],
+                reinterpret_cast<float*>(refMsgData._payload)[2]);
+            auto posVar = objDef.ToVariant(3, parameterData);
 
-        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
-        AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+            sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+            AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+        }
         break;
-    }
     case ROI_CoordinateMapping_SourcePosition_X:
-    {
-        if (msgData._valCount != 1 || msgData._payloadSize != 1 * sizeof(float))
-            return false;
+        {
+            if (msgData._valCount != 1 || msgData._payloadSize != 1 * sizeof(float))
+                return false;
 
-        auto targetObj = RemoteObject(ROI_CoordinateMapping_SourcePosition, RemoteObjectAddressing(channel, record));
-        if (!GetValueCache().Contains(targetObj))
-            GetValueCache().SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
+            auto targetObj = RemoteObject(ROI_CoordinateMapping_SourcePosition, RemoteObjectAddressing(channel, record));
+            if (!GetValueCache().Contains(targetObj))
+                GetValueCache().SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
 
-        // get the xyz data from cache to insert the new x data and send the xyz out
-        auto& refMsgData = GetValueCache().GetValue(targetObj);
-        if (refMsgData._valCount != 3 || refMsgData._payloadSize != 3 * sizeof(float))
-            return false;
-        reinterpret_cast<float*>(refMsgData._payload)[0] = reinterpret_cast<float*>(msgData._payload)[0];
+            // get the xyz data from cache to insert the new x data and send the xyz out
+            auto& refMsgData = GetValueCache().GetValue(targetObj);
+            if (refMsgData._valCount != 3 || refMsgData._payloadSize != 3 * sizeof(float))
+                return false;
+            reinterpret_cast<float*>(refMsgData._payload)[0] = reinterpret_cast<float*>(msgData._payload)[0];
 
-        //auto x = reinterpret_cast<float*>(refMsgData._payload)[0];
-        //auto y = reinterpret_cast<float*>(refMsgData._payload)[1];
-        //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
-        //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
+            //auto x = reinterpret_cast<float*>(refMsgData._payload)[0];
+            //auto y = reinterpret_cast<float*>(refMsgData._payload)[1];
+            //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
+            //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
 
-        GetValueCache().SetValue(targetObj, refMsgData);
+            GetValueCache().SetValue(targetObj, refMsgData);
 
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
-        auto parameterData = NanoOcp1::DataFromPosition(
-            reinterpret_cast<float*>(refMsgData._payload)[0],
-            reinterpret_cast<float*>(refMsgData._payload)[1],
-            reinterpret_cast<float*>(refMsgData._payload)[2]);
-        auto posVar = objDef.ToVariant(3, parameterData);
-        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
-        AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
+            auto parameterData = NanoOcp1::DataFromPosition(
+                reinterpret_cast<float*>(refMsgData._payload)[0],
+                reinterpret_cast<float*>(refMsgData._payload)[1],
+                reinterpret_cast<float*>(refMsgData._payload)[2]);
+            auto posVar = objDef.ToVariant(3, parameterData);
+            sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+            AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+        }
         break;
-    }
     case ROI_CoordinateMapping_SourcePosition_Y:
-    {
-        if (msgData._valCount != 1 || msgData._payloadSize != 1 * sizeof(float))
-            return false;
+        {
+            if (msgData._valCount != 1 || msgData._payloadSize != 1 * sizeof(float))
+                return false;
 
-        auto targetObj = RemoteObject(ROI_CoordinateMapping_SourcePosition, RemoteObjectAddressing(channel, record));
-        if (!GetValueCache().Contains(targetObj))
-            GetValueCache().SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
+            auto targetObj = RemoteObject(ROI_CoordinateMapping_SourcePosition, RemoteObjectAddressing(channel, record));
+            if (!GetValueCache().Contains(targetObj))
+                GetValueCache().SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
 
-        // get the xyz data from cache to insert the new x data and send the xyz out
-        auto& refMsgData = GetValueCache().GetValue(targetObj);
-        if (refMsgData._valCount != 3 || refMsgData._payloadSize != 3 * sizeof(float))
-            return false;
-        reinterpret_cast<float*>(refMsgData._payload)[1] = reinterpret_cast<float*>(msgData._payload)[1];
+            // get the xyz data from cache to insert the new x data and send the xyz out
+            auto& refMsgData = GetValueCache().GetValue(targetObj);
+            if (refMsgData._valCount != 3 || refMsgData._payloadSize != 3 * sizeof(float))
+                return false;
+            reinterpret_cast<float*>(refMsgData._payload)[1] = reinterpret_cast<float*>(msgData._payload)[1];
 
-        //auto x = reinterpret_cast<float*>(refMsgData._payload)[0];
-        //auto y = reinterpret_cast<float*>(refMsgData._payload)[1];
-        //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
-        //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
+            //auto x = reinterpret_cast<float*>(refMsgData._payload)[0];
+            //auto y = reinterpret_cast<float*>(refMsgData._payload)[1];
+            //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
+            //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
 
-        GetValueCache().SetValue(targetObj, refMsgData);
+            GetValueCache().SetValue(targetObj, refMsgData);
 
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
-        auto parameterData = NanoOcp1::DataFromPosition(
-            reinterpret_cast<float*>(refMsgData._payload)[0],
-            reinterpret_cast<float*>(refMsgData._payload)[1],
-            reinterpret_cast<float*>(refMsgData._payload)[2]);
-        auto posVar = objDef.ToVariant(3, parameterData);
-        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
-        AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
+            auto parameterData = NanoOcp1::DataFromPosition(
+                reinterpret_cast<float*>(refMsgData._payload)[0],
+                reinterpret_cast<float*>(refMsgData._payload)[1],
+                reinterpret_cast<float*>(refMsgData._payload)[2]);
+            auto posVar = objDef.ToVariant(3, parameterData);
+            sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+            AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+        }
         break;
-    }
     case ROI_Positioning_SourcePosition:
-    {
-        if (msgData._valCount != 1 || msgData._payloadSize != 3 * sizeof(float))
-            return false;
+        {
+            if (msgData._valCount != 1 || msgData._payloadSize != 3 * sizeof(float))
+                return false;
 
-        GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
 
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
-        auto parameterData = NanoOcp1::DataFromPosition(
-            reinterpret_cast<float*>(msgData._payload)[0],
-            reinterpret_cast<float*>(msgData._payload)[1],
-            reinterpret_cast<float*>(msgData._payload)[2]);
-        auto posVar = objDef.ToVariant(3, parameterData);
-        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
-        AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
+            auto parameterData = NanoOcp1::DataFromPosition(
+                reinterpret_cast<float*>(msgData._payload)[0],
+                reinterpret_cast<float*>(msgData._payload)[1],
+                reinterpret_cast<float*>(msgData._payload)[2]);
+            auto posVar = objDef.ToVariant(3, parameterData);
+            sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+            AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+        }
         break;
-    }
     case ROI_Positioning_SourcePosition_XY:
-    {
-        if (msgData._valCount != 2 || msgData._payloadSize != 2 * sizeof(float))
-            return false;
+        {
+            if (msgData._valCount != 2 || msgData._payloadSize != 2 * sizeof(float))
+                return false;
 
-        auto targetObj = RemoteObject(ROI_Positioning_SourcePosition, RemoteObjectAddressing(channel, record));
-        if (!GetValueCache().Contains(targetObj))
-            GetValueCache().SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
+            auto targetObj = RemoteObject(ROI_Positioning_SourcePosition, RemoteObjectAddressing(channel, record));
+            if (!GetValueCache().Contains(targetObj))
+                GetValueCache().SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
 
-        // get the xyz data from cache to insert the new xy data and send the xyz out
-        auto& refMsgData = GetValueCache().GetValue(targetObj);
-        if (refMsgData._valCount != 3 || refMsgData._payloadSize != 3 * sizeof(float))
-            return false;
-        reinterpret_cast<float*>(refMsgData._payload)[0] = reinterpret_cast<float*>(msgData._payload)[0];
-        reinterpret_cast<float*>(refMsgData._payload)[1] = reinterpret_cast<float*>(msgData._payload)[1];
+            // get the xyz data from cache to insert the new xy data and send the xyz out
+            auto& refMsgData = GetValueCache().GetValue(targetObj);
+            if (refMsgData._valCount != 3 || refMsgData._payloadSize != 3 * sizeof(float))
+                return false;
+            reinterpret_cast<float*>(refMsgData._payload)[0] = reinterpret_cast<float*>(msgData._payload)[0];
+            reinterpret_cast<float*>(refMsgData._payload)[1] = reinterpret_cast<float*>(msgData._payload)[1];
 
-        //auto x = reinterpret_cast<float*>(refMsgData._payload)[0];
-        //auto y = reinterpret_cast<float*>(refMsgData._payload)[1];
-        //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
-        //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
+            //auto x = reinterpret_cast<float*>(refMsgData._payload)[0];
+            //auto y = reinterpret_cast<float*>(refMsgData._payload)[1];
+            //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
+            //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
 
-        GetValueCache().SetValue(targetObj, refMsgData);
+            GetValueCache().SetValue(targetObj, refMsgData);
 
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
-        auto parameterData = NanoOcp1::DataFromPosition(
-            reinterpret_cast<float*>(refMsgData._payload)[0],
-            reinterpret_cast<float*>(refMsgData._payload)[1],
-            reinterpret_cast<float*>(refMsgData._payload)[2]);
-        auto posVar = objDef.ToVariant(3, parameterData);
-        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
-        AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
+            auto parameterData = NanoOcp1::DataFromPosition(
+                reinterpret_cast<float*>(refMsgData._payload)[0],
+                reinterpret_cast<float*>(refMsgData._payload)[1],
+                reinterpret_cast<float*>(refMsgData._payload)[2]);
+            auto posVar = objDef.ToVariant(3, parameterData);
+            sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+            AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+        }
         break;
-    }
     case ROI_Positioning_SourcePosition_X:
-    {
-        if (msgData._valCount != 1 || msgData._payloadSize != 1 * sizeof(float))
-            return false;
+        {
+            if (msgData._valCount != 1 || msgData._payloadSize != 1 * sizeof(float))
+                return false;
 
-        auto targetObj = RemoteObject(ROI_Positioning_SourcePosition, RemoteObjectAddressing(channel, record));
-        if (!GetValueCache().Contains(targetObj))
-            GetValueCache().SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
+            auto targetObj = RemoteObject(ROI_Positioning_SourcePosition, RemoteObjectAddressing(channel, record));
+            if (!GetValueCache().Contains(targetObj))
+                GetValueCache().SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
 
-        // get the xyz data from cache to insert the new xy data and send the xyz out
-        auto& refMsgData = GetValueCache().GetValue(targetObj);
-        if (refMsgData._valCount != 3 || refMsgData._payloadSize != 3 * sizeof(float))
-            return false;
-        reinterpret_cast<float*>(refMsgData._payload)[0] = reinterpret_cast<float*>(msgData._payload)[0];
+            // get the xyz data from cache to insert the new xy data and send the xyz out
+            auto& refMsgData = GetValueCache().GetValue(targetObj);
+            if (refMsgData._valCount != 3 || refMsgData._payloadSize != 3 * sizeof(float))
+                return false;
+            reinterpret_cast<float*>(refMsgData._payload)[0] = reinterpret_cast<float*>(msgData._payload)[0];
 
-        //auto x = reinterpret_cast<float*>(refMsgData._payload)[0];
-        //auto y = reinterpret_cast<float*>(refMsgData._payload)[1];
-        //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
-        //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
+            //auto x = reinterpret_cast<float*>(refMsgData._payload)[0];
+            //auto y = reinterpret_cast<float*>(refMsgData._payload)[1];
+            //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
+            //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
 
-        GetValueCache().SetValue(targetObj, refMsgData);
+            GetValueCache().SetValue(targetObj, refMsgData);
 
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
-        auto parameterData = NanoOcp1::DataFromPosition(
-            reinterpret_cast<float*>(refMsgData._payload)[0],
-            reinterpret_cast<float*>(refMsgData._payload)[1],
-            reinterpret_cast<float*>(refMsgData._payload)[2]);
-        auto posVar = objDef.ToVariant(3, parameterData);
-        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
-        AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
+            auto parameterData = NanoOcp1::DataFromPosition(
+                reinterpret_cast<float*>(refMsgData._payload)[0],
+                reinterpret_cast<float*>(refMsgData._payload)[1],
+                reinterpret_cast<float*>(refMsgData._payload)[2]);
+            auto posVar = objDef.ToVariant(3, parameterData);
+            sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+            AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+        }
         break;
-    }
     case ROI_Positioning_SourcePosition_Y:
-    {
-        if (msgData._valCount != 1 || msgData._payloadSize != 1 * sizeof(float))
-            return false;
+        {
+            if (msgData._valCount != 1 || msgData._payloadSize != 1 * sizeof(float))
+                return false;
 
-        auto targetObj = RemoteObject(ROI_Positioning_SourcePosition, RemoteObjectAddressing(channel, record));
-        if (!GetValueCache().Contains(targetObj))
-            GetValueCache().SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
+            auto targetObj = RemoteObject(ROI_Positioning_SourcePosition, RemoteObjectAddressing(channel, record));
+            if (!GetValueCache().Contains(targetObj))
+                GetValueCache().SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
 
-        // get the xyz data from cache to insert the new xy data and send the xyz out
-        auto& refMsgData = GetValueCache().GetValue(targetObj);
-        if (refMsgData._valCount != 3 || refMsgData._payloadSize != 3 * sizeof(float))
-            return false;
-        reinterpret_cast<float*>(refMsgData._payload)[1] = reinterpret_cast<float*>(msgData._payload)[1];
+            // get the xyz data from cache to insert the new xy data and send the xyz out
+            auto& refMsgData = GetValueCache().GetValue(targetObj);
+            if (refMsgData._valCount != 3 || refMsgData._payloadSize != 3 * sizeof(float))
+                return false;
+            reinterpret_cast<float*>(refMsgData._payload)[1] = reinterpret_cast<float*>(msgData._payload)[1];
 
-        //auto x = reinterpret_cast<float*>(refMsgData._payload)[0];
-        //auto y = reinterpret_cast<float*>(refMsgData._payload)[1];
-        //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
-        //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
+            //auto x = reinterpret_cast<float*>(refMsgData._payload)[0];
+            //auto y = reinterpret_cast<float*>(refMsgData._payload)[1];
+            //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
+            //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
 
-        GetValueCache().SetValue(targetObj, refMsgData);
+            GetValueCache().SetValue(targetObj, refMsgData);
 
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
-        auto parameterData = NanoOcp1::DataFromPosition(
-            reinterpret_cast<float*>(refMsgData._payload)[0],
-            reinterpret_cast<float*>(refMsgData._payload)[1],
-            reinterpret_cast<float*>(refMsgData._payload)[2]);
-        auto posVar = objDef.ToVariant(3, parameterData);
-        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
-        AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
+            auto parameterData = NanoOcp1::DataFromPosition(
+                reinterpret_cast<float*>(refMsgData._payload)[0],
+                reinterpret_cast<float*>(refMsgData._payload)[1],
+                reinterpret_cast<float*>(refMsgData._payload)[2]);
+            auto posVar = objDef.ToVariant(3, parameterData);
+            sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(posVar), handle).GetMemoryBlock());
+            AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+        }
         break;
-    }
     case ROI_Positioning_SourceSpread:
-    {
-        if (msgData._valCount != 1 || msgData._payloadSize != sizeof(float))
-            return false;
+        {
+            if (msgData._valCount != 1 || msgData._payloadSize != sizeof(float))
+                return false;
 
-        GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
 
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Spread(channel);
-        auto spreadValue = *static_cast<float*>(msgData._payload);
-        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(spreadValue), handle).GetMemoryBlock());
-        AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Spread(channel);
+            auto spreadValue = *static_cast<float*>(msgData._payload);
+            sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(spreadValue), handle).GetMemoryBlock());
+            AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+        }
         break;
-    }
     case ROI_Positioning_SourceDelayMode:
-    {
-        if (msgData._valCount != 1 || msgData._payloadSize != sizeof(int))
-            return false;
+        {
+            if (msgData._valCount != 1 || msgData._payloadSize != sizeof(int))
+                return false;
 
-        GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
 
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(channel);
-        auto delayModeValue = *static_cast<int*>(msgData._payload);
-        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(delayModeValue), handle).GetMemoryBlock());
-        AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(channel);
+            auto delayModeValue = *static_cast<int*>(msgData._payload);
+            sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(delayModeValue), handle).GetMemoryBlock());
+            AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+        }
         break;
-    }
     case ROI_MatrixInput_Mute:
-    {
-        if (msgData._valCount != 1 || msgData._payloadSize != sizeof(int))
-            return false;
+        {
+            if (msgData._valCount != 1 || msgData._payloadSize != sizeof(int))
+                return false;
 
-        GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
 
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Mute(channel);
-        auto muteValue = (*static_cast<int*>(msgData._payload) == 1) ? 1 : 2; // internal value 0=unmute, 1=mute; OcaMute uses 2=unmute, 1=mute
-        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(muteValue), handle).GetMemoryBlock());
-        AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Mute(channel);
+            auto muteValue = (*static_cast<int*>(msgData._payload) == 1) ? 1 : 2; // internal value 0=unmute, 1=mute; OcaMute uses 2=unmute, 1=mute
+            sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(muteValue), handle).GetMemoryBlock());
+            AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+        }
         break;
-    }
     case ROI_MatrixInput_ReverbSendGain:
-    {
-        if (msgData._valCount != 1 || msgData._payloadSize != sizeof(float))
-            return false;
+        {
+            if (msgData._valCount != 1 || msgData._payloadSize != sizeof(float))
+                return false;
 
-        GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
 
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ReverbSendGain(channel);
-        auto gainValue = *static_cast<float*>(msgData._payload);
-        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(gainValue), handle).GetMemoryBlock());
-        AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ReverbSendGain(channel);
+            auto gainValue = *static_cast<float*>(msgData._payload);
+            sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(gainValue), handle).GetMemoryBlock());
+            AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+        }
         break;
-    }
     case ROI_MatrixInput_Gain:
-    {
-        if (msgData._valCount != 1 || msgData._payloadSize != sizeof(float))
-            return false;
+        {
+            if (msgData._valCount != 1 || msgData._payloadSize != sizeof(float))
+                return false;
 
-        GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
 
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Gain(channel);
-        auto gainValue = *static_cast<float*>(msgData._payload);
-        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(gainValue), handle).GetMemoryBlock());
-        AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Gain(channel);
+            auto gainValue = *static_cast<float*>(msgData._payload);
+            sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(gainValue), handle).GetMemoryBlock());
+            AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+        }
         break;
-    }
     case ROI_MatrixInput_ChannelName:
-    {
-        if (msgData._valCount < 1 || msgData._payloadSize != msgData._valCount * sizeof(char))
-            return false;
+        {
+            if (msgData._valCount < 1 || msgData._payloadSize != msgData._valCount * sizeof(char))
+                return false;
 
-        GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
 
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ChannelName(channel);
-        auto stringValue = juce::String(static_cast<const char*>(msgData._payload), msgData._payloadSize);
-        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(stringValue), handle).GetMemoryBlock());
-        AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ChannelName(channel);
+            auto stringValue = juce::String(static_cast<const char*>(msgData._payload), msgData._payloadSize);
+            sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(stringValue), handle).GetMemoryBlock());
+            AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+        }
         break;
-    }
     case ROI_MatrixInput_LevelMeterPreMute:
-    {
-        if (msgData._valCount != 1 || msgData._payloadSize != sizeof(float))
-            return false;
+        {
+            if (msgData._valCount != 1 || msgData._payloadSize != sizeof(float))
+                return false;
 
-        GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
 
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_LevelMeterPreMute(channel);
-        auto levelValue = *static_cast<float*>(msgData._payload);
-        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(levelValue), handle).GetMemoryBlock());
-        AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_LevelMeterPreMute(channel);
+            auto levelValue = *static_cast<float*>(msgData._payload);
+            sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(levelValue), handle).GetMemoryBlock());
+            AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+            break;
+        }
         break;
-    }
     case ROI_MatrixOutput_Mute:
-    {
-        if (msgData._valCount != 1 || msgData._payloadSize != sizeof(int))
-            return false;
+        {
+            if (msgData._valCount != 1 || msgData._payloadSize != sizeof(int))
+                return false;
 
-        GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
 
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Mute(channel);
-        auto muteValue = (*static_cast<int*>(msgData._payload) == 1) ? 1 : 2; // internal value 0=unmute, 1=mute; OcaMute uses 2=unmute, 1=mute
-        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(muteValue), handle).GetMemoryBlock());
-        AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Mute(channel);
+            auto muteValue = (*static_cast<int*>(msgData._payload) == 1) ? 1 : 2; // internal value 0=unmute, 1=mute; OcaMute uses 2=unmute, 1=mute
+            sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(muteValue), handle).GetMemoryBlock());
+            AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+        }
         break;
-    }
     case ROI_MatrixOutput_Gain:
-    {
-        if (msgData._valCount != 1 || msgData._payloadSize != sizeof(float))
-            return false;
+        {
+            if (msgData._valCount != 1 || msgData._payloadSize != sizeof(float))
+                return false;
 
-        GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
 
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Gain(channel);
-        auto gainValue = *static_cast<float*>(msgData._payload);
-        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(gainValue), handle).GetMemoryBlock());
-        AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Gain(channel);
+            auto gainValue = *static_cast<float*>(msgData._payload);
+            sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(gainValue), handle).GetMemoryBlock());
+            AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+        }
         break;
-    }
     case ROI_MatrixOutput_ChannelName:
-    {
-        if (msgData._valCount < 1 || msgData._payloadSize != msgData._valCount * sizeof(char))
-            return false;
+        {
+            if (msgData._valCount < 1 || msgData._payloadSize != msgData._valCount * sizeof(char))
+                return false;
 
-        GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
 
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_ChannelName(channel);
-        auto stringValue = juce::String(static_cast<const char*>(msgData._payload), msgData._payloadSize);
-        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(stringValue), handle).GetMemoryBlock());
-        AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_ChannelName(channel);
+            auto stringValue = juce::String(static_cast<const char*>(msgData._payload), msgData._payloadSize);
+            sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(stringValue), handle).GetMemoryBlock());
+            AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+        }
         break;
-    }
     case ROI_MatrixOutput_LevelMeterPreMute:
-    {
-        if (msgData._valCount != 1 || msgData._payloadSize != sizeof(float))
-            return false;
+        {
+            if (msgData._valCount != 1 || msgData._payloadSize != sizeof(float))
+                return false;
 
-        GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
 
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_LevelMeterPreMute(channel);
-        auto levelValue = *static_cast<float*>(msgData._payload);
-        sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(levelValue), handle).GetMemoryBlock());
-        AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_LevelMeterPreMute(channel);
+            auto levelValue = *static_cast<float*>(msgData._payload);
+            sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(levelValue), handle).GetMemoryBlock());
+            AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+        }
         break;
-    }
     default:
         break;
     }
@@ -740,166 +741,166 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
         switch (activeObj._Id)
         {
         case ROI_CoordinateMapping_SourcePosition:
-        {
-            success = success && m_nanoOcp->sendData(
-                NanoOcp1::Ocp1CommandResponseRequired(
-                    NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
-            //DBG(juce::String(__FUNCTION__) << " ROI_CoordinateMapping_SourcePosition ("
-            //    << "record:" << juce::String(record)
-            //    << " channel:" << juce::String(channel)
-            //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
-        }
-        break;
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ROI_CoordinateMapping_SourcePosition ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
         case ROI_Positioning_SourcePosition:
-        {
-            success = success && m_nanoOcp->sendData(
-                NanoOcp1::Ocp1CommandResponseRequired(
-                    NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
-            //DBG(juce::String(__FUNCTION__) << " ROI_Positioning_SourcePosition (" 
-            //    << "record:" << juce::String(record)
-            //    << " channel:" << juce::String(channel)
-            //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
-        }
-        break;
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ROI_Positioning_SourcePosition (" 
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
         case ROI_Positioning_SourceSpread:
-        {
-            success = success && m_nanoOcp->sendData(
-                NanoOcp1::Ocp1CommandResponseRequired(
-                    NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Spread(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
-            //DBG(juce::String(__FUNCTION__) << " ROI_Positioning_SourceSpread (" 
-            //    << "record:" << juce::String(record)
-            //    << " channel:" << juce::String(channel)
-            //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
-        }
-        break;
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Spread(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ROI_Positioning_SourceSpread (" 
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
         case ROI_Positioning_SourceDelayMode:
-        {
-            success = success && m_nanoOcp->sendData(
-                NanoOcp1::Ocp1CommandResponseRequired(
-                    NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
-            //DBG(juce::String(__FUNCTION__) << " ROI_Positioning_SourceDelayMode (" 
-            //    << "record:" << juce::String(record)
-            //    << " channel:" << juce::String(channel)
-            //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
-        }
-        break;
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ROI_Positioning_SourceDelayMode (" 
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
         case ROI_MatrixInput_Mute:
-        {
-            success = success && m_nanoOcp->sendData(
-                NanoOcp1::Ocp1CommandResponseRequired(
-                    NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Mute(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
-            //DBG(juce::String(__FUNCTION__) << " ROI_MatrixInput_Mute (" 
-            //    << "record:" << juce::String(record)
-            //    << " channel:" << juce::String(channel)
-            //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
-        }
-        break;
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Mute(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ROI_MatrixInput_Mute (" 
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
         case ROI_MatrixInput_ReverbSendGain:
-        {
-            success = success && m_nanoOcp->sendData(
-                NanoOcp1::Ocp1CommandResponseRequired(
-                    NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ReverbSendGain(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
-            //DBG(juce::String(__FUNCTION__) << " ROI_MatrixInput_ReverbSendGain (" 
-            //    << "record:" << juce::String(record)
-            //    << " channel:" << juce::String(channel)
-            //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
-        }
-        break;
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ReverbSendGain(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ROI_MatrixInput_ReverbSendGain (" 
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
         case ROI_MatrixInput_Gain:
-        {
-            success = success && m_nanoOcp->sendData(
-                NanoOcp1::Ocp1CommandResponseRequired(
-                    NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Gain(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
-            //DBG(juce::String(__FUNCTION__) << " ROI_MatrixInput_Gain (" 
-            //    << "record:" << juce::String(record)
-            //    << " channel:" << juce::String(channel)
-            //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
-        }
-        break;
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Gain(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ROI_MatrixInput_Gain (" 
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
         case ROI_MatrixInput_ChannelName:
-        {
-            success = success && m_nanoOcp->sendData(
-                NanoOcp1::Ocp1CommandResponseRequired(
-                    NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ChannelName(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
-            //DBG(juce::String(__FUNCTION__) << " ROI_MatrixInput_ChannelName (" 
-            //    << "record:" << juce::String(record)
-            //    << " channel:" << juce::String(channel)
-            //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
-        }
-        break;
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ChannelName(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ROI_MatrixInput_ChannelName (" 
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
         case ROI_MatrixInput_LevelMeterPreMute:
-        {
-            success = success && m_nanoOcp->sendData(
-                NanoOcp1::Ocp1CommandResponseRequired(
-                    NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_LevelMeterPreMute(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
-            //DBG(juce::String(__FUNCTION__) << " ROI_MatrixInput_LevelMeterPreMute (" 
-            //    << "record:" << juce::String(record)
-            //    << " channel:" << juce::String(channel)
-            //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
-        }
-        break;
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_LevelMeterPreMute(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ROI_MatrixInput_LevelMeterPreMute (" 
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
         case ROI_MatrixOutput_Mute:
-        {
-            success = success && m_nanoOcp->sendData(
-                NanoOcp1::Ocp1CommandResponseRequired(
-                    NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Mute(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
-            //DBG(juce::String(__FUNCTION__) << " ROI_MatrixOutput_Mute (" 
-            //    << "record:" << juce::String(record)
-            //    << " channel:" << juce::String(channel)
-            //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
-        }
-        break;
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Mute(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ROI_MatrixOutput_Mute (" 
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
         case ROI_MatrixOutput_Gain:
-        {
-            success = success && m_nanoOcp->sendData(
-                NanoOcp1::Ocp1CommandResponseRequired(
-                    NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Gain(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
-            //DBG(juce::String(__FUNCTION__) << " ROI_MatrixOutput_Gain (" 
-            //    << "record:" << juce::String(record)
-            //    << " channel:" << juce::String(channel)
-            //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
-        }
-        break;
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Gain(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ROI_MatrixOutput_Gain (" 
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
         case ROI_MatrixOutput_ChannelName:
-        {
-            success = success && m_nanoOcp->sendData(
-                NanoOcp1::Ocp1CommandResponseRequired(
-                    NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_ChannelName(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
-            //DBG(juce::String(__FUNCTION__) << " ROI_MatrixOutput_ChannelName (" 
-            //    << "record:" << juce::String(record)
-            //    << " channel:" << juce::String(channel)
-            //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
-        }
-        break;
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_ChannelName(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ROI_MatrixOutput_ChannelName (" 
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
         case ROI_MatrixOutput_LevelMeterPreMute:
-        {
-            success = success && m_nanoOcp->sendData(
-                NanoOcp1::Ocp1CommandResponseRequired(
-                    NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_LevelMeterPreMute(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
-            //DBG(juce::String(__FUNCTION__) << " ROI_MatrixInput_LevelMeterPreMute (" 
-            //    << "record:" << juce::String(record)
-            //    << " channel:" << juce::String(channel)
-            //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
-        }
-        break;
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_LevelMeterPreMute(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ROI_MatrixInput_LevelMeterPreMute (" 
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
         case ROI_CoordinateMapping_SourcePosition_XY:
         case ROI_CoordinateMapping_SourcePosition_X:
         case ROI_CoordinateMapping_SourcePosition_Y:
-        {
-            //DBG(juce::String(__FUNCTION__) << " skipping ROI_CoordinateMapping_SourcePosition subscriptions that are not supported ("
-            //    << "record:" << juce::String(record)
-            //    << " channel:" << juce::String(channel) << ")");
-        }
-        break;
+            {
+                //DBG(juce::String(__FUNCTION__) << " skipping ROI_CoordinateMapping_SourcePosition subscriptions that are not supported ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel) << ")");
+            }
+            break;
         case ROI_Positioning_SourcePosition_XY:
         case ROI_Positioning_SourcePosition_X:
         case ROI_Positioning_SourcePosition_Y:
-        {            
-            //DBG(juce::String(__FUNCTION__) << " skipping ROI_Positioning_SourcePosition subscriptions that are not supported ("
-            //  << "record:" << juce::String(record)
-            //  << " channel:" << juce::String(channel) << ")");
-        }
-        break;
+            {            
+                //DBG(juce::String(__FUNCTION__) << " skipping ROI_Positioning_SourcePosition subscriptions that are not supported ("
+                //  << "record:" << juce::String(record)
+                //  << " channel:" << juce::String(channel) << ")");
+            }
+            break;
         default:
             continue; // skip adding a pending subscription handle below
         }
@@ -942,149 +943,149 @@ bool OCP1ProtocolProcessor::QueryObjectValue(const RemoteObjectIdentifier& roi, 
     switch (roi)
     {
     case ROI_CoordinateMapping_SourcePosition:
-    {
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
-        success = success && m_nanoOcp->sendData(
-            NanoOcp1::Ocp1CommandResponseRequired(
-                objDef.GetValueCommand(), handle).GetMemoryBlock());
-        AddPendingGetValueHandle(handle, objDef.m_targetOno);
-        //DBG(juce::String(__FUNCTION__) + " ROI_CoordinateMapping_SourcePosition (handle:" + NanoOcp1::HandleToString(handle) + ")");
-    }
-    break;
+        {
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    objDef.GetValueCommand(), handle).GetMemoryBlock());
+            AddPendingGetValueHandle(handle, objDef.m_targetOno);
+            //DBG(juce::String(__FUNCTION__) + " ROI_CoordinateMapping_SourcePosition (handle:" + NanoOcp1::HandleToString(handle) + ")");
+        }
+        break;
     case ROI_Positioning_SourcePosition:
-    {
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
-        success = success && m_nanoOcp->sendData(
-            NanoOcp1::Ocp1CommandResponseRequired(
-                objDef.GetValueCommand(), handle).GetMemoryBlock());
-        AddPendingGetValueHandle(handle, objDef.m_targetOno);
-        //DBG(juce::String(__FUNCTION__) + " ROI_Positioning_SourcePosition (handle:" + NanoOcp1::HandleToString(handle) + ")");
-    }
-    break;
+        {
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    objDef.GetValueCommand(), handle).GetMemoryBlock());
+            AddPendingGetValueHandle(handle, objDef.m_targetOno);
+            //DBG(juce::String(__FUNCTION__) + " ROI_Positioning_SourcePosition (handle:" + NanoOcp1::HandleToString(handle) + ")");
+        }
+        break;
     case ROI_Positioning_SourceSpread:
-    {
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Spread(channel);
-        success = success && m_nanoOcp->sendData(
-            NanoOcp1::Ocp1CommandResponseRequired(
-                objDef.GetValueCommand(), handle).GetMemoryBlock());
-        AddPendingGetValueHandle(handle, objDef.m_targetOno);
-        //DBG(juce::String(__FUNCTION__) + " ROI_Positioning_SourceSpread (handle:" + NanoOcp1::HandleToString(handle) + ")");
-    }
-    break;
+        {
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Spread(channel);
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    objDef.GetValueCommand(), handle).GetMemoryBlock());
+            AddPendingGetValueHandle(handle, objDef.m_targetOno);
+            //DBG(juce::String(__FUNCTION__) + " ROI_Positioning_SourceSpread (handle:" + NanoOcp1::HandleToString(handle) + ")");
+        }
+        break;
     case ROI_Positioning_SourceDelayMode:
-    {
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(channel);
-        success = success && m_nanoOcp->sendData(
-            NanoOcp1::Ocp1CommandResponseRequired(
-                objDef.GetValueCommand(), handle).GetMemoryBlock());
-        AddPendingGetValueHandle(handle, objDef.m_targetOno);
-        //DBG(juce::String(__FUNCTION__) + " ROI_Positioning_SourceDelayMode (handle:" + NanoOcp1::HandleToString(handle) + ")");
-    }
-    break;
+        {
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(channel);
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    objDef.GetValueCommand(), handle).GetMemoryBlock());
+            AddPendingGetValueHandle(handle, objDef.m_targetOno);
+            //DBG(juce::String(__FUNCTION__) + " ROI_Positioning_SourceDelayMode (handle:" + NanoOcp1::HandleToString(handle) + ")");
+        }
+        break;
     case ROI_MatrixInput_Mute:
-    {
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Mute(channel);
-        success = success && m_nanoOcp->sendData(
-            NanoOcp1::Ocp1CommandResponseRequired(
-                objDef.GetValueCommand(), handle).GetMemoryBlock());
-        AddPendingGetValueHandle(handle, objDef.m_targetOno);
-        //DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_Mute (handle:" + NanoOcp1::HandleToString(handle) + ")");
-    }
-    break;
+        {
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Mute(channel);
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    objDef.GetValueCommand(), handle).GetMemoryBlock());
+            AddPendingGetValueHandle(handle, objDef.m_targetOno);
+            //DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_Mute (handle:" + NanoOcp1::HandleToString(handle) + ")");
+        }
+        break;
     case ROI_MatrixInput_ReverbSendGain:
-    {
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ReverbSendGain(channel);
-        success = success && m_nanoOcp->sendData(
-            NanoOcp1::Ocp1CommandResponseRequired(
-                objDef.GetValueCommand(), handle).GetMemoryBlock());
-        AddPendingGetValueHandle(handle, objDef.m_targetOno);
-        //DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_ReverbSendGain (handle:" + NanoOcp1::HandleToString(handle) + ")");
-    }
-    break;
+        {
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ReverbSendGain(channel);
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    objDef.GetValueCommand(), handle).GetMemoryBlock());
+            AddPendingGetValueHandle(handle, objDef.m_targetOno);
+            //DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_ReverbSendGain (handle:" + NanoOcp1::HandleToString(handle) + ")");
+        }
+        break;
     case ROI_MatrixInput_Gain:
-    {
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Gain(channel);
-        success = success && m_nanoOcp->sendData(
-            NanoOcp1::Ocp1CommandResponseRequired(
-                objDef.GetValueCommand(), handle).GetMemoryBlock());
-        AddPendingGetValueHandle(handle, objDef.m_targetOno);
-        //DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_Gain(handle: " + NanoOcp1::HandleToString(handle) + ")");
-    }
-    break;
+        {
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Gain(channel);
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    objDef.GetValueCommand(), handle).GetMemoryBlock());
+            AddPendingGetValueHandle(handle, objDef.m_targetOno);
+            //DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_Gain(handle: " + NanoOcp1::HandleToString(handle) + ")");
+        }
+        break;
     case ROI_MatrixInput_ChannelName:
-    {
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ChannelName(channel);
-        success = success && m_nanoOcp->sendData(
-            NanoOcp1::Ocp1CommandResponseRequired(
-                objDef.GetValueCommand(), handle).GetMemoryBlock());
-        AddPendingGetValueHandle(handle, objDef.m_targetOno);
-        //DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_ChannelName(handle: " + NanoOcp1::HandleToString(handle) + ")");
-    }
-    break;
+        {
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ChannelName(channel);
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    objDef.GetValueCommand(), handle).GetMemoryBlock());
+            AddPendingGetValueHandle(handle, objDef.m_targetOno);
+            //DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_ChannelName(handle: " + NanoOcp1::HandleToString(handle) + ")");
+        }
+        break;
     case ROI_MatrixInput_LevelMeterPreMute:
-    {
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_LevelMeterPreMute(channel);
-        success = success && m_nanoOcp->sendData(
-            NanoOcp1::Ocp1CommandResponseRequired(
-                objDef.GetValueCommand(), handle).GetMemoryBlock());
-        AddPendingGetValueHandle(handle, objDef.m_targetOno);
-        //DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_LevelMeterPreMute(handle: " + NanoOcp1::HandleToString(handle) + ")");
-    }
-    break;
+        {
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_LevelMeterPreMute(channel);
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    objDef.GetValueCommand(), handle).GetMemoryBlock());
+            AddPendingGetValueHandle(handle, objDef.m_targetOno);
+            //DBG(juce::String(__FUNCTION__) + " ROI_MatrixInput_LevelMeterPreMute(handle: " + NanoOcp1::HandleToString(handle) + ")");
+        }
+        break;
     case ROI_MatrixOutput_Mute:
-    {
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Mute(channel);
-        success = success && m_nanoOcp->sendData(
-            NanoOcp1::Ocp1CommandResponseRequired(
-                objDef.GetValueCommand(), handle).GetMemoryBlock());
-        AddPendingGetValueHandle(handle, objDef.m_targetOno);
-        //DBG(juce::String(__FUNCTION__) + " ROI_MatrixOutput_Mute (handle:" + NanoOcp1::HandleToString(handle) + ")");
-    }
-    break;
+        {
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Mute(channel);
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    objDef.GetValueCommand(), handle).GetMemoryBlock());
+            AddPendingGetValueHandle(handle, objDef.m_targetOno);
+            //DBG(juce::String(__FUNCTION__) + " ROI_MatrixOutput_Mute (handle:" + NanoOcp1::HandleToString(handle) + ")");
+        }
+        break;
     case ROI_MatrixOutput_Gain:
-    {
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Gain(channel);
-        success = success && m_nanoOcp->sendData(
-            NanoOcp1::Ocp1CommandResponseRequired(
-                objDef.GetValueCommand(), handle).GetMemoryBlock());
-        AddPendingGetValueHandle(handle, objDef.m_targetOno);
-        //DBG(juce::String(__FUNCTION__) + " ROI_MatrixOutput_Gain(handle: " + NanoOcp1::HandleToString(handle) + ")");
-    }
-    break;
+        {
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Gain(channel);
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    objDef.GetValueCommand(), handle).GetMemoryBlock());
+            AddPendingGetValueHandle(handle, objDef.m_targetOno);
+            //DBG(juce::String(__FUNCTION__) + " ROI_MatrixOutput_Gain(handle: " + NanoOcp1::HandleToString(handle) + ")");
+        }
+        break;
     case ROI_MatrixOutput_ChannelName:
-    {
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_ChannelName(channel);
-        success = success && m_nanoOcp->sendData(
-            NanoOcp1::Ocp1CommandResponseRequired(
-                objDef.GetValueCommand(), handle).GetMemoryBlock());
-        AddPendingGetValueHandle(handle, objDef.m_targetOno);
-        //DBG(juce::String(__FUNCTION__) + " ROI_MatrixOutput_ChannelName(handle: " + NanoOcp1::HandleToString(handle) + ")");
-    }
-    break;
+        {
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_ChannelName(channel);
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    objDef.GetValueCommand(), handle).GetMemoryBlock());
+            AddPendingGetValueHandle(handle, objDef.m_targetOno);
+            //DBG(juce::String(__FUNCTION__) + " ROI_MatrixOutput_ChannelName(handle: " + NanoOcp1::HandleToString(handle) + ")");
+        }
+        break;
     case ROI_MatrixOutput_LevelMeterPreMute:
-    {
-        auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_LevelMeterPreMute(channel);
-        success = success && m_nanoOcp->sendData(
-            NanoOcp1::Ocp1CommandResponseRequired(
-                objDef.GetValueCommand(), handle).GetMemoryBlock());
-        AddPendingGetValueHandle(handle, objDef.m_targetOno);
-        //DBG(juce::String(__FUNCTION__) + " ROI_MatrixOutput_LevelMeterPreMute(handle: " + NanoOcp1::HandleToString(handle) + ")");
-    }
-    break;
+        {
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_LevelMeterPreMute(channel);
+            success = success && m_nanoOcp->sendData(
+                NanoOcp1::Ocp1CommandResponseRequired(
+                    objDef.GetValueCommand(), handle).GetMemoryBlock());
+            AddPendingGetValueHandle(handle, objDef.m_targetOno);
+            //DBG(juce::String(__FUNCTION__) + " ROI_MatrixOutput_LevelMeterPreMute(handle: " + NanoOcp1::HandleToString(handle) + ")");
+        }
+        break;
     case ROI_CoordinateMapping_SourcePosition_XY:
     case ROI_CoordinateMapping_SourcePosition_X:
     case ROI_CoordinateMapping_SourcePosition_Y:
-    {
-        //DBG(juce::String(__FUNCTION__) + " skipping ROI_CoordinateMapping_SourcePosition X Y XY");
-    }
-    break;
+        {
+            //DBG(juce::String(__FUNCTION__) + " skipping ROI_CoordinateMapping_SourcePosition X Y XY");
+        }
+        break;
     case ROI_Positioning_SourcePosition_XY:
     case ROI_Positioning_SourcePosition_X:
     case ROI_Positioning_SourcePosition_Y:
-    {
-        //DBG(juce::String(__FUNCTION__) + " skipping ROI_Positioning_SourcePosition X Y XY");
-    }
-    break;
+        {
+            //DBG(juce::String(__FUNCTION__) + " skipping ROI_Positioning_SourcePosition X Y XY");
+        }
+        break;
     default:
         success = false;
     }
@@ -1249,201 +1250,201 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
     switch (roi)
     {
     case ROI_CoordinateMapping_SourcePosition:
-    {
-        if (!NanoOcp1::VariantToPosition(cmdDef.ToVariant(3, msgObj->GetParameterData()), newFloatValue[0], newFloatValue[1], newFloatValue[2]))
-            return false;
-        remObjMsgData._payloadSize = 3 * sizeof(float);
-        remObjMsgData._valCount = 3;
-        remObjMsgData._valType = ROVT_FLOAT;
-        remObjMsgData._payload = &newFloatValue;
+        {
+            if (!NanoOcp1::VariantToPosition(cmdDef.ToVariant(3, msgObj->GetParameterData()), newFloatValue[0], newFloatValue[1], newFloatValue[2]))
+                return false;
+            remObjMsgData._payloadSize = 3 * sizeof(float);
+            remObjMsgData._valCount = 3;
+            remObjMsgData._valType = ROVT_FLOAT;
+            remObjMsgData._payload = &newFloatValue;
 
-        //DBG(juce::String(__FUNCTION__) << " " << roi 
-        //    << " (" << static_cast<int>(objAddr.first) << "," << static_cast<int>(objAddr.second) << ") " 
-        //    << newFloatValue[0] << "," << newFloatValue[1] << "," << newFloatValue[2] << ";");
+            //DBG(juce::String(__FUNCTION__) << " " << roi 
+            //    << " (" << static_cast<int>(objAddr.first) << "," << static_cast<int>(objAddr.second) << ") " 
+            //    << newFloatValue[0] << "," << newFloatValue[1] << "," << newFloatValue[2] << ";");
 
-        objectsDataToForward[ROI_CoordinateMapping_SourcePosition].payloadCopy(RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 3, &newFloatValue, 3 * sizeof(float)));
-        objectsDataToForward[ROI_CoordinateMapping_SourcePosition_XY].payloadCopy(RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 2, &newFloatValue, 2 * sizeof(float)));
-        objectsDataToForward[ROI_CoordinateMapping_SourcePosition_X].payloadCopy(RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 1, &newFloatValue, sizeof(float)));
-        newFloatValue[0] = newFloatValue[1]; // hacky bit - move the y value to the first (x) position to be able to reuse the newFloatValue array for Y forwarding
-        objectsDataToForward[ROI_CoordinateMapping_SourcePosition_Y] = RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 1, &newFloatValue, sizeof(float));
-    }
-    break;
+            objectsDataToForward[ROI_CoordinateMapping_SourcePosition].payloadCopy(RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 3, &newFloatValue, 3 * sizeof(float)));
+            objectsDataToForward[ROI_CoordinateMapping_SourcePosition_XY].payloadCopy(RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 2, &newFloatValue, 2 * sizeof(float)));
+            objectsDataToForward[ROI_CoordinateMapping_SourcePosition_X].payloadCopy(RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 1, &newFloatValue, sizeof(float)));
+            newFloatValue[0] = newFloatValue[1]; // hacky bit - move the y value to the first (x) position to be able to reuse the newFloatValue array for Y forwarding
+            objectsDataToForward[ROI_CoordinateMapping_SourcePosition_Y] = RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 1, &newFloatValue, sizeof(float));
+        }
+        break;
     case ROI_Positioning_SourcePosition:
-    {
-        if (!NanoOcp1::VariantToPosition(cmdDef.ToVariant(3, msgObj->GetParameterData()), newFloatValue[0], newFloatValue[1], newFloatValue[2]))
-            return false;
-        remObjMsgData._payloadSize = 3 * sizeof(float);
-        remObjMsgData._valCount = 3;
-        remObjMsgData._valType = ROVT_FLOAT;
-        remObjMsgData._payload = &newFloatValue;
+        {
+            if (!NanoOcp1::VariantToPosition(cmdDef.ToVariant(3, msgObj->GetParameterData()), newFloatValue[0], newFloatValue[1], newFloatValue[2]))
+                return false;
+            remObjMsgData._payloadSize = 3 * sizeof(float);
+            remObjMsgData._valCount = 3;
+            remObjMsgData._valType = ROVT_FLOAT;
+            remObjMsgData._payload = &newFloatValue;
 
-        //DBG(juce::String(__FUNCTION__) << " " << roi
-        //    << " (" << static_cast<int>(objAddr.first) << "," << static_cast<int>(objAddr.second) << ") "
-        //    << newFloatValue[0] << "," << newFloatValue[1] << "," << newFloatValue[2] << ";");
+            //DBG(juce::String(__FUNCTION__) << " " << roi
+            //    << " (" << static_cast<int>(objAddr.first) << "," << static_cast<int>(objAddr.second) << ") "
+            //    << newFloatValue[0] << "," << newFloatValue[1] << "," << newFloatValue[2] << ";");
 
-        objectsDataToForward[ROI_Positioning_SourcePosition].payloadCopy(RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 3, &newFloatValue, 3 * sizeof(float)));
-        objectsDataToForward[ROI_Positioning_SourcePosition_XY].payloadCopy(RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 2, &newFloatValue, 2 * sizeof(float)));
-        objectsDataToForward[ROI_Positioning_SourcePosition_X].payloadCopy(RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 1, &newFloatValue, sizeof(float)));
-        newFloatValue[0] = newFloatValue[1]; // hacky bit - move the y value to the first (x) position to be able to reuse the newFloatValue array for Y forwarding
-        objectsDataToForward[ROI_Positioning_SourcePosition_Y] = RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 1, &newFloatValue, sizeof(float));
-    }
-    break;
+            objectsDataToForward[ROI_Positioning_SourcePosition].payloadCopy(RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 3, &newFloatValue, 3 * sizeof(float)));
+            objectsDataToForward[ROI_Positioning_SourcePosition_XY].payloadCopy(RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 2, &newFloatValue, 2 * sizeof(float)));
+            objectsDataToForward[ROI_Positioning_SourcePosition_X].payloadCopy(RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 1, &newFloatValue, sizeof(float)));
+            newFloatValue[0] = newFloatValue[1]; // hacky bit - move the y value to the first (x) position to be able to reuse the newFloatValue array for Y forwarding
+            objectsDataToForward[ROI_Positioning_SourcePosition_Y] = RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 1, &newFloatValue, sizeof(float));
+        }
+        break;
     case ROI_Positioning_SourceSpread:
-    {
-        *newFloatValue = NanoOcp1::DataToFloat(msgObj->GetParameterData());
+        {
+            *newFloatValue = NanoOcp1::DataToFloat(msgObj->GetParameterData());
 
-        remObjMsgData._payloadSize = sizeof(float);
-        remObjMsgData._valCount = 1;
-        remObjMsgData._valType = ROVT_FLOAT;
-        remObjMsgData._payload = &newFloatValue;
+            remObjMsgData._payloadSize = sizeof(float);
+            remObjMsgData._valCount = 1;
+            remObjMsgData._valType = ROVT_FLOAT;
+            remObjMsgData._payload = &newFloatValue;
 
-        objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
-    }
-    break;
+            objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
+        }
+        break;
     case ROI_Positioning_SourceDelayMode:
-    {
-        *newIntValue = NanoOcp1::DataToUint16(msgObj->GetParameterData());  // off=0, tight=1, full=2
+        {
+            *newIntValue = NanoOcp1::DataToUint16(msgObj->GetParameterData());  // off=0, tight=1, full=2
 
-        remObjMsgData._payloadSize = sizeof(int);
-        remObjMsgData._valCount = 1;
-        remObjMsgData._valType = ROVT_INT;
-        remObjMsgData._payload = &newIntValue;
+            remObjMsgData._payloadSize = sizeof(int);
+            remObjMsgData._valCount = 1;
+            remObjMsgData._valType = ROVT_INT;
+            remObjMsgData._payload = &newIntValue;
 
-        objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
-    }
-    break;
+            objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
+        }
+        break;
     case ROI_MatrixInput_ReverbSendGain:
-    {
-        *newFloatValue = NanoOcp1::DataToFloat(msgObj->GetParameterData());
+        {
+            *newFloatValue = NanoOcp1::DataToFloat(msgObj->GetParameterData());
 
-        remObjMsgData._payloadSize = sizeof(float);
-        remObjMsgData._valCount = 1;
-        remObjMsgData._valType = ROVT_FLOAT;
-        remObjMsgData._payload = &newFloatValue;
+            remObjMsgData._payloadSize = sizeof(float);
+            remObjMsgData._valCount = 1;
+            remObjMsgData._valType = ROVT_FLOAT;
+            remObjMsgData._payload = &newFloatValue;
 
-        objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
-    }
-    break;
+            objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
+        }
+        break;
     case ROI_MatrixInput_Gain:
-    {
-        *newFloatValue = NanoOcp1::DataToFloat(msgObj->GetParameterData());
+        {
+            *newFloatValue = NanoOcp1::DataToFloat(msgObj->GetParameterData());
 
-        remObjMsgData._payloadSize = sizeof(float);
-        remObjMsgData._valCount = 1;
-        remObjMsgData._valType = ROVT_FLOAT;
-        remObjMsgData._payload = &newFloatValue;
+            remObjMsgData._payloadSize = sizeof(float);
+            remObjMsgData._valCount = 1;
+            remObjMsgData._valType = ROVT_FLOAT;
+            remObjMsgData._payload = &newFloatValue;
 
-        objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
-    }
-    break;
+            objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
+        }
+        break;
     case ROI_MatrixInput_Mute:
-    {
-        auto ocaMuteValue = NanoOcp1::DataToUint8(msgObj->GetParameterData());
-
-        // internal value 0=unmute, 1=mute; OcaMute uses 2=unmute, 1=mute
-        switch (ocaMuteValue)
         {
-        case 2:
-            *newIntValue = 0;
-            break;
-        case 1:
-        default:
-            *newIntValue = 1;
-            break;
+            auto ocaMuteValue = NanoOcp1::DataToUint8(msgObj->GetParameterData());
+
+            // internal value 0=unmute, 1=mute; OcaMute uses 2=unmute, 1=mute
+            switch (ocaMuteValue)
+            {
+            case 2:
+                *newIntValue = 0;
+                break;
+            case 1:
+            default:
+                *newIntValue = 1;
+                break;
+            }
+
+            remObjMsgData._payloadSize = sizeof(int);
+            remObjMsgData._valCount = 1;
+            remObjMsgData._valType = ROVT_INT;
+            remObjMsgData._payload = &newIntValue;
+
+            objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
         }
-
-        remObjMsgData._payloadSize = sizeof(int);
-        remObjMsgData._valCount = 1;
-        remObjMsgData._valType = ROVT_INT;
-        remObjMsgData._payload = &newIntValue;
-
-        objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
-    }
-    break;
+        break;
     case ROI_MatrixInput_ChannelName:
-    {
-        newStringValue = NanoOcp1::DataToString(msgObj->GetParameterData());
-
-        remObjMsgData._payloadSize = static_cast<std::uint32_t>(newStringValue.length() * sizeof(char));
-        remObjMsgData._valCount = static_cast<std::uint16_t>(newStringValue.length());
-        remObjMsgData._valType = ROVT_STRING;
-        remObjMsgData._payload = newStringValue.getCharPointer().getAddress();
-
-        objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
-    }
-    break;
-    case ROI_MatrixInput_LevelMeterPreMute:
-    {
-        *newFloatValue = NanoOcp1::DataToFloat(msgObj->GetParameterData());
-
-        remObjMsgData._payloadSize = sizeof(float);
-        remObjMsgData._valCount = 1;
-        remObjMsgData._valType = ROVT_FLOAT;
-        remObjMsgData._payload = &newFloatValue;
-
-        objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
-    }
-    break;
-    case ROI_MatrixOutput_Gain:
-    {
-        *newFloatValue = NanoOcp1::DataToFloat(msgObj->GetParameterData());
-
-        remObjMsgData._payloadSize = sizeof(float);
-        remObjMsgData._valCount = 1;
-        remObjMsgData._valType = ROVT_FLOAT;
-        remObjMsgData._payload = &newFloatValue;
-
-        objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
-    }
-    break;
-    case ROI_MatrixOutput_Mute:
-    {
-        auto ocaMuteValue = NanoOcp1::DataToUint8(msgObj->GetParameterData());
-
-        // internal value 0=unmute, 1=mute; OcaMute uses 2=unmute, 1=mute
-        switch (ocaMuteValue)
         {
-        case 2:
-            *newIntValue = 0;
-            break;
-        case 1:
-        default:
-            *newIntValue = 1;
-            break;
+            newStringValue = NanoOcp1::DataToString(msgObj->GetParameterData());
+
+            remObjMsgData._payloadSize = static_cast<std::uint32_t>(newStringValue.length() * sizeof(char));
+            remObjMsgData._valCount = static_cast<std::uint16_t>(newStringValue.length());
+            remObjMsgData._valType = ROVT_STRING;
+            remObjMsgData._payload = newStringValue.getCharPointer().getAddress();
+
+            objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
         }
+        break;
+    case ROI_MatrixInput_LevelMeterPreMute:
+        {
+            *newFloatValue = NanoOcp1::DataToFloat(msgObj->GetParameterData());
 
-        remObjMsgData._payloadSize = sizeof(int);
-        remObjMsgData._valCount = 1;
-        remObjMsgData._valType = ROVT_INT;
-        remObjMsgData._payload = &newIntValue;
+            remObjMsgData._payloadSize = sizeof(float);
+            remObjMsgData._valCount = 1;
+            remObjMsgData._valType = ROVT_FLOAT;
+            remObjMsgData._payload = &newFloatValue;
 
-        objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
-    }
-    break;
+            objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
+        }
+        break;
+    case ROI_MatrixOutput_Gain:
+        {
+            *newFloatValue = NanoOcp1::DataToFloat(msgObj->GetParameterData());
+
+            remObjMsgData._payloadSize = sizeof(float);
+            remObjMsgData._valCount = 1;
+            remObjMsgData._valType = ROVT_FLOAT;
+            remObjMsgData._payload = &newFloatValue;
+
+            objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
+        }
+        break;
+    case ROI_MatrixOutput_Mute:
+        {
+            auto ocaMuteValue = NanoOcp1::DataToUint8(msgObj->GetParameterData());
+
+            // internal value 0=unmute, 1=mute; OcaMute uses 2=unmute, 1=mute
+            switch (ocaMuteValue)
+            {
+            case 2:
+                *newIntValue = 0;
+                break;
+            case 1:
+            default:
+                *newIntValue = 1;
+                break;
+            }
+
+            remObjMsgData._payloadSize = sizeof(int);
+            remObjMsgData._valCount = 1;
+            remObjMsgData._valType = ROVT_INT;
+            remObjMsgData._payload = &newIntValue;
+
+            objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
+        }
+        break;
     case ROI_MatrixOutput_ChannelName:
-    {
-        newStringValue = NanoOcp1::DataToString(msgObj->GetParameterData());
+        {
+            newStringValue = NanoOcp1::DataToString(msgObj->GetParameterData());
 
-        remObjMsgData._payloadSize = static_cast<std::uint32_t>(newStringValue.length() * sizeof(char));
-        remObjMsgData._valCount = static_cast<std::uint16_t>(newStringValue.length());
-        remObjMsgData._valType = ROVT_STRING;
-        remObjMsgData._payload = newStringValue.getCharPointer().getAddress();
+            remObjMsgData._payloadSize = static_cast<std::uint32_t>(newStringValue.length() * sizeof(char));
+            remObjMsgData._valCount = static_cast<std::uint16_t>(newStringValue.length());
+            remObjMsgData._valType = ROVT_STRING;
+            remObjMsgData._payload = newStringValue.getCharPointer().getAddress();
 
-        objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
-    }
-    break;
+            objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
+        }
+        break;
     case ROI_MatrixOutput_LevelMeterPreMute:
-    {
-        *newFloatValue = NanoOcp1::DataToFloat(msgObj->GetParameterData());
+        {
+            *newFloatValue = NanoOcp1::DataToFloat(msgObj->GetParameterData());
 
-        remObjMsgData._payloadSize = sizeof(float);
-        remObjMsgData._valCount = 1;
-        remObjMsgData._valType = ROVT_FLOAT;
-        remObjMsgData._payload = &newFloatValue;
+            remObjMsgData._payloadSize = sizeof(float);
+            remObjMsgData._valCount = 1;
+            remObjMsgData._valType = ROVT_FLOAT;
+            remObjMsgData._payload = &newFloatValue;
 
-        objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
-    }
-    break;
+            objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
+        }
+        break;
     default:
         return false;
     }
