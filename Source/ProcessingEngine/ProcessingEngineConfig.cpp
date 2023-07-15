@@ -652,11 +652,11 @@ bool ProcessingEngineConfig::RemoveNodeOrProtocol(int Id)
 /**
 * Helper to resolve ROI to human readable string.
 *
-* @param Id	The remote object id to be resolved to a string.
+* @param roi	The remote object id to be resolved to a string.
 */
-String ProcessingEngineConfig::GetObjectDescription(RemoteObjectIdentifier Id)
+String ProcessingEngineConfig::GetObjectDescription(const RemoteObjectIdentifier roi)
 {
-	switch (Id)
+	switch (roi)
 	{
 	case ROI_HeartbeatPing:
 		return "PING";
@@ -790,11 +790,11 @@ String ProcessingEngineConfig::GetObjectDescription(RemoteObjectIdentifier Id)
 /**
 * Helper to resolve ROI to short human readable string.
 *
-* @param Id	The remote object id to be resolved to a string.
+* @param roi	The remote object id to be resolved to a string.
 */
-String ProcessingEngineConfig::GetObjectShortDescription(RemoteObjectIdentifier Id)
+String ProcessingEngineConfig::GetObjectShortDescription(const RemoteObjectIdentifier roi)
 {
-	switch (Id)
+	switch (roi)
 	{
 	case ROI_HeartbeatPing:
 		return "PING";
@@ -1042,12 +1042,12 @@ bool ProcessingEngineConfig::IsKeepaliveObject(RemoteObjectIdentifier objectId)
 
 /**
  * Helper method to get an internal defined value range for a given remote object.
- * @param	id	The remote object id to get the value range for
+ * @param	roi		The remote object id to get the value range for
  * @return	The float value range as requested. Empty range for unknown object.
  */
-juce::Range<float>& ProcessingEngineConfig::GetRemoteObjectRange(RemoteObjectIdentifier id)
+juce::Range<float>& ProcessingEngineConfig::GetRemoteObjectRange(const RemoteObjectIdentifier roi)
 {
-	return m_objectRanges[id];
+	return m_objectRanges[roi];
 }
 
 /**

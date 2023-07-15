@@ -105,12 +105,12 @@ bool Mirror_dualA_withValFilter::setStateXml(XmlElement* stateXml)
  * Method to be called by parent node on receiving data from node protocol with given id
  *
  * @param PId		The id of the protocol that received the data
- * @param Id		The object id to send a message for
+ * @param roi		The object id to send a message for
  * @param msgData	The actual message value/content data
  * @param msgMeta	The meta information on the message data that was received
  * @return	True if successful sent/forwarded, false if not
  */
-bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta)
+bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta)
 {
 	// a valid parent node is required to be able to do anything with the received message
 	auto parentNode = ObjectDataHandling_Abstract::GetParentNode();
@@ -128,29 +128,29 @@ bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
 
 	UpdateOnlineState(PId);
 
-	if (IsCachedValuesQuery(Id))
+	if (IsCachedValuesQuery(roi))
 		return SendValueCacheToProtocol(PId);
 
 	// check the incoming data regarding value change to then forward and if required mirror it to other protocols
-	if (IsChangedDataValue(PId, Id, msgData._addrVal, msgData))
+	if (IsChangedDataValue(PId, roi, msgData._addrVal, msgData))
 	{
 		// mirror and forward to all B if data comes from A
 		if (isProtocolTypeA)
 		{
 			// data mirroring is only done inbetween typeA protocols
-			MirrorDataIfRequired(PId, Id, msgData);
+			MirrorDataIfRequired(PId, roi, msgData);
 
 			// now do the basic A to B forwarding
 			auto sendSuccess = true;
 			for (auto const& pId : GetProtocolBIds())
 				if (msgMeta._ExternalId != pId || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
-					sendSuccess = parentNode->SendMessageTo(pId, Id, msgData) && sendSuccess;
+					sendSuccess = parentNode->SendMessageTo(pId, roi, msgData) && sendSuccess;
 			return sendSuccess;
 		}
 		// forward to A current master if data comes from B
 		else if (isProtocolTypeB)
 		{
-			return parentNode->SendMessageTo(m_currentMaster, Id, msgData);
+			return parentNode->SendMessageTo(m_currentMaster, roi, msgData);
 		}
 		else
 			return false;
@@ -189,11 +189,11 @@ void Mirror_dualA_withValFilter::UpdateOnlineState(ProtocolId id)
  * and if the check is positive, exec the mirroring by sending the data.
  *
  * @param PId		The id of the protocol that received the data
- * @param Id		The object id that was received
+ * @param roi		The object id that was received
  * @param msgData	The actual message value/content data
  * @return			True if the mirroring was executed, false if not
  */
-bool Mirror_dualA_withValFilter::MirrorDataIfRequired(ProtocolId PId, RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
+bool Mirror_dualA_withValFilter::MirrorDataIfRequired(ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData)
 {
 	// a valid parent node is required to be able to do anything with the received message
 	auto parentNode = ObjectDataHandling_Abstract::GetParentNode();
@@ -207,7 +207,7 @@ bool Mirror_dualA_withValFilter::MirrorDataIfRequired(ProtocolId PId, RemoteObje
 	// send values received from master to slave
 	if (PId == m_currentMaster && m_currentSlave != INVALID_ADDRESS_VALUE)
 	{
-		return parentNode->SendMessageTo(m_currentSlave, Id, msgData);
+		return parentNode->SendMessageTo(m_currentSlave, roi, msgData);
 	}
 	else
 		return false;

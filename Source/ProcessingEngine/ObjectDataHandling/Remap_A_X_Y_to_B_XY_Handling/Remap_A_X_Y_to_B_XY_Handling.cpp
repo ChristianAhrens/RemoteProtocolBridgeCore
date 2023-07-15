@@ -47,12 +47,12 @@ Remap_A_X_Y_to_B_XY_Handling::~Remap_A_X_Y_to_B_XY_Handling()
  * Method to be called by parent node on receiving data from node protocol with given id
  *
  * @param PId		The id of the protocol that received the data
- * @param Id		The object id to send a message for
+ * @param roi		The object id to send a message for
  * @param msgData	The actual message value/content data
  * @param msgMeta	The meta information on the message data that was received
  * @return	True if successful sent/forwarded, false if not
  */
-bool Remap_A_X_Y_to_B_XY_Handling::OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta)
+bool Remap_A_X_Y_to_B_XY_Handling::OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta)
 {
 	auto parentNode = ObjectDataHandling_Abstract::GetParentNode();
 	if (!parentNode)
@@ -66,9 +66,9 @@ bool Remap_A_X_Y_to_B_XY_Handling::OnReceivedMessageFromProtocol(const ProtocolI
 	{
 		// the message was received by a typeA protocol
 
-		RemoteObjectIdentifier ObjIdToSend = Id;
+		RemoteObjectIdentifier ObjIdToSend = roi;
 
-		if (Id == ROI_CoordinateMapping_SourcePosition_X)
+		if (roi == ROI_CoordinateMapping_SourcePosition_X)
 		{
 			// special handling of merging separate x message to a combined xy one
 			jassert(msgData._valType == ROVT_FLOAT);
@@ -91,7 +91,7 @@ bool Remap_A_X_Y_to_B_XY_Handling::OnReceivedMessageFromProtocol(const ProtocolI
 
 			ObjIdToSend = ROI_CoordinateMapping_SourcePosition_XY;
 		}
-		else if (Id == ROI_CoordinateMapping_SourcePosition_Y)
+		else if (roi == ROI_CoordinateMapping_SourcePosition_Y)
 		{
 			// special handling of merging separate y message to a combined xy one
 			jassert(msgData._valType == ROVT_FLOAT);
@@ -126,7 +126,7 @@ bool Remap_A_X_Y_to_B_XY_Handling::OnReceivedMessageFromProtocol(const ProtocolI
 	}
 	if (std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) != GetProtocolBIds().end())
 	{
-		if (Id == ROI_CoordinateMapping_SourcePosition_XY)
+		if (roi == ROI_CoordinateMapping_SourcePosition_XY)
 		{
 			// special handling of splitting a combined xy message to  separate x, y ones
 			jassert(msgData._valType == ROVT_FLOAT);
@@ -168,7 +168,7 @@ bool Remap_A_X_Y_to_B_XY_Handling::OnReceivedMessageFromProtocol(const ProtocolI
 			auto sendSuccess = true;
 			for (auto const& protocolA : GetProtocolAIds())
 				if (msgMeta._ExternalId != protocolA || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
-					sendSuccess = parentNode->SendMessageTo(protocolA, Id, modMsgData) && sendSuccess;
+					sendSuccess = parentNode->SendMessageTo(protocolA, roi, modMsgData) && sendSuccess;
 
 			return sendSuccess;
 		}

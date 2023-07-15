@@ -27,7 +27,7 @@
 // **************************************************************************************
 
 /**
- * @fn void ObjectDataHandling_Abstract::OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier Id, RemoteObjectMessageData& msgData)
+ * @fn void ObjectDataHandling_Abstract::OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier roi, RemoteObjectMessageData& msgData)
  * @param PId	The protocol id that a message was received on
  * @param Id	The id of the remote object that was received
  * @param msgData	The message that was received

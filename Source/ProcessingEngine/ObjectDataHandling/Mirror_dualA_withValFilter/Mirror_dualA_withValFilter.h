@@ -41,7 +41,7 @@ public:
 	void AddProtocolAId(ProtocolId PAId) override;
 
 	//==============================================================================
-	bool OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta) override;
+	bool OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta) override;
 
 	//==============================================================================
 	bool setStateXml(XmlElement* stateXml) override;
@@ -53,7 +53,7 @@ private:
 	void SetProtoFailoverTime(double timeout);
 	double GetProtoFailoverTime();
 	
-	bool MirrorDataIfRequired(ProtocolId PId, RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData);
+	bool MirrorDataIfRequired(ProtocolId PId, RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData);
 
 	double		m_protoFailoverTime;	/**< . */
 	ProtocolId	m_currentMaster;		/**< Protocol Id of the protocol currently handled as master. */

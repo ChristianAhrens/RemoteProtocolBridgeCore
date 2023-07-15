@@ -55,10 +55,10 @@ public:
 	bool Stop() override;
 
 	//==============================================================================
-	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData, const int externalId = -1) override;
+	bool SendRemoteObjectMessage(const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const int externalId = -1) override;
 
 	//==============================================================================
-	static String GetRemoteObjectString(RemoteObjectIdentifier id);
+	static juce::String GetRemoteObjectString(const RemoteObjectIdentifier roi);
 
 private:
 	//==============================================================================
@@ -72,7 +72,7 @@ private:
 	bool CreateObjectSubscriptions();
 	bool DeleteObjectSubscriptions();
 	bool QueryObjectValues();
-	bool QueryObjectValue(const RemoteObjectIdentifier& roi, const ChannelId& channel, const RecordId& record);
+	bool QueryObjectValue(const RemoteObjectIdentifier roi, const ChannelId& channel, const RecordId& record);
 
 	//==============================================================================
 	const std::vector<RemoteObject> GetOcp1SupportedActiveRemoteObjects();

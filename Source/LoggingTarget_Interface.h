@@ -52,5 +52,5 @@ public:
 	 * Method to be overloaded by ancestors to act as an interface
 	 * for generic data insertion for logging
 	 */
-	virtual void AddLogData(NodeId NId, ProtocolId SenderPId, ProtocolType SenderType, RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData) = 0;
+	virtual void AddLogData(NodeId NId, ProtocolId SenderPId, ProtocolType SenderType, RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData) = 0;
 };

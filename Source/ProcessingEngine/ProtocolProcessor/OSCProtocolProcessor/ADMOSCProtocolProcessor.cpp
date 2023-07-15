@@ -96,12 +96,12 @@ bool ADMOSCProtocolProcessor::setStateXml(XmlElement* stateXml)
 /**
  * Method to trigger sending of a message
  *
- * @param Id		The id of the object to send a message for
+ * @param roi		The id of the object to send a message for
  * @param msgData	The message payload and metadata
  * @param externalId	An optional external id for identification of replies, etc. 
  *						(unused in this protocolprocessor impl)
  */
-bool ADMOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData, const int externalId)
+bool ADMOSCProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const int externalId)
 {
 	ignoreUnused(externalId);
 
@@ -115,7 +115,7 @@ bool ADMOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id,
 	if (msgData._addrVal._first <= INVALID_ADDRESS_VALUE)
 		return false;
 
-	ADMObjectType targetObjType = WriteMessageDataToObjectCache(Id, msgData);
+	ADMObjectType targetObjType = WriteMessageDataToObjectCache(roi, msgData);
 	if(targetObjType == ADMObjectType::AOT_Invalid)
 		return false;
 

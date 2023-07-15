@@ -250,13 +250,13 @@ public:
 	static String				ObjectHandlingModeToString(ObjectHandlingMode ohm);
 	static ObjectHandlingMode	ObjectHandlingModeFromString(String mode);
 
-	static String GetObjectDescription(RemoteObjectIdentifier Id);
-	static String GetObjectShortDescription(RemoteObjectIdentifier Id);
+	static String GetObjectDescription(RemoteObjectIdentifier roi);
+	static String GetObjectShortDescription(RemoteObjectIdentifier roi);
 	static bool IsChannelAddressingObject(RemoteObjectIdentifier objectId);
 	static bool IsRecordAddressingObject(RemoteObjectIdentifier objectId);
     static bool IsKeepaliveObject(RemoteObjectIdentifier objectId);
 
-	static juce::Range<float>& GetRemoteObjectRange(RemoteObjectIdentifier id);
+	static juce::Range<float>& GetRemoteObjectRange(RemoteObjectIdentifier roi);
 
 	// ============================================================
 	bool isValid() override;

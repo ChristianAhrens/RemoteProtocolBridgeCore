@@ -466,30 +466,30 @@ ObjectDataHandling_Abstract* ProcessingEngineNode::GetObjectDataHandling()
  * This is achieved by the member processing protocol objects accessing their parent with this handling method.
  *
  * @param receiver	The protocol processing object that has received the message
- * @param id		The message object id that corresponds to the received message
+ * @param roi		The message object id that corresponds to the received message
  * @param msgData	The actual message data that was received
  * @param msgMeta	Meta information on the message data that was received
  */
-void ProcessingEngineNode::OnProtocolMessageReceived(ProtocolProcessorBase* receiver, RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta)
+void ProcessingEngineNode::OnProtocolMessageReceived(ProtocolProcessorBase* receiver, const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta)
 {
-	m_messageQueue.enqueueMessage(InterProtocolMessage(this->GetId(), receiver->GetId(), receiver->GetType(), id, msgData, msgMeta));
+	m_messageQueue.enqueueMessage(InterProtocolMessage(this->GetId(), receiver->GetId(), receiver->GetType(), roi, msgData, msgMeta));
 }
 
 /**
  * Method to forward a message to member protocol with given id
  *
  * @param PId		The id of the protocol to send the RemoteObject to
- * @param Id		The message object id that corresponds to the message to be sent
+ * @param roi		The message object id that corresponds to the message to be sent
  * @param msgData	The actual message data that was received
  * @param externalId	An optional integer id that might be used by protocol implementations to track IO data.
  * @return	True on success, false if a failure occurred
  */
-bool ProcessingEngineNode::SendMessageTo(ProtocolId PId, RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData, const int externalId) const
+bool ProcessingEngineNode::SendMessageTo(ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const int externalId) const
 {
 	if (m_typeAProtocols.count(PId))
-		return m_typeAProtocols.at(PId)->SendRemoteObjectMessage(Id, msgData, externalId);
+		return m_typeAProtocols.at(PId)->SendRemoteObjectMessage(roi, msgData, externalId);
 	else if (m_typeBProtocols.count(PId))
-		return m_typeBProtocols.at(PId)->SendRemoteObjectMessage(Id, msgData, externalId);
+		return m_typeBProtocols.at(PId)->SendRemoteObjectMessage(roi, msgData, externalId);
 	else
 		return false;
 }

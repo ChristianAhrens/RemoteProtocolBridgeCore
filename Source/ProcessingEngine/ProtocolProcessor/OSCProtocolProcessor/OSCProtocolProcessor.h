@@ -58,11 +58,11 @@ public:
 	bool Start() override;
 	bool Stop() override;
 
-	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData, const int externalId = -1) override;
+	bool SendRemoteObjectMessage(const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const int externalId = -1) override;
 
 	bool SendAddressedMessage(const String& addressString, const RemoteObjectMessageData& msgData);
 
-	static String GetRemoteObjectString(RemoteObjectIdentifier id);
+	static juce::String GetRemoteObjectString(const RemoteObjectIdentifier roi);
 
 	virtual void oscBundleReceived(const OSCBundle &bundle, const String& senderIPAddress, const int& senderPort) override;
 	virtual void oscMessageReceived(const OSCMessage &message, const String& senderIPAddress, const int& senderPort) override;
@@ -74,7 +74,7 @@ protected:
 
 	void SetHostPort(std::int32_t hostPort) override;
 
-	bool createMessageData(const OSCMessage& messageInput, const RemoteObjectIdentifier& objectId, RemoteObjectMessageData& newMessageData);
+	bool createMessageData(const OSCMessage& messageInput, const RemoteObjectIdentifier roi, RemoteObjectMessageData& newMessageData);
 	bool createIntMessageData(const OSCMessage& messageInput, RemoteObjectMessageData& newMessageData);
 	bool createFloatMessageData(const OSCMessage& messageInput, RemoteObjectMessageData& newMessageData);
 	bool createStringMessageData(const OSCMessage& messageInput, RemoteObjectMessageData& newMessageData);

@@ -25,10 +25,10 @@ public:
 
 	bool setStateXml(XmlElement* stateXml) override;
 
-	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData, const int externalId = -1) override;
+	bool SendRemoteObjectMessage(const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const int externalId = -1) override;
 
 	static String GetRemoteObjectDomainString();
-	static String GetRemoteObjectParameterTypeString(RemoteObjectIdentifier id);
+	static String GetRemoteObjectParameterTypeString(RemoteObjectIdentifier roi);
 
 	virtual void oscMessageReceived(const OSCMessage &message, const String& senderIPAddress, const int& senderPort) override;
 

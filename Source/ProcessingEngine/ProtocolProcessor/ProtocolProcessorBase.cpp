@@ -50,7 +50,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /**
- * @fn bool ProtocolProcessorBase::SendMessage(RemoteObjectIdentifier Id, RemoteObjectMessageData& msgData)
+ * @fn bool ProtocolProcessorBase::SendMessage(RemoteObjectIdentifier roi, RemoteObjectMessageData& msgData)
  * @param Id		The object id to send a message for
  * @param msgData	The actual message value/content data
  * Pure virtual function to trigger sending a message by derived processor object

@@ -47,12 +47,12 @@ Forward_A_to_B_only::~Forward_A_to_B_only()
  * Method to be called by parent node on receiving data from node protocol with given id
  *
  * @param PId		The id of the protocol that received the data
- * @param Id		The object id to send a message for
+ * @param roi		The object id to send a message for
  * @param msgData	The actual message value/content data
  * @param msgMeta	The meta information on the message data that was received
  * @return	True if successful sent/forwarded, false if not
  */
-bool Forward_A_to_B_only::OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta)
+bool Forward_A_to_B_only::OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta)
 {
 	ignoreUnused(msgMeta);
 
@@ -70,7 +70,7 @@ bool Forward_A_to_B_only::OnReceivedMessageFromProtocol(const ProtocolId PId, co
 		sendSuccess = true;
 		for (auto const& protocolB : GetProtocolBIds())
 			if (msgMeta._ExternalId != protocolB || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
-				sendSuccess = parentNode->SendMessageTo(protocolB, Id, msgData) && sendSuccess;
+				sendSuccess = parentNode->SendMessageTo(protocolB, roi, msgData) && sendSuccess;
 	}
 	else if (std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) != GetProtocolBIds().end())
 	{

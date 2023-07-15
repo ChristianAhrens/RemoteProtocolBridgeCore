@@ -135,12 +135,12 @@ bool OCP1ProtocolProcessor::setStateXml(XmlElement* stateXml)
 /**
  * Public method to get OCA object specific ObjectName string
  *
- * @param id	The object id to get the OCA specific object name
+ * @param roi	The object id to get the OCA specific object name
  * @return		The OCA specific object name
  */
-String OCP1ProtocolProcessor::GetRemoteObjectString(RemoteObjectIdentifier id)
+juce::String OCP1ProtocolProcessor::GetRemoteObjectString(const RemoteObjectIdentifier roi)
 {
-    switch (id)
+    switch (roi)
     {
     case ROI_CoordinateMapping_SourcePosition:
     case ROI_CoordinateMapping_SourcePosition_XY:
@@ -173,23 +173,23 @@ String OCP1ProtocolProcessor::GetRemoteObjectString(RemoteObjectIdentifier id)
  * positioning ROIs by mapping them to the triple float value equivalent and uses
  * the value cache to fill in the missing data.
  *
- * @param Id		    The id of the object to send a message for
+ * @param roi		    The id of the object to send a message for
  * @param msgData	    The message payload and metadata
  * @param externalId	An optional external id for identification of replies, etc. ...
  */
-bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData, const int externalId)
+bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const int externalId)
 {
     // if NanoOcp does not exist or the processor is not running, give up immediately
     if (!m_nanoOcp || !m_IsRunning)
         return false;
 
     // if we are dealing with the special ROI for heartbeat (Ocp1 Keepalive), send it right away
-    if (id == ROI_HeartbeatPing)
+    if (roi == ROI_HeartbeatPing)
         return m_nanoOcp->sendData(NanoOcp1::Ocp1KeepAlive(static_cast<std::uint16_t>(GetActiveRemoteObjectsInterval() / 1000)).GetMemoryBlock());
 
     // if the ROI data is empty, it is a value request message that must be handled as such
     if (msgData.isDataEmpty())
-        return QueryObjectValue(id, msgData._addrVal._first, msgData._addrVal._second);
+        return QueryObjectValue(roi, msgData._addrVal._first, msgData._addrVal._second);
 
     auto& channel = msgData._addrVal._first;
     auto& record = msgData._addrVal._second;
@@ -199,14 +199,14 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
 
     float zeroPayload[3] = { 0.0f, 0.0f, 0.0f };
 
-    switch (id)
+    switch (roi)
     {
     case ROI_CoordinateMapping_SourcePosition:
         {
             if (msgData._valCount != 3 || msgData._payloadSize != 3 * sizeof(float))
                 return false;
 
-            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(roi, RemoteObjectAddressing(channel, record)), msgData);
 
             auto objDef = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
             auto parameterData = NanoOcp1::DataFromPosition(
@@ -321,7 +321,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
             if (msgData._valCount != 1 || msgData._payloadSize != 3 * sizeof(float))
                 return false;
 
-            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(roi, RemoteObjectAddressing(channel, record)), msgData);
 
             auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
             auto parameterData = NanoOcp1::DataFromPosition(
@@ -352,7 +352,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
             //auto x = reinterpret_cast<float*>(refMsgData._payload)[0];
             //auto y = reinterpret_cast<float*>(refMsgData._payload)[1];
             //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
-            //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
+            //DBG(juce::String(__FUNCTION__) << " ROI:" << roi << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
 
             GetValueCache().SetValue(targetObj, refMsgData);
 
@@ -384,7 +384,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
             //auto x = reinterpret_cast<float*>(refMsgData._payload)[0];
             //auto y = reinterpret_cast<float*>(refMsgData._payload)[1];
             //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
-            //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
+            //DBG(juce::String(__FUNCTION__) << " ROI:" << roi << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
 
             GetValueCache().SetValue(targetObj, refMsgData);
 
@@ -416,7 +416,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
             //auto x = reinterpret_cast<float*>(refMsgData._payload)[0];
             //auto y = reinterpret_cast<float*>(refMsgData._payload)[1];
             //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
-            //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
+            //DBG(juce::String(__FUNCTION__) << " ROI:" << roi << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
 
             GetValueCache().SetValue(targetObj, refMsgData);
 
@@ -435,7 +435,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
             if (msgData._valCount != 1 || msgData._payloadSize != sizeof(float))
                 return false;
 
-            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(roi, RemoteObjectAddressing(channel, record)), msgData);
 
             auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Spread(channel);
             auto spreadValue = *static_cast<float*>(msgData._payload);
@@ -448,7 +448,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
             if (msgData._valCount != 1 || msgData._payloadSize != sizeof(int))
                 return false;
 
-            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(roi, RemoteObjectAddressing(channel, record)), msgData);
 
             auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(channel);
             auto delayModeValue = *static_cast<int*>(msgData._payload);
@@ -461,7 +461,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
             if (msgData._valCount != 1 || msgData._payloadSize != sizeof(int))
                 return false;
 
-            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(roi, RemoteObjectAddressing(channel, record)), msgData);
 
             auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Mute(channel);
             auto muteValue = (*static_cast<int*>(msgData._payload) == 1) ? 1 : 2; // internal value 0=unmute, 1=mute; OcaMute uses 2=unmute, 1=mute
@@ -474,7 +474,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
             if (msgData._valCount != 1 || msgData._payloadSize != sizeof(float))
                 return false;
 
-            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(roi, RemoteObjectAddressing(channel, record)), msgData);
 
             auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ReverbSendGain(channel);
             auto gainValue = *static_cast<float*>(msgData._payload);
@@ -487,7 +487,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
             if (msgData._valCount != 1 || msgData._payloadSize != sizeof(float))
                 return false;
 
-            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(roi, RemoteObjectAddressing(channel, record)), msgData);
 
             auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Gain(channel);
             auto gainValue = *static_cast<float*>(msgData._payload);
@@ -500,7 +500,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
             if (msgData._valCount < 1 || msgData._payloadSize != msgData._valCount * sizeof(char))
                 return false;
 
-            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(roi, RemoteObjectAddressing(channel, record)), msgData);
 
             auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ChannelName(channel);
             auto stringValue = juce::String(static_cast<const char*>(msgData._payload), msgData._payloadSize);
@@ -513,7 +513,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
             if (msgData._valCount != 1 || msgData._payloadSize != sizeof(float))
                 return false;
 
-            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(roi, RemoteObjectAddressing(channel, record)), msgData);
 
             auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_LevelMeterPreMute(channel);
             auto levelValue = *static_cast<float*>(msgData._payload);
@@ -527,7 +527,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
             if (msgData._valCount != 1 || msgData._payloadSize != sizeof(int))
                 return false;
 
-            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(roi, RemoteObjectAddressing(channel, record)), msgData);
 
             auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Mute(channel);
             auto muteValue = (*static_cast<int*>(msgData._payload) == 1) ? 1 : 2; // internal value 0=unmute, 1=mute; OcaMute uses 2=unmute, 1=mute
@@ -540,7 +540,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
             if (msgData._valCount != 1 || msgData._payloadSize != sizeof(float))
                 return false;
 
-            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(roi, RemoteObjectAddressing(channel, record)), msgData);
 
             auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Gain(channel);
             auto gainValue = *static_cast<float*>(msgData._payload);
@@ -553,7 +553,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
             if (msgData._valCount < 1 || msgData._payloadSize != msgData._valCount * sizeof(char))
                 return false;
 
-            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(roi, RemoteObjectAddressing(channel, record)), msgData);
 
             auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_ChannelName(channel);
             auto stringValue = juce::String(static_cast<const char*>(msgData._payload), msgData._payloadSize);
@@ -566,7 +566,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
             if (msgData._valCount != 1 || msgData._payloadSize != sizeof(float))
                 return false;
 
-            GetValueCache().SetValue(RemoteObject(id, RemoteObjectAddressing(channel, record)), msgData);
+            GetValueCache().SetValue(RemoteObject(roi, RemoteObjectAddressing(channel, record)), msgData);
 
             auto objDef = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_LevelMeterPreMute(channel);
             auto levelValue = *static_cast<float*>(msgData._payload);
@@ -575,6 +575,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier id, c
         }
         break;
     default:
+        DBG(juce::String(__FUNCTION__) << " " << ProcessingEngineConfig::GetObjectDescription(roi) << " -> not implmented");
         break;
     }
 
@@ -935,7 +936,7 @@ bool OCP1ProtocolProcessor::QueryObjectValues()
     return success;
 }
 
-bool OCP1ProtocolProcessor::QueryObjectValue(const RemoteObjectIdentifier& roi, const ChannelId& channel, const RecordId& record)
+bool OCP1ProtocolProcessor::QueryObjectValue(const RemoteObjectIdentifier roi, const ChannelId& channel, const RecordId& record)
 {
     auto handle = std::uint32_t(0);
     auto success = true;
@@ -1087,6 +1088,7 @@ bool OCP1ProtocolProcessor::QueryObjectValue(const RemoteObjectIdentifier& roi, 
         }
         break;
     default:
+        DBG(juce::String(__FUNCTION__) << " " << ProcessingEngineConfig::GetObjectDescription(roi) << " -> not implmented");
         success = false;
     }
 

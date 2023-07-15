@@ -66,7 +66,7 @@ public:
 		 * as an interface for handling of received message data
 		 */
 		virtual void OnProtocolMessageReceived(ProtocolProcessorBase* receiver, 
-			RemoteObjectIdentifier id, 
+			const RemoteObjectIdentifier roi, 
 			const RemoteObjectMessageData& msgData, 
 			const RemoteObjectMessageMetaInfo& msgMeta = RemoteObjectMessageMetaInfo(RemoteObjectMessageMetaInfo::MC_None, -1)) = 0;
 	};
@@ -83,7 +83,7 @@ public:
 	ProtocolRole GetRole();
 
 	//==============================================================================
-	virtual bool SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData, const int externalId = -1) = 0;
+	virtual bool SendRemoteObjectMessage(const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const int externalId = -1) = 0;
 
 	virtual bool Start() = 0;
 	virtual bool Stop() = 0;

@@ -57,12 +57,12 @@ bool YmhOSCProtocolProcessor::setStateXml(XmlElement* stateXml)
 /**
  * Method to trigger sending of a message
  *
- * @param Id			The id of the object to send a message for
+ * @param roi			The id of the object to send a message for
  * @param msgData		The message payload and metadata
  * @param externalId	An optional external id for identification of replies, etc. 
  *						(unused in this protocolprocessor impl)
  */
-bool YmhOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData, const int externalId)
+bool YmhOSCProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const int externalId)
 {
 	ignoreUnused(externalId);
 
@@ -74,7 +74,7 @@ bool YmhOSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id,
 		return false;
 
 	// assemble the addressing string
-	String addressString = GetRemoteObjectDomainString() + String(msgData._addrVal._first) + GetRemoteObjectParameterTypeString(Id);
+	String addressString = GetRemoteObjectDomainString() + String(msgData._addrVal._first) + GetRemoteObjectParameterTypeString(roi);
 	if (addressString.isEmpty())
 		return false;
 	else
@@ -253,12 +253,12 @@ String YmhOSCProtocolProcessor::GetRemoteObjectDomainString()
 /**
  * static method to get Yamaha specific OSC address string parameter definition trailer
  *
- * @param id	The object id to get the OSC specific parameter def string for
+ * @param roi	The object id to get the OSC specific parameter def string for
  * @return		The parameter defining string, empty if not available
  */
-String YmhOSCProtocolProcessor::GetRemoteObjectParameterTypeString(RemoteObjectIdentifier id)
+String YmhOSCProtocolProcessor::GetRemoteObjectParameterTypeString(const RemoteObjectIdentifier roi)
 {
-	switch (id)
+	switch (roi)
 	{
 	case ROI_Positioning_SourceSpread:
 		return "/w";								// width parameter (0-1, can be mapped directly to SO spread)
