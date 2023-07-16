@@ -680,15 +680,15 @@ bool MIDIProtocolProcessor::activateMidiOutput(const String& midiOutputIdentifie
  * and at the same time submit it to internal hashing with timestamp to ensure deafness regarding
  * sending next midi output for this object. (avoids race conditions on motorfaders of hw console surfaces...)
  *
- * @param id		The message object id that corresponds to the received message
+ * @param roi		The message object id that corresponds to the received message
  * @param msgData	The actual message data that was received
  */
-void MIDIProtocolProcessor::forwardAndDeafProofMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData)
+void MIDIProtocolProcessor::forwardAndDeafProofMessage(const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData)
 {
-	m_addressedObjectOutputDeafStampMap[id][msgData._addrVal] = juce::Time::getMillisecondCounterHiRes();
+	m_addressedObjectOutputDeafStampMap[roi][msgData._addrVal] = juce::Time::getMillisecondCounterHiRes();
 
 	if (m_messageListener)
-		m_messageListener->OnProtocolMessageReceived(this, id, msgData);
+		m_messageListener->OnProtocolMessageReceived(this, roi, msgData);
 }
 
 /**
@@ -727,32 +727,36 @@ bool MIDIProtocolProcessor::Stop()
 /**
  * Method to trigger sending of a message
  *
- * @param Id		The id of the object to send a message for
+ * @param roi		The id of the object to send a message for
  * @param msgData	The message payload and metadata
+ * @param externalId	An optional external id for identification of replies, etc. 
+ *						(unused in this protocolprocessor impl)
  */
-bool MIDIProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
+bool MIDIProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const int externalId)
 {
+	ignoreUnused(externalId);
+
 	// keep our MIDI specific value cache in sync with what is going on in the rest of the world first
-	GetValueCache().SetValue(RemoteObject(Id, msgData._addrVal), msgData);
+	GetValueCache().SetValue(RemoteObject(roi, msgData._addrVal), msgData);
 
 	// without valid output, we cannot send anything
 	if (!m_midiOutput)
 		return false;
 
 	// if we do not have a valid mapping for the remote object to be sent, we cannot send anything either
-	if (m_midiAssiMap.count(Id) <= 0)
+	if (m_midiAssiMap.count(roi) <= 0)
 		return false;
 
 	// Verify that we have not received any input for the given addressing in the last deaf time period.
 	// This avoids race conditions with external MIDI hw, e.g. hardware motorfaders, that otherwise might end up in a freezing state.
-	if ((Time::getMillisecondCounterHiRes() - m_addressedObjectOutputDeafStampMap[Id][msgData._addrVal]) < m_outputDeafTimeMs)
+	if ((Time::getMillisecondCounterHiRes() - m_addressedObjectOutputDeafStampMap[roi][msgData._addrVal]) < m_outputDeafTimeMs)
 		return false;
 
 	auto channel = static_cast<int>(msgData._addrVal._first);
 	auto record = static_cast<int>(msgData._addrVal._second);
 
 	// if the remote object to be sent uses mappings/records, but the protocol processor is configured to handle a differend recordId, we do not want to send midi for the object
-	if (ProcessingEngineConfig::IsRecordAddressingObject(Id) && (m_mappingAreaId != record))
+	if (ProcessingEngineConfig::IsRecordAddressingObject(roi) && (m_mappingAreaId != record))
 		return false;
 
 	// depending on remote object message data, derive the contained data values
@@ -777,7 +781,7 @@ bool MIDIProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, c
 			stringValue += static_cast<char*>(msgData._payload)[i];
 	}
 
-	auto midiAssi = m_midiAssiMap.at(Id);
+	auto midiAssi = m_midiAssiMap.at(roi);
 
 	auto assiCmdValue		= midiAssi.getCommandValue();
 	auto assiCmdRange		= midiAssi.getCommandRange();
@@ -787,11 +791,11 @@ bool MIDIProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, c
 	auto newMidiValue = 0;
 	if (floatValues.size() > 0)
 		newMidiValue = static_cast<int>(jmap(floatValues.at(0), 
-			ProcessingEngineConfig::GetRemoteObjectRange(Id).getStart(), ProcessingEngineConfig::GetRemoteObjectRange(Id).getEnd(), 
+			ProcessingEngineConfig::GetRemoteObjectRange(roi).getStart(), ProcessingEngineConfig::GetRemoteObjectRange(roi).getEnd(),
 			static_cast<float>(assiValRange.getStart()), static_cast<float>(assiValRange.getEnd())));
 	else if (intValues.size() > 0)
 		newMidiValue = jmap(intValues.at(0), 
-			static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(Id).getStart()), static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(Id).getEnd()), 
+			static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(roi).getStart()), static_cast<int>(ProcessingEngineConfig::GetRemoteObjectRange(roi).getEnd()),
 			assiValRange.getStart(), assiValRange.getEnd());
 
 	auto newMidiMessage = juce::MidiMessage();

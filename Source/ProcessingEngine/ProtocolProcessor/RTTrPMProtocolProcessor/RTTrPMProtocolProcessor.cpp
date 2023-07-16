@@ -192,12 +192,15 @@ bool RTTrPMProtocolProcessor::setStateXml(XmlElement* stateXml)
 /**
  * Method to trigger sending of a message
  *
- * @param Id		The id of the object to send a message for
+ * @param roi		The id of the object to send a message for
  * @param msgData	The message payload and metadata
+ * @param externalId	An optional external id for identification of replies, etc. 
+ *						(unused in this protocolprocessor impl)
  */
-bool RTTrPMProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
+bool RTTrPMProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const int externalId)
 {
-	ignoreUnused(Id);
+	ignoreUnused(externalId);
+	ignoreUnused(roi);
 	ignoreUnused(msgData);
 
 	// currently, RTTrPM Protocol implementation does not support sending data

@@ -56,6 +56,8 @@ typedef std::int8_t		RecordId;
 #define INVALID_IPADDRESS_VALUE String()
 #define INVALID_RATE_VALUE -1
 #define INVALID_PORT_VALUE -1
+#define INVALID_EXTID -1
+#define ASYNC_EXTID -2
 
 /**
  * Known Protocol Processor Types
@@ -63,7 +65,7 @@ typedef std::int8_t		RecordId;
 enum ProtocolType
 {
 	PT_Invalid = 0,			/**< Invalid protocol type value. */
-	PT_OCAProtocol,			/**< OCA protocol type value. */
+	PT_OCP1Protocol,			/**< OCA protocol type value. */
 	PT_OSCProtocol,			/**< OSC protocol type value. */
 	PT_MidiProtocol,		/**< MIDI protocol type value. */
 	PT_RTTrPMProtocol,		/**< Blacktrax RTTrPMotion protocol type value. */
@@ -516,8 +518,104 @@ struct RemoteObjectMessageData
 
 		return *this;
 	}
+	/**
+	 * Method to check if the internal data is empty.
+	 */
+	bool isDataEmpty() const
+	{
+		return (_payloadSize == 0 && _valCount == 0 && _payload == nullptr);
+	}
 
 	JUCE_LEAK_DETECTOR(RemoteObjectMessageData)
+};
+
+/**
+ * Dataset holding meta info on a remote object message
+ */
+struct RemoteObjectMessageMetaInfo
+{
+	enum MessageCategory
+	{
+		MC_None,
+		MC_UnsolicitedMessage,
+		MC_SetMessageAcknowledgement
+	};
+
+	MessageCategory	_Category;		/**< The message data category of the object. */
+	int				_ExternalId;	/**< An external identifier for the object. 
+									 * In case of category MC_SetMessageAcknowledgement 
+									 * this is the protocol id of the protocol that triggered thet SET.
+									 * -2 if no protocol but other means triggered the SET. */
+
+	/**
+	 * Constructor to initialize with invalid values
+	 */
+	RemoteObjectMessageMetaInfo()
+		:	_Category(MC_None),
+			_ExternalId(-1)
+	{
+	};
+	/**
+	 * Copy Constructor
+	 */
+	RemoteObjectMessageMetaInfo(const RemoteObjectMessageMetaInfo& rhs)
+	{
+		*this = rhs;
+	};
+	/**
+	 * Constructor to initialize with parameter values
+	 *
+	 * @param category		Message data category value to initialize with.
+	 * @param externalId	Message data external id value to initialize with.
+	 */
+	RemoteObjectMessageMetaInfo(MessageCategory category, int externalId)
+		:	_Category(category),
+			_ExternalId(externalId)
+	{
+	};
+	/**
+	 * Equality comparison operator overload
+	 */
+	bool operator==(const RemoteObjectMessageMetaInfo& rhs) const
+	{
+		return (_Category == rhs._Category && _ExternalId == rhs._ExternalId);
+	};
+	/**
+	 * Unequality comparison operator overload
+	 */
+	bool operator!=(const RemoteObjectMessageMetaInfo& rhs) const
+	{
+		return !(*this == rhs);
+	}
+	/**
+	 * Lesser than comparison operator overload
+	 */
+	bool operator<(const RemoteObjectMessageMetaInfo& rhs) const
+	{
+		return (!(*this > rhs) && (*this != rhs));
+	}
+	/**
+	 * Greater than comparison operator overload
+	 */
+	bool operator>(const RemoteObjectMessageMetaInfo& rhs) const
+	{
+		return (_Category > rhs._Category) || ((_Category == rhs._Category) && (_ExternalId > rhs._ExternalId));
+	}
+	/**
+	 * Assignment operator
+	 */
+	RemoteObjectMessageMetaInfo& operator=(const RemoteObjectMessageMetaInfo& rhs)
+	{
+		if (this != &rhs)
+		{
+			_Category = rhs._Category;
+			_ExternalId = rhs._ExternalId;
+		}
+
+		return *this;
+	}
+
+	JUCE_LEAK_DETECTOR(RemoteObjectMessageMetaInfo)
 };
 
 /**

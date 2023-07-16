@@ -62,10 +62,13 @@ public:
 		virtual ~Listener() {};
 
 		/**
-		 * Method to be overloaded by ancestors to act as an interface
-		 * for handling of received message data
+		 * Method to be overloaded by derived implementations to act
+		 * as an interface for handling of received message data
 		 */
-		virtual void OnProtocolMessageReceived(ProtocolProcessorBase* receiver, RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData) = 0;
+		virtual void OnProtocolMessageReceived(ProtocolProcessorBase* receiver, 
+			const RemoteObjectIdentifier roi, 
+			const RemoteObjectMessageData& msgData, 
+			const RemoteObjectMessageMetaInfo& msgMeta = RemoteObjectMessageMetaInfo(RemoteObjectMessageMetaInfo::MC_None, -1)) = 0;
 	};
 
 public:
@@ -80,7 +83,7 @@ public:
 	ProtocolRole GetRole();
 
 	//==============================================================================
-	virtual bool SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData) = 0;
+	virtual bool SendRemoteObjectMessage(const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const int externalId = -1) = 0;
 
 	virtual bool Start() = 0;
 	virtual bool Stop() = 0;
@@ -106,6 +109,10 @@ public:
 	virtual bool setStateXml(XmlElement* stateXml) override;								
 
 protected:
+	//==============================================================================
+	const std::vector<RemoteObject>& GetActiveRemoteObjects();
+
+	//==============================================================================
 	Listener				*m_messageListener;				/**< The parent node object. Needed for e.g. triggering receive notifications. */
 	ProtocolType			m_type;							/**< Processor type regarding the protocol being handled */
 	NodeId					m_parentNodeId;					/**< The id of the objects' parent node. */
@@ -114,7 +121,7 @@ protected:
 	bool					m_IsRunning;					/**< Bool indication if the processor is successfully running. */
 
 private:
-	void timerThreadCallback() override;
+	virtual void timerThreadCallback() override;
 
 	std::vector<RemoteObject>	m_mutedRemoteObjects;			/**< List of remote objects to be muted. */
 	std::vector<RemoteObject>	m_activeRemoteObjects;			/**< List of remote objects to be activly handled. */

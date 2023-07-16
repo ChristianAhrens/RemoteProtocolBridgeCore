@@ -27,7 +27,7 @@
 // **************************************************************************************
 
 /**
- * @fn void ObjectDataHandling_Abstract::OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier Id, RemoteObjectMessageData& msgData)
+ * @fn void ObjectDataHandling_Abstract::OnReceivedMessageFromProtocol(ProtocolId PId, RemoteObjectIdentifier roi, RemoteObjectMessageData& msgData)
  * @param PId	The protocol id that a message was received on
  * @param Id	The id of the remote object that was received
  * @param msgData	The message that was received
@@ -42,11 +42,12 @@
 ObjectDataHandling_Abstract::ObjectDataHandling_Abstract(ProcessingEngineNode* parentNode)
 	: m_parentNode(parentNode),
       m_mode(ObjectHandlingMode::OHM_Invalid),
-      m_parentNodeId(0),
-	  m_protocolReactionTimeout(1000)
+      m_parentNodeId(0)
 {	
 	if (parentNode)
 		m_parentNodeId = parentNode->GetId();
+
+	SetProtocolReactionTimeout(5100);
 }
 
 /**
@@ -92,7 +93,7 @@ bool ObjectDataHandling_Abstract::setStateXml(XmlElement* stateXml)
 		}
 	}
 	
-	startTimer(static_cast<int>(m_protocolReactionTimeout));
+	startTimer(static_cast<int>(GetProtocolReactionTimeout()));
 
 	return true;
 }
@@ -298,7 +299,7 @@ void ObjectDataHandling_Abstract::timerCallback()
 		if (m_protocolReactionTSMap.count(id) <= 0)
 			continue;
 		// if the protocol has not received data in more than what is specified in timeouttime, set it to down
-		else if (Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(id) > m_protocolReactionTimeout)
+		else if (Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(id) > GetProtocolReactionTimeout())
 			SetChangedProtocolState(id, OHS_Protocol_Down);
 	}
 	for (auto const& id : GetProtocolBIds())
@@ -311,7 +312,7 @@ void ObjectDataHandling_Abstract::timerCallback()
 		if (m_protocolReactionTSMap.count(id) <= 0)
 			continue;
 		// if the protocol has not received data in more than what is specified in timeouttime, set it to down
-		else if (Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(id) > m_protocolReactionTimeout)
+		else if (Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(id) > GetProtocolReactionTimeout())
 			SetChangedProtocolState(id, OHS_Protocol_Down);
 	}
 }
@@ -329,7 +330,7 @@ void ObjectDataHandling_Abstract::UpdateOnlineState(ProtocolId id)
 	if (m_protocolReactionTSMap.count(id) <= 0)
 		SetChangedProtocolState(id, OHS_Protocol_Up);
 	// if the protocol is receiving data the first time after 1s of silence, set its status to UP
-	else if (Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(id) <= m_protocolReactionTimeout)
+	else if (Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(id) <= GetProtocolReactionTimeout())
 		SetChangedProtocolState(id, OHS_Protocol_Up);
 
 	m_protocolReactionTSMap[id] = Time::getMillisecondCounterHiRes();

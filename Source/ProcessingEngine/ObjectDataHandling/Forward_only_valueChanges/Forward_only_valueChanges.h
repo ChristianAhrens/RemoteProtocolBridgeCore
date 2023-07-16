@@ -38,16 +38,16 @@ public:
 
 	bool setStateXml(XmlElement* stateXml) override;
 
-	bool OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData) override;
+	bool OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta) override;
 
 protected:
-	bool IsChangedDataValue(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectAddressing& roAddr, const RemoteObjectMessageData& msgData, bool setAsNewCurrentData = true);
-    void SetCurrentValue(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectAddressing& roAddr, const RemoteObjectMessageData& msgData);
+	bool IsChangedDataValue(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectAddressing& roAddr, const RemoteObjectMessageData& msgData, bool setAsNewCurrentData = true);
+    void SetCurrentValue(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectAddressing& roAddr, const RemoteObjectMessageData& msgData);
 
 	float GetPrecision();
 	void SetPrecision(float precision);
 
-	bool IsCachedValuesQuery(const RemoteObjectIdentifier Id);
+	bool IsCachedValuesQuery(const RemoteObjectIdentifier roi);
 	bool SendValueCacheToProtocol(const ProtocolId PId);
 	
 private:

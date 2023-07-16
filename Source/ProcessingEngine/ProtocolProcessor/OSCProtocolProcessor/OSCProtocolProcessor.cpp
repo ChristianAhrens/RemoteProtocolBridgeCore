@@ -169,12 +169,16 @@ bool OSCProtocolProcessor::connectSenderIfRequired()
 /**
  * Method to trigger sending of a message
  *
- * @param Id		The id of the object to send a message for
+ * @param roi		The id of the object to send a message for
  * @param msgData	The message payload and metadata
+ * @param externalId	An optional external id for identification of replies, etc. 
+ *						(unused in this protocolprocessor impl)
  */
-bool OSCProtocolProcessor::SendRemoteObjectMessage(RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
+bool OSCProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const int externalId)
 {
-	String addressString = GetRemoteObjectString(Id);
+	ignoreUnused(externalId);
+
+	String addressString = GetRemoteObjectString(roi);
 	if (addressString.isEmpty())
 		return false;
 
@@ -533,12 +537,12 @@ void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const S
 /**
  * static method to get OSC object specific ObjectName string
  *
- * @param id	The object id to get the OSC specific object name
+ * @param roi	The object id to get the OSC specific object name
  * @return		The OSC specific object name
  */
-String OSCProtocolProcessor::GetRemoteObjectString(RemoteObjectIdentifier id)
+String OSCProtocolProcessor::GetRemoteObjectString(const RemoteObjectIdentifier roi)
 {
-	switch (id)
+	switch (roi)
 	{
 	case ROI_HeartbeatPong:
 		return "/pong";
@@ -712,13 +716,13 @@ void OSCProtocolProcessor::SetHostPort(std::int32_t hostPort)
  * Proxy helper method to process the given objectId and forward the call to the appropriate
  * int/float/string method to have the remote object message data struct filled with data from an osc message.
  * @param	messageInput	The osc input message to read from.
- * @param	objectId		The object id that defines what data can be read from messageInput.
+ * @param	roi		The object id that defines what data can be read from messageInput.
  * @param	newMessageData	The message data struct to fill data into.
  * @return	True on success, false on failure.
  */
-bool OSCProtocolProcessor::createMessageData(const OSCMessage& messageInput, const RemoteObjectIdentifier& objectId, RemoteObjectMessageData& newMessageData)
+bool OSCProtocolProcessor::createMessageData(const OSCMessage& messageInput, const RemoteObjectIdentifier roi, RemoteObjectMessageData& newMessageData)
 {
-	switch (objectId)
+	switch (roi)
 	{
 		case ROI_Error_GnrlErr:
 		case ROI_MatrixInput_Select:

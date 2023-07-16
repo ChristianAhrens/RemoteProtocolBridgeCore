@@ -51,7 +51,7 @@ public:
 	bool Stop() override;
 
 	//==============================================================================
-	bool SendRemoteObjectMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData) override;
+	bool SendRemoteObjectMessage(const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const int externalId = -1) override;
 
 private:
 	// This is used to dispach an incoming midi message to the message thread
@@ -75,7 +75,7 @@ private:
 	void processMidiMessage(const juce::MidiMessage& midiMessage, const String& sourceName);
 	bool activateMidiInput(const String& midiInputIdentifier);
 	bool activateMidiOutput(const String& midiOutputIdentifier);
-	void forwardAndDeafProofMessage(RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData);
+	void forwardAndDeafProofMessage(RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData);
 
 	MappingAreaId								m_mappingAreaId{ MAI_Invalid };	/**< The DS100 mapping area to be used when converting incoming coords into relative messages. If this is MAI_Invalid, absolute messages will be generated. */
 

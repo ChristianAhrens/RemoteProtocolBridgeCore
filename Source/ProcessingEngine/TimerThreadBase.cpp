@@ -95,7 +95,8 @@ void TimerThreadBase::run()
             remainingInterval = 0;
         }
         auto remainingIntervalMs = static_cast<int>(0.001f * remainingInterval);
-        if (remainingIntervalMs >= m_callbackInterval)
+        auto callbackIntervalus = static_cast<int>(1000 * m_callbackInterval);
+        if (remainingInterval >= callbackIntervalus)
         {
             // we are in an undefined state, must not happen!
             jassertfalse;

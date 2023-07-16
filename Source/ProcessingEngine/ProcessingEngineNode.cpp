@@ -49,7 +49,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ObjectDataHandling/A1active_withValFilter/A1active_withValFilter.h"
 #include "ObjectDataHandling/A2active_withValFilter/A2active_withValFilter.h"
 
-#include "ProtocolProcessor/OCAProtocolProcessor/OCAProtocolProcessor.h"
+#include "ProtocolProcessor/OCP1ProtocolProcessor/OCP1ProtocolProcessor.h"
 #include "ProtocolProcessor/OSCProtocolProcessor/OSCProtocolProcessor.h"
 #include "ProtocolProcessor/RTTrPMProtocolProcessor/RTTrPMProtocolProcessor.h"
 #include "ProtocolProcessor/MIDIProtocolProcessor/MIDIProtocolProcessor.h"
@@ -309,6 +309,7 @@ bool ProcessingEngineNode::setStateXml(XmlElement* stateXml)
 				protocol->setStateXml(protocolXmlElement);
 				if (protocol->GetRole() == ProtocolRole::PR_A)
 				{
+					m_typeAProtocols.erase(protocolId);
 					m_typeAProtocols.insert(std::make_pair(protocolId, std::move(protocol)));
 
 					// add the protocolnodetype A to datahandlings' list of ProtocolIds for A protocols
@@ -319,6 +320,7 @@ bool ProcessingEngineNode::setStateXml(XmlElement* stateXml)
 				}
 				else if (protocol->GetRole() == ProtocolRole::PR_B)
 				{
+					m_typeBProtocols.erase(protocolId);
 					m_typeBProtocols.insert(std::make_pair(protocolId, std::move(protocol)));
 
 					// add the protocolnodetype B to datahandlings' list of ProtocolIds for B protocols
@@ -392,8 +394,8 @@ ProtocolProcessorBase *ProcessingEngineNode::CreateProtocolProcessor(ProtocolTyp
 	{
 		case PT_OSCProtocol:
 			return new OSCProtocolProcessor(m_nodeId, listenerPortNumber);
-		case PT_OCAProtocol:
-			return new OCAProtocolProcessor(m_nodeId);
+		case PT_OCP1Protocol:
+			return new OCP1ProtocolProcessor(m_nodeId);
 		case PT_RTTrPMProtocol:
 			return new RTTrPMProtocolProcessor(m_nodeId, listenerPortNumber);
 		case PT_MidiProtocol:
@@ -464,27 +466,30 @@ ObjectDataHandling_Abstract* ProcessingEngineNode::GetObjectDataHandling()
  * This is achieved by the member processing protocol objects accessing their parent with this handling method.
  *
  * @param receiver	The protocol processing object that has received the message
- * @param id		The message object id that corresponds to the received message
+ * @param roi		The message object id that corresponds to the received message
  * @param msgData	The actual message data that was received
+ * @param msgMeta	Meta information on the message data that was received
  */
-void ProcessingEngineNode::OnProtocolMessageReceived(ProtocolProcessorBase* receiver, RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData)
+void ProcessingEngineNode::OnProtocolMessageReceived(ProtocolProcessorBase* receiver, const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta)
 {
-	m_messageQueue.enqueueMessage(InterProtocolMessage(this->GetId(), receiver->GetId(), receiver->GetType(), id, msgData));
+	m_messageQueue.enqueueMessage(InterProtocolMessage(this->GetId(), receiver->GetId(), receiver->GetType(), roi, msgData, msgMeta));
 }
 
 /**
  * Method to forward a message to member protocol with given id
  *
  * @param PId		The id of the protocol to send the RemoteObject to
- * @param Id		The message object id that corresponds to the message to be sent
+ * @param roi		The message object id that corresponds to the message to be sent
  * @param msgData	The actual message data that was received
+ * @param externalId	An optional integer id that might be used by protocol implementations to track IO data.
+ * @return	True on success, false if a failure occurred
  */
-bool ProcessingEngineNode::SendMessageTo(ProtocolId PId, RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData) const
+bool ProcessingEngineNode::SendMessageTo(ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const int externalId) const
 {
 	if (m_typeAProtocols.count(PId))
-		return m_typeAProtocols.at(PId)->SendRemoteObjectMessage(Id, msgData);
+		return m_typeAProtocols.at(PId)->SendRemoteObjectMessage(roi, msgData, externalId);
 	else if (m_typeBProtocols.count(PId))
-		return m_typeBProtocols.at(PId)->SendRemoteObjectMessage(Id, msgData);
+		return m_typeBProtocols.at(PId)->SendRemoteObjectMessage(roi, msgData, externalId);
 	else
 		return false;
 }
@@ -520,13 +525,17 @@ void ProcessingEngineNode::run()
 		if (m_messageQueue.waitForMessage(25) && m_messageQueue.dequeueMessage(protocolMessage))
 		{
 			// send the message data to any listeners - asynchronous
-			postMessage(new NodeCallbackMessage(protocolMessage));
+			if (protocolMessage._msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement // if either we do not deal with a reply of SET data
+				|| protocolMessage._msgMeta._ExternalId != ASYNC_EXTID)										// or the SET data was not initiated by async listeners but protocols instead
+			{
+				postMessage(new NodeCallbackMessage(protocolMessage));
+			}
 
 			// perform internal bridging forwarding of message - synchronous
 			auto isBridgingObject = (protocolMessage._Id < ROI_BridgingMAX);
 			auto isOHMCtrlObject = (protocolMessage._Id == ROI_RemoteProtocolBridge_GetAllKnownValues);
 			if (m_dataHandling && (isBridgingObject || isOHMCtrlObject))
-				m_dataHandling->OnReceivedMessageFromProtocol(protocolMessage._senderProtocolId, protocolMessage._Id, protocolMessage._msgData);
+				m_dataHandling->OnReceivedMessageFromProtocol(protocolMessage._senderProtocolId, protocolMessage._Id, protocolMessage._msgData, protocolMessage._msgMeta);
 		}
 	}
 

@@ -115,24 +115,27 @@ bool DS100_DeviceSimulation::setStateXml(XmlElement* stateXml)
  * Method to be called by parent node on receiving data from node protocol with given id
  *
  * @param PId		The id of the protocol that received the data
- * @param Id		The object id to send a message for
+ * @param roi		The object id to send a message for
  * @param msgData	The actual message value/content data
+ * @param msgMeta	The meta information on the message data that was received
  * @return	True if successful sent/forwarded, false if not
  */
-bool DS100_DeviceSimulation::OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
+bool DS100_DeviceSimulation::OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta)
 {
+	ignoreUnused(msgMeta);
+
 	auto parentNode = ObjectDataHandling_Abstract::GetParentNode();
 	if (parentNode)
 	{
 		UpdateOnlineState(PId);
 
-		if (IsDataRequestPollMessage(Id, msgData))
+		if (IsDataRequestPollMessage(roi, msgData))
 		{
-			return ReplyToDataRequest(PId, Id, msgData._addrVal);
+			return ReplyToDataRequest(PId, roi, msgData._addrVal);
 		}
 		else
 		{
-			SetDataValue(PId, Id, msgData);
+			SetDataValue(PId, roi, msgData);
 
 			auto protocolAIter = std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId);
 			if (protocolAIter != GetProtocolAIds().end())
@@ -140,7 +143,7 @@ bool DS100_DeviceSimulation::OnReceivedMessageFromProtocol(const ProtocolId PId,
 				// Send to all typeB protocols
 				auto sendSuccess = true;
 				for (auto const protocolB : GetProtocolBIds())
-					sendSuccess = parentNode->SendMessageTo(protocolB, Id, msgData) && sendSuccess;
+					sendSuccess = parentNode->SendMessageTo(protocolB, roi, msgData, ASYNC_EXTID) && sendSuccess;
 
 				return sendSuccess;
 
@@ -151,7 +154,7 @@ bool DS100_DeviceSimulation::OnReceivedMessageFromProtocol(const ProtocolId PId,
 				// Send to all typeA protocols
 				auto sendSuccess = true;
 				for (auto const protocolA : GetProtocolAIds())
-					sendSuccess = parentNode->SendMessageTo(protocolA, Id, msgData) && sendSuccess;
+					sendSuccess = parentNode->SendMessageTo(protocolA, roi, msgData, ASYNC_EXTID) && sendSuccess;
 
 				return sendSuccess;
 			}
@@ -165,12 +168,12 @@ bool DS100_DeviceSimulation::OnReceivedMessageFromProtocol(const ProtocolId PId,
 
 /**
  * Helper to identify remote objects that do not change their value after initially being set on startup.
- * @param	Id	The remote object to check.
+ * @param	roi	The remote object to check.
  * @return	True if the given remote object does not change its value after initialization.
  */
-bool DS100_DeviceSimulation::IsStaticValueRemoteObject(const RemoteObjectIdentifier Id)
+bool DS100_DeviceSimulation::IsStaticValueRemoteObject(const RemoteObjectIdentifier roi)
 {
-	switch (Id)
+	switch (roi)
 	{
 	case ROI_MatrixInput_ChannelName:
 	case ROI_MatrixOutput_ChannelName:
@@ -185,14 +188,14 @@ bool DS100_DeviceSimulation::IsStaticValueRemoteObject(const RemoteObjectIdentif
  * Helper method to detect if incoming message is an osc message adressing a valid object without
  * actual data value (meaning a reply with the current data value of the object is expected).
  *
- * @param Id	The ROI that was received and has to be checked
+ * @param roi	The ROI that was received and has to be checked
  * @param msgData	The received message data that has to be checked
  * @return True if the object is valid and no data is contained, false if not
  */
-bool DS100_DeviceSimulation::IsDataRequestPollMessage(const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
+bool DS100_DeviceSimulation::IsDataRequestPollMessage(const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData)
 {
 	bool remoteObjectRequiresReply = false;
-	switch (Id)
+	switch (roi)
 	{
 	case ROI_HeartbeatPing:
 	case ROI_CoordinateMapping_SourcePosition_X:
@@ -314,11 +317,11 @@ void DS100_DeviceSimulation::PrintDataInfo(const String& actionName, const std::
  * Helper method to reply the correct current simulated data to a received request.
  *
  * @param PId		The id of the protocol that received the request and needs to be sent back the current value
- * @param Id		The ROI that was received and has to be checked
+ * @param roi		The ROI that was received and has to be checked
  * @param adressing	The adressing (ch+rec) that was queried and requires answering
  * @return True if the requested reply was successful, false if not
  */
-bool DS100_DeviceSimulation::ReplyToDataRequest(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectAddressing adressing)
+bool DS100_DeviceSimulation::ReplyToDataRequest(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectAddressing adressing)
 {
 	const ProcessingEngineNode* parentNode = ObjectDataHandling_Abstract::GetParentNode();
 	if (!parentNode)
@@ -326,12 +329,12 @@ bool DS100_DeviceSimulation::ReplyToDataRequest(const ProtocolId PId, const Remo
 
 	ScopedLock l(m_currentValLock);
 	
-	if (m_currentValues.count(Id) == 0)
+	if (m_currentValues.count(roi) == 0)
 		return false;
-	if (m_currentValues.at(Id).count(adressing) == 0)
+	if (m_currentValues.at(roi).count(adressing) == 0)
 		return false;
 
-	auto dataReplyId = Id;
+	auto dataReplyId = roi;
 	auto& dataReplyValue = m_currentValues.at(dataReplyId).at(adressing);
 
 	switch (dataReplyId)
@@ -557,10 +560,10 @@ void DS100_DeviceSimulation::InitDataValues()
  * a new poll request will trigger an answer with the value set in this method.)
  *
  * @param PId	The id of the protocol that received the message.
- * @param Id	The ROI that was received
+ * @param roi	The ROI that was received
  * @param msgData	The received message data from which the value shall be taken
  */
-void DS100_DeviceSimulation::SetDataValue(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData)
+void DS100_DeviceSimulation::SetDataValue(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData)
 {
 	ignoreUnused(PId);
 
@@ -569,7 +572,7 @@ void DS100_DeviceSimulation::SetDataValue(const ProtocolId PId, const RemoteObje
 	ScopedLock l(m_currentValLock);
 
 	// special handling for some remote objects - e.g. incoming x value shall also be inserted as new value to combined xy remote object
-	switch (Id)
+	switch (roi)
 	{
 	case ROI_CoordinateMapping_SourcePosition_X:
 		// we require the xy object to already be present in current values for the ch/rec addressing to be able to set the single x value
@@ -633,20 +636,20 @@ void DS100_DeviceSimulation::SetDataValue(const ProtocolId PId, const RemoteObje
 	}
 
 	// set the data for the actual incoming remote object
-	if (m_currentValues.count(Id) > 0)
+	if (m_currentValues.count(roi) > 0)
 	{
 		// if the data entry does not exist, insert the incoming data as placeholder
-		if (m_currentValues.at(Id).count(msgData._addrVal) <= 0)
-			m_currentValues.at(Id).insert(std::make_pair(msgData._addrVal, msgData));
+		if (m_currentValues.at(roi).count(msgData._addrVal) <= 0)
+			m_currentValues.at(roi).insert(std::make_pair(msgData._addrVal, msgData));
 
 		// if the entry existed or we just inserted the incoming data, perform a fully copy incl. payload anyways
-		m_currentValues.at(Id).at(msgData._addrVal).payloadCopy(newMsgData);
+		m_currentValues.at(roi).at(msgData._addrVal).payloadCopy(newMsgData);
 	}
 	else
 	{
-		m_currentValues.insert(std::pair<RemoteObjectIdentifier, std::map<RemoteObjectAddressing, RemoteObjectMessageData>>(Id, std::map<RemoteObjectAddressing, RemoteObjectMessageData>()));
-		m_currentValues.at(Id).insert(std::make_pair(msgData._addrVal, newMsgData));
-		m_currentValues.at(Id).at(msgData._addrVal).payloadCopy(newMsgData);
+		m_currentValues.insert(std::pair<RemoteObjectIdentifier, std::map<RemoteObjectAddressing, RemoteObjectMessageData>>(roi, std::map<RemoteObjectAddressing, RemoteObjectMessageData>()));
+		m_currentValues.at(roi).insert(std::make_pair(msgData._addrVal, newMsgData));
+		m_currentValues.at(roi).at(msgData._addrVal).payloadCopy(newMsgData);
 	}
 
 	// notify all registered listeners

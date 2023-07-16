@@ -77,15 +77,17 @@ public:
 		 * @param nodeId				The node id to initialize the member with.
 		 * @param senderProtocolId		The sender protocol id to initialize the member with.
 		 * @param senderProtocolType	The sender protocol type to initialize the member with.
-		 * @param Id					The remote object id to initialize the member with.
+		 * @param roi					The remote object id to initialize the member with.
 		 * @param msgData				The message data to initialize the member with.
+		 * @param msgMeta				The message metadata to initialize the member with.
 		 */
-		InterProtocolMessage(NodeId nodeId, ProtocolId senderProtocolId, ProtocolType senderProtocolType, RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData) :
+		InterProtocolMessage(NodeId nodeId, ProtocolId senderProtocolId, ProtocolType senderProtocolType, RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta) :
 			_nodeId(nodeId),
 			_senderProtocolId(senderProtocolId),
 			_senderProtocolType(senderProtocolType),
-			_Id(Id),
-			_msgData(msgData)
+			_Id(roi),
+			_msgData(msgData),
+			_msgMeta(msgMeta)
 		{
 		}
 
@@ -95,10 +97,12 @@ public:
 		 * @param senderProtocolId		The sender protocol id to initialize the member with.
 		 * @param Id					The remote object id to initialize the member with.
 		 * @param msgData				The message data to initialize the member with.
+		 * @param msgMeta				The message metadata to initialize the member with.
 		 */
-		InterProtocolMessage(ProtocolId senderProtocolId, RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData) :
+		InterProtocolMessage(ProtocolId senderProtocolId, RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta) :
 			_senderProtocolId(senderProtocolId),
-			_Id(Id)
+			_Id(roi),
+			_msgMeta(msgMeta)
 		{
 			_msgData.payloadCopy(msgData);
 		}
@@ -120,16 +124,18 @@ public:
 				_senderProtocolType = rhs._senderProtocolType;
 				_Id = rhs._Id;
 				_msgData.payloadCopy(rhs._msgData);
+				_msgMeta = rhs._msgMeta;
 			}
 
 			return *this;
 		}
 
-		NodeId						_nodeId{ static_cast<NodeId>(INVALID_ADDRESS_VALUE) };
-		ProtocolId					_senderProtocolId{ static_cast<ProtocolId>(INVALID_ADDRESS_VALUE) };
-		ProtocolType				_senderProtocolType{ PT_Invalid };
-		RemoteObjectIdentifier		_Id{ ROI_Invalid };
-		RemoteObjectMessageData		_msgData;
+		NodeId							_nodeId{ static_cast<NodeId>(INVALID_ADDRESS_VALUE) };
+		ProtocolId						_senderProtocolId{ static_cast<ProtocolId>(INVALID_ADDRESS_VALUE) };
+		ProtocolType					_senderProtocolType{ PT_Invalid };
+		RemoteObjectIdentifier			_Id{ ROI_Invalid };
+		RemoteObjectMessageData			_msgData;
+		RemoteObjectMessageMetaInfo	_msgMeta;
 	};
 
 	/**
@@ -178,7 +184,7 @@ public:
 	NodeId GetId();
 	Thread::ThreadID GetNodeThreadId();
 
-	bool SendMessageTo(ProtocolId PId, RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData) const;
+	bool SendMessageTo(ProtocolId PId, RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const int externalId = INVALID_EXTID) const;
 
 	bool Start();
 	bool Stop();
@@ -189,7 +195,7 @@ public:
 	virtual bool setStateXml(XmlElement* stateXml) override;
 
 	//==============================================================================
-	void OnProtocolMessageReceived(ProtocolProcessorBase* receiver, RemoteObjectIdentifier id, const RemoteObjectMessageData& msgData) override;
+	void OnProtocolMessageReceived(ProtocolProcessorBase* receiver, RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta = RemoteObjectMessageMetaInfo(RemoteObjectMessageMetaInfo::MC_None, -1)) override;
 
 	//==============================================================================
 	void handleMessage(const Message& msg) override;

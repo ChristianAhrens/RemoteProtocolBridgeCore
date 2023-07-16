@@ -104,7 +104,7 @@ public:
 	bool setStateXml(XmlElement* stateXml) override;
 
 	//==============================================================================
-	bool OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData) override;
+	bool OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta) override;
 
 	//==============================================================================
 	void timerThreadCallback() override;
@@ -115,12 +115,12 @@ public:
 	void notifyListeners();
 
 private:
-	bool IsStaticValueRemoteObject(const RemoteObjectIdentifier Id);
-	bool IsDataRequestPollMessage(const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData);
-	bool ReplyToDataRequest(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectAddressing adressing);
+	bool IsStaticValueRemoteObject(const RemoteObjectIdentifier roi);
+	bool IsDataRequestPollMessage(const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData);
+	bool ReplyToDataRequest(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectAddressing adressing);
 
 	void InitDataValues();
-	void SetDataValue(const ProtocolId PId, const RemoteObjectIdentifier Id, const RemoteObjectMessageData& msgData);
+	void SetDataValue(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData);
 	void UpdateDataValues();
 
 	void PrintDataInfo(const String& actionName, const std::pair<RemoteObjectIdentifier, RemoteObjectMessageData>& idDataKV);
