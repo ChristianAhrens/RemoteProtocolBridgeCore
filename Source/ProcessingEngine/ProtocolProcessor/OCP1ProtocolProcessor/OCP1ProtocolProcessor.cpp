@@ -639,6 +639,30 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
             AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
         }
         break;
+    case ROI_Scene_Recall:
+        {
+            if (msgData._valCount != 2 || msgData._payloadSize != msgData._valCount * sizeof(int))
+                return false;
+
+            auto sceneIndexMajor = static_cast<int*>(msgData._payload)[0];
+            auto sceneIndexMinor = static_cast<int*>(msgData._payload)[1];
+            auto stringValue = juce::String(sceneIndexMajor) + "." + juce::String(sceneIndexMinor);
+
+            auto modMsgData = RemoteObjectMessageData(
+                msgData._addrVal, 
+                ROVT_STRING, 
+                static_cast<std::uint16_t>(stringValue.length()), 
+                stringValue.getCharPointer().getAddress(), 
+                static_cast<std::uint32_t>(stringValue.length() * sizeof(char)));
+
+            // Scene recall is redirected to SceneIndex
+            GetValueCache().SetValue(RemoteObject(ROI_Scene_SceneIndex, RemoteObjectAddressing(channel, record)), modMsgData);
+
+            auto objDef = NanoOcp1::DS100::dbOcaObjectDef_Scene_SceneIndex();
+            sendSuccess = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef.SetValueCommand(stringValue), handle).GetMemoryBlock());
+            AddPendingSetValueHandle(handle, objDef.m_targetOno, externalId);
+        }
+        break;
     case ROI_Scene_SceneIndex:
         {
             if (msgData._valCount < 1 || msgData._payloadSize != msgData._valCount * sizeof(char))
