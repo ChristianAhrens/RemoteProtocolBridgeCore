@@ -1554,6 +1554,8 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
     case ROI_MatrixOutput_Gain:
     case ROI_MatrixOutput_LevelMeterPreMute:
     case ROI_MatrixOutput_LevelMeterPostMute:
+    case ROI_MatrixSettings_ReverbPredelayFactor:
+    case ROI_MatrixSettings_ReverbRearLevel:
         {
             *newFloatValue = NanoOcp1::DataToFloat(msgObj->GetParameterData());
 
@@ -1568,8 +1570,6 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
     case ROI_Settings_DeviceName:
     case ROI_MatrixInput_ChannelName:
     case ROI_MatrixOutput_ChannelName:
-    case ROI_MatrixSettings_ReverbPredelayFactor:
-    case ROI_MatrixSettings_ReverbRearLevel:
     case ROI_Scene_SceneIndex:
     case ROI_Scene_SceneName:
     case ROI_Scene_SceneComment:
