@@ -87,28 +87,46 @@ bool Forward_only_valueChanges::OnReceivedMessageFromProtocol(const ProtocolId P
 	if (IsCachedValuesQuery(roi))
 		return SendValueCacheToProtocol(PId);
 
+	// Check the incoming value against the currently cached value for the incoming protocol.
+	// The currently cached value is taken from one of the two caches, A or B, and if a change 
+	// is detected, the value in that cache is updated accordingly. 
+	// BEWARE it is not updated in the complementary other cache - that is/has to be done after successful sending
 	if (!IsChangedDataValue(PId, roi, msgData._addrVal, msgData))
 		return false;
 
 	if (std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) != GetProtocolAIds().end())
 	{
 		// Send to all typeB protocols
-		auto sendSuccess = true;
+		auto overallSendSuccess = true;
 		for (auto const& protocolB : GetProtocolBIds())
+		{
 			if (msgMeta._ExternalId != protocolB || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
-				sendSuccess = parentNode->SendMessageTo(protocolB, roi, msgData) && sendSuccess;
+			{
+				auto sendSuccess = parentNode->SendMessageTo(protocolB, roi, msgData);
+				if (sendSuccess)
+					SetCurrentValue(protocolB, roi, msgData._addrVal, msgData); // set the updated value as current for the complementary cache as well
+				overallSendSuccess = sendSuccess && overallSendSuccess;
+			}
+		}
 
-		return sendSuccess;
+		return overallSendSuccess;
 	}
 	else if (std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) != GetProtocolBIds().end())
 	{
 		// Send to all typeA protocols
-		auto sendSuccess = true;
+		auto overallSendSuccess = true;
 		for (auto const& protocolA : GetProtocolAIds())
+		{
 			if (msgMeta._ExternalId != protocolA || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
-				sendSuccess = parentNode->SendMessageTo(protocolA, roi, msgData) && sendSuccess;
+			{
+				auto sendSuccess = parentNode->SendMessageTo(protocolA, roi, msgData);
+				if (sendSuccess)
+					SetCurrentValue(protocolA, roi, msgData._addrVal, msgData); // set the updated value as current for the complementary cache as well
+				overallSendSuccess = sendSuccess && overallSendSuccess;
+			}
+		}
 
-		return sendSuccess;
+		return overallSendSuccess;
 	}
 	else
 		return false;
@@ -330,7 +348,7 @@ bool Forward_only_valueChanges::SendValueCacheToProtocol(const ProtocolId PId)
     else if (isProtocolB)
     {
         auto sendSuccess = true;
-        for (auto const& cachedValue : m_currentAValues)
+        for (auto const& cachedValue : m_currentBValues)
             for (auto const& cachedValueObject : cachedValue.second)
                 sendSuccess = sendSuccess && parentNode->SendMessageTo(PId, cachedValue.first, cachedValueObject.second);
         return sendSuccess;
