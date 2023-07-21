@@ -178,7 +178,16 @@ enum RemoteObjectIdentifier
 	ROI_Scene_Previous,
 	ROI_Scene_Next,
 	ROI_Scene_Recall,
-	ROI_BridgingMAX,								/**< Value to mark max enum iteration scope. ROIs greater than this can/will not be bridged.*/
+	ROI_CoordinateMappingSettings_P1real,
+	ROI_CoordinateMappingSettings_P2real,
+	ROI_CoordinateMappingSettings_P3real,
+	ROI_CoordinateMappingSettings_P4real,
+	ROI_CoordinateMappingSettings_P1virtual,
+	ROI_CoordinateMappingSettings_P3virtual,
+	ROI_CoordinateMappingSettings_Flip,
+	ROI_CoordinateMappingSettings_Name,
+	ROI_Positioning_SpeakerPosition,			// 6-float loudspeaker position (x, y, z, hor, vert, rot)
+	ROI_BridgingMAX,							/**< Value to mark max enum iteration scope. ROIs greater than this can/will not be bridged.*/
 	ROI_Device_Clear,
 	ROI_RemoteProtocolBridge_SoundObjectSelect,
 	ROI_RemoteProtocolBridge_UIElementIndexSelect,

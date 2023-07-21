@@ -267,8 +267,8 @@ bool OSCProtocolProcessor::SendAddressedMessage(const String& addressString, con
 		break;
 	case ROVT_FLOAT:
 		{
-		jassert(msgData._valCount < 4); // max known d&b OSC msg val cnt would be positioning xyz
-		float multivalues[3];
+		jassert(msgData._valCount <= 6); // max known d&b OSC msg val cnt would be positioning xyzhvr
+		float multivalues[6];
 
 		for (int i = 0; i < msgData._valCount; ++i)
 			multivalues[i] = ((float*)msgData._payload)[i];
@@ -279,6 +279,8 @@ bool OSCProtocolProcessor::SendAddressedMessage(const String& addressString, con
 			sendSuccess = m_oscSender.send(OSCMessage(addressString, multivalues[0], multivalues[1]));
 		else if (msgData._valCount == 3)
 			sendSuccess = m_oscSender.send(OSCMessage(addressString, multivalues[0], multivalues[1], multivalues[2]));
+		else if (msgData._valCount == 6)
+			sendSuccess = m_oscSender.send(OSCMessage(addressString, multivalues[0], multivalues[1], multivalues[2], multivalues[3], multivalues[4], multivalues[5]));
 		else
 			sendSuccess = m_oscSender.send(OSCMessage(addressString));
 		}
@@ -497,6 +499,24 @@ void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const S
 			newObjectId = ROI_RemoteProtocolBridge_MatrixInputGroupSelect;
 		else if (addressString.startsWith(GetRemoteObjectString(ROI_RemoteProtocolBridge_MatrixOutputGroupSelect)))
 			newObjectId = ROI_RemoteProtocolBridge_MatrixOutputGroupSelect;
+		else if (addressString.startsWith(GetRemoteObjectString(ROI_CoordinateMappingSettings_P1real)))
+			newObjectId = ROI_CoordinateMappingSettings_P1real;
+		else if (addressString.startsWith(GetRemoteObjectString(ROI_CoordinateMappingSettings_P2real)))
+			newObjectId = ROI_CoordinateMappingSettings_P2real;
+		else if (addressString.startsWith(GetRemoteObjectString(ROI_CoordinateMappingSettings_P3real)))
+			newObjectId = ROI_CoordinateMappingSettings_P3real;
+		else if (addressString.startsWith(GetRemoteObjectString(ROI_CoordinateMappingSettings_P4real)))
+			newObjectId = ROI_CoordinateMappingSettings_P4real;
+		else if (addressString.startsWith(GetRemoteObjectString(ROI_CoordinateMappingSettings_P1virtual)))
+			newObjectId = ROI_CoordinateMappingSettings_P1virtual;
+		else if (addressString.startsWith(GetRemoteObjectString(ROI_CoordinateMappingSettings_P3virtual)))
+			newObjectId = ROI_CoordinateMappingSettings_P3virtual;
+		else if (addressString.startsWith(GetRemoteObjectString(ROI_CoordinateMappingSettings_Flip)))
+			newObjectId = ROI_CoordinateMappingSettings_Flip;
+		else if (addressString.startsWith(GetRemoteObjectString(ROI_CoordinateMappingSettings_Name)))
+			newObjectId = ROI_CoordinateMappingSettings_Name;
+		else if (addressString.startsWith(GetRemoteObjectString(ROI_Positioning_SpeakerPosition)))
+			newObjectId = ROI_Positioning_SpeakerPosition;
 		else
 			newObjectId = ROI_Invalid;
 
@@ -666,6 +686,24 @@ String OSCProtocolProcessor::GetRemoteObjectString(const RemoteObjectIdentifier 
 		return "/RemoteProtocolBridge/MatrixInputSelectionSelect";
 	case ROI_RemoteProtocolBridge_MatrixOutputGroupSelect:
 		return "/RemoteProtocolBridge/MatrixOutputSelectionSelect";
+	case ROI_CoordinateMappingSettings_P1real:
+		return "/dbaudio1/coordinatemappingsettings/p1_real";
+	case ROI_CoordinateMappingSettings_P2real:
+		return "/dbaudio1/coordinatemappingsettings/p2_real";
+	case ROI_CoordinateMappingSettings_P3real:
+		return "/dbaudio1/coordinatemappingsettings/p3_real";
+	case ROI_CoordinateMappingSettings_P4real:
+		return "/dbaudio1/coordinatemappingsettings/p4_real";
+	case ROI_CoordinateMappingSettings_P1virtual:
+		return "/dbaudio1/coordinatemappingsettings/p1_virtual";
+	case ROI_CoordinateMappingSettings_P3virtual:
+		return "/dbaudio1/coordinatemappingsettings/p1_virtual";
+	case ROI_CoordinateMappingSettings_Flip:
+		return "/dbaudio1/coordinatemappingsettings/flip";
+	case ROI_CoordinateMappingSettings_Name:
+		return "/dbaudio1/coordinatemappingsettings/name";
+	case ROI_Positioning_SpeakerPosition:
+		return "/dbaudio1/positioning/speaker_position";
 	default:
 		return "";
 	}
@@ -746,6 +784,7 @@ bool OSCProtocolProcessor::createMessageData(const OSCMessage& messageInput, con
 		case ROI_RemoteProtocolBridge_SoundObjectGroupSelect:
 		case ROI_RemoteProtocolBridge_MatrixInputGroupSelect:
 		case ROI_RemoteProtocolBridge_MatrixOutputGroupSelect:
+		case ROI_CoordinateMappingSettings_Flip:
 			return createIntMessageData(messageInput, newMessageData);
 		case ROI_MatrixInput_Gain:
 		case ROI_MatrixInput_Delay:
@@ -772,6 +811,13 @@ bool OSCProtocolProcessor::createMessageData(const OSCMessage& messageInput, con
 		case ROI_CoordinateMapping_SourcePosition_X:
 		case ROI_CoordinateMapping_SourcePosition_Y:
 		case ROI_CoordinateMapping_SourcePosition:
+		case ROI_CoordinateMappingSettings_P1real:
+		case ROI_CoordinateMappingSettings_P2real:
+		case ROI_CoordinateMappingSettings_P3real:
+		case ROI_CoordinateMappingSettings_P4real:
+		case ROI_CoordinateMappingSettings_P1virtual:
+		case ROI_CoordinateMappingSettings_P3virtual:
+		case ROI_Positioning_SpeakerPosition:
 			return createFloatMessageData(messageInput, newMessageData);
 		case ROI_Scene_SceneIndex:
 		case ROI_Settings_DeviceName:
@@ -781,6 +827,7 @@ bool OSCProtocolProcessor::createMessageData(const OSCMessage& messageInput, con
 		case ROI_MatrixOutput_ChannelName:
 		case ROI_Scene_SceneName:
 		case ROI_Scene_SceneComment:
+		case ROI_CoordinateMappingSettings_Name:
 			return createStringMessageData(messageInput, newMessageData);
 		case ROI_Device_Clear:
 		case ROI_Scene_Previous:
@@ -837,6 +884,22 @@ bool OSCProtocolProcessor::createFloatMessageData(const OSCMessage& messageInput
 		newMessageData._valCount = 3;
 		newMessageData._payload = m_floatValueBuffer;
 		newMessageData._payloadSize = 3 * sizeof(float);
+
+		return true;
+	}
+	else if (messageInput.size() == 6)
+	{
+		m_floatValueBuffer[0] = messageInput[0].getFloat32();
+		m_floatValueBuffer[1] = messageInput[1].getFloat32();
+		m_floatValueBuffer[2] = messageInput[2].getFloat32();
+		m_floatValueBuffer[3] = messageInput[3].getFloat32();
+		m_floatValueBuffer[4] = messageInput[4].getFloat32();
+		m_floatValueBuffer[5] = messageInput[5].getFloat32();
+
+		newMessageData._valType = ROVT_FLOAT;
+		newMessageData._valCount = 6;
+		newMessageData._payload = m_floatValueBuffer;
+		newMessageData._payloadSize = 6 * sizeof(float);
 
 		return true;
 	}

@@ -780,6 +780,24 @@ String ProcessingEngineConfig::GetObjectDescription(const RemoteObjectIdentifier
 		return "RPB MI Selection Select";
 	case ROI_RemoteProtocolBridge_MatrixOutputGroupSelect:
 		return "RPB MO Selection Select";
+	case ROI_CoordinateMappingSettings_P1real:
+		return "Mapping Area P1 real";
+	case ROI_CoordinateMappingSettings_P2real:
+		return "Mapping Area P2 real";
+	case ROI_CoordinateMappingSettings_P3real:
+		return "Mapping Area P3 real";
+	case ROI_CoordinateMappingSettings_P4real:
+		return "Mapping Area P4 real";
+	case ROI_CoordinateMappingSettings_P1virtual:
+		return "Mapping Area P1 virt";
+	case ROI_CoordinateMappingSettings_P3virtual:
+		return "Mapping Area P3 virt";
+	case ROI_CoordinateMappingSettings_Flip:
+		return "Mapping Area flip";
+	case ROI_CoordinateMappingSettings_Name:
+		return "Mapping Area name";
+	case ROI_Positioning_SpeakerPosition:
+		return "Speaker Position";
 	case ROI_Invalid:
 	default:
 		jassertfalse;
@@ -918,6 +936,24 @@ String ProcessingEngineConfig::GetObjectShortDescription(const RemoteObjectIdent
 		return "RPB MI Sel. Sel.";
 	case ROI_RemoteProtocolBridge_MatrixOutputGroupSelect:
 		return "RPB MO Sel. Sel.";
+	case ROI_CoordinateMappingSettings_P1real:
+		return "Map P1 real";
+	case ROI_CoordinateMappingSettings_P2real:
+		return "Map P2 real";
+	case ROI_CoordinateMappingSettings_P3real:
+		return "Map P3 real";
+	case ROI_CoordinateMappingSettings_P4real:
+		return "Map P4 real";
+	case ROI_CoordinateMappingSettings_P1virtual:
+		return "Map P1 virt";
+	case ROI_CoordinateMappingSettings_P3virtual:
+		return "Map P3 virt";
+	case ROI_CoordinateMappingSettings_Flip:
+		return "Map flip";
+	case ROI_CoordinateMappingSettings_Name:
+		return "Map name";
+	case ROI_Positioning_SpeakerPosition:
+		return "Spkr Pos";
 	case ROI_Invalid:
 	default:
 		jassertfalse;
@@ -977,6 +1013,15 @@ bool ProcessingEngineConfig::IsChannelAddressingObject(RemoteObjectIdentifier ob
 	case ROI_RemoteProtocolBridge_SoundObjectGroupSelect:
 	case ROI_RemoteProtocolBridge_MatrixInputGroupSelect:
 	case ROI_RemoteProtocolBridge_MatrixOutputGroupSelect:
+	case ROI_CoordinateMappingSettings_P1real:
+	case ROI_CoordinateMappingSettings_P2real:
+	case ROI_CoordinateMappingSettings_P3real:
+	case ROI_CoordinateMappingSettings_P4real:
+	case ROI_CoordinateMappingSettings_P1virtual:
+	case ROI_CoordinateMappingSettings_P3virtual:
+	case ROI_CoordinateMappingSettings_Flip:
+	case ROI_CoordinateMappingSettings_Name:
+	case ROI_Positioning_SpeakerPosition:
 		return true;
 	case ROI_Settings_DeviceName:
 	case ROI_Error_GnrlErr:

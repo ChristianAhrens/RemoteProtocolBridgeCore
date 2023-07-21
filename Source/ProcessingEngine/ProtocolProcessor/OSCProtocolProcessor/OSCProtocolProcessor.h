@@ -87,7 +87,7 @@ protected:
 	std::unique_ptr<SenderAwareOSCReceiver>	m_oscReceiver;					/**< An OSCReceiver object can connect to a network port, receive incoming OSC packets from the network
 																			 * via UDP, parse them, and forward the included OSCMessage and OSCBundle objects to its listeners. */
 
-	float m_floatValueBuffer[3] = { 0.0f, 0.0f, 0.0f };
+	float m_floatValueBuffer[6] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
 	int m_intValueBuffer[2] = { 0, 0 };
 	String m_stringValueBuffer;
 
