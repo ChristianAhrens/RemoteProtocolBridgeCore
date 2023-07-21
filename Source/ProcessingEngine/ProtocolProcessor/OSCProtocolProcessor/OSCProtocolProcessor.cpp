@@ -697,7 +697,7 @@ String OSCProtocolProcessor::GetRemoteObjectString(const RemoteObjectIdentifier 
 	case ROI_CoordinateMappingSettings_P1virtual:
 		return "/dbaudio1/coordinatemappingsettings/p1_virtual";
 	case ROI_CoordinateMappingSettings_P3virtual:
-		return "/dbaudio1/coordinatemappingsettings/p1_virtual";
+		return "/dbaudio1/coordinatemappingsettings/p3_virtual";
 	case ROI_CoordinateMappingSettings_Flip:
 		return "/dbaudio1/coordinatemappingsettings/flip";
 	case ROI_CoordinateMappingSettings_Name:
