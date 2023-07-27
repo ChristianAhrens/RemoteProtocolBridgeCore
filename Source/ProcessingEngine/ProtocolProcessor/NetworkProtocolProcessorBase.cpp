@@ -92,7 +92,8 @@ const std::string& NetworkProtocolProcessorBase::GetIpAddress()
 void NetworkProtocolProcessorBase::SetIpAddress(const std::string& ipAddress)
 {
 	jassert(!ipAddress.empty());
-	m_ipAddress = ipAddress;
+	if (juce::IPAddress(ipAddress).toString() == juce::String(ipAddress))
+		m_ipAddress = ipAddress;
 }
 
 /**
