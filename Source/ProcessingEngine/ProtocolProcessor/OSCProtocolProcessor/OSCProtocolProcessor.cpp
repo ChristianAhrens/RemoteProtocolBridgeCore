@@ -379,143 +379,143 @@ void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const S
 		RecordId recordId = INVALID_ADDRESS_VALUE;
 
 		// Determine which parameter was changed depending on the incoming message's address pattern.
-		if (addressString.startsWith(GetRemoteObjectString(ROI_Settings_DeviceName)))
+		if (addressString.containsWholeWord(GetRemoteObjectString(ROI_Settings_DeviceName)))
 			newObjectId = ROI_Settings_DeviceName;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_Error_GnrlErr)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_Error_GnrlErr)))
 			newObjectId = ROI_Error_GnrlErr;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_Error_ErrorText)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_Error_ErrorText)))
 			newObjectId = ROI_Error_ErrorText;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_Status_StatusText)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_Status_StatusText)))
 			newObjectId = ROI_Status_StatusText;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixInput_Select)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixInput_Select)))
 			newObjectId = ROI_MatrixInput_Select;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixInput_Mute)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixInput_Mute)))
 			newObjectId = ROI_MatrixInput_Mute;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixInput_Gain)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixInput_Gain)))
 			newObjectId = ROI_MatrixInput_Gain;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixInput_Delay)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixInput_Delay)))
 			newObjectId = ROI_MatrixInput_Delay;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixInput_DelayEnable)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixInput_DelayEnable)))
 			newObjectId = ROI_MatrixInput_DelayEnable;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixInput_EqEnable)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixInput_EqEnable)))
 			newObjectId = ROI_MatrixInput_EqEnable;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixInput_Polarity)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixInput_Polarity)))
 			newObjectId = ROI_MatrixInput_Polarity;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixInput_ChannelName)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixInput_ChannelName)))
 			newObjectId = ROI_MatrixInput_ChannelName;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixInput_LevelMeterPreMute)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixInput_LevelMeterPreMute)))
 			newObjectId = ROI_MatrixInput_LevelMeterPreMute;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixInput_LevelMeterPostMute)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixInput_LevelMeterPostMute)))
 			newObjectId = ROI_MatrixInput_LevelMeterPostMute;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixNode_Enable)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixNode_Enable)))
 			newObjectId = ROI_MatrixNode_Enable;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixNode_Gain)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixNode_Gain)))
 			newObjectId = ROI_MatrixNode_Gain;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixNode_DelayEnable)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixNode_DelayEnable)))
 			newObjectId = ROI_MatrixNode_DelayEnable;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixInput_Polarity)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixInput_Polarity)))
 			newObjectId = ROI_MatrixInput_Polarity;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixNode_Delay)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixNode_Delay)))
 			newObjectId = ROI_MatrixNode_Delay;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixOutput_Mute)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixOutput_Mute)))
 			newObjectId = ROI_MatrixOutput_Mute;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixOutput_Gain)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixOutput_Gain)))
 			newObjectId = ROI_MatrixOutput_Gain;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixOutput_Delay)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixOutput_Delay)))
 			newObjectId = ROI_MatrixOutput_Delay;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixOutput_DelayEnable)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixOutput_DelayEnable)))
 			newObjectId = ROI_MatrixOutput_DelayEnable;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixOutput_EqEnable)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixOutput_EqEnable)))
 			newObjectId = ROI_MatrixOutput_EqEnable;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixOutput_Polarity)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixOutput_Polarity)))
 			newObjectId = ROI_MatrixOutput_Polarity;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixOutput_ChannelName)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixOutput_ChannelName)))
 			newObjectId = ROI_MatrixOutput_ChannelName;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixOutput_LevelMeterPreMute)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixOutput_LevelMeterPreMute)))
 			newObjectId = ROI_MatrixOutput_LevelMeterPreMute;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixOutput_LevelMeterPostMute)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixOutput_LevelMeterPostMute)))
 			newObjectId = ROI_MatrixOutput_LevelMeterPostMute;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_Positioning_SourceSpread)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_Positioning_SourceSpread)))
 			newObjectId = ROI_Positioning_SourceSpread;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_Positioning_SourceDelayMode)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_Positioning_SourceDelayMode)))
 			newObjectId = ROI_Positioning_SourceDelayMode;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_Positioning_SourcePosition_XY)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_Positioning_SourcePosition_XY)))
 			newObjectId = ROI_Positioning_SourcePosition_XY;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_Positioning_SourcePosition_X)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_Positioning_SourcePosition_X)))
 			newObjectId = ROI_Positioning_SourcePosition_X;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_Positioning_SourcePosition_Y)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_Positioning_SourcePosition_Y)))
 			newObjectId = ROI_Positioning_SourcePosition_Y;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_Positioning_SourcePosition)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_Positioning_SourcePosition)))
 			newObjectId = ROI_Positioning_SourcePosition;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_CoordinateMapping_SourcePosition_XY)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_CoordinateMapping_SourcePosition_XY)))
 			newObjectId = ROI_CoordinateMapping_SourcePosition_XY;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_CoordinateMapping_SourcePosition_X)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_CoordinateMapping_SourcePosition_X)))
 			newObjectId = ROI_CoordinateMapping_SourcePosition_X;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_CoordinateMapping_SourcePosition_Y)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_CoordinateMapping_SourcePosition_Y)))
 			newObjectId = ROI_CoordinateMapping_SourcePosition_Y;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_CoordinateMapping_SourcePosition)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_CoordinateMapping_SourcePosition)))
 			newObjectId = ROI_CoordinateMapping_SourcePosition;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixSettings_ReverbRoomId)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixSettings_ReverbRoomId)))
 			newObjectId = ROI_MatrixSettings_ReverbRoomId;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixSettings_ReverbPredelayFactor)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixSettings_ReverbPredelayFactor)))
 			newObjectId = ROI_MatrixSettings_ReverbPredelayFactor;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixSettings_ReverbRearLevel)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixSettings_ReverbRearLevel)))
 			newObjectId = ROI_MatrixSettings_ReverbRearLevel;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_MatrixInput_ReverbSendGain)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_MatrixInput_ReverbSendGain)))
 			newObjectId = ROI_MatrixInput_ReverbSendGain;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_ReverbInput_Gain)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_ReverbInput_Gain)))
 			newObjectId = ROI_ReverbInput_Gain;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_ReverbInputProcessing_Mute)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_ReverbInputProcessing_Mute)))
 			newObjectId = ROI_ReverbInputProcessing_Mute;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_ReverbInputProcessing_Gain)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_ReverbInputProcessing_Gain)))
 			newObjectId = ROI_ReverbInputProcessing_Gain;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_ReverbInputProcessing_LevelMeter)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_ReverbInputProcessing_LevelMeter)))
 			newObjectId = ROI_ReverbInputProcessing_LevelMeter;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_ReverbInputProcessing_EqEnable)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_ReverbInputProcessing_EqEnable)))
 			newObjectId = ROI_ReverbInputProcessing_EqEnable;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_Device_Clear)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_Device_Clear)))
 			newObjectId = ROI_Device_Clear;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_Scene_Previous)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_Scene_Previous)))
 			newObjectId = ROI_Scene_Previous;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_Scene_Next)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_Scene_Next)))
 			newObjectId = ROI_Scene_Next;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_Scene_Recall)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_Scene_Recall)))
 			newObjectId = ROI_Scene_Recall;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_Scene_SceneIndex)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_Scene_SceneIndex)))
 			newObjectId = ROI_Scene_SceneIndex;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_Scene_SceneName)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_Scene_SceneName)))
 			newObjectId = ROI_Scene_SceneName;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_Scene_SceneComment)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_Scene_SceneComment)))
 			newObjectId = ROI_Scene_SceneComment;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_RemoteProtocolBridge_SoundObjectSelect)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_RemoteProtocolBridge_SoundObjectSelect)))
 			newObjectId = ROI_RemoteProtocolBridge_SoundObjectSelect;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_RemoteProtocolBridge_UIElementIndexSelect)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_RemoteProtocolBridge_UIElementIndexSelect)))
 			newObjectId = ROI_RemoteProtocolBridge_UIElementIndexSelect;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_RemoteProtocolBridge_GetAllKnownValues)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_RemoteProtocolBridge_GetAllKnownValues)))
 			newObjectId = ROI_RemoteProtocolBridge_GetAllKnownValues;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_RemoteProtocolBridge_SoundObjectGroupSelect)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_RemoteProtocolBridge_SoundObjectGroupSelect)))
 			newObjectId = ROI_RemoteProtocolBridge_SoundObjectGroupSelect;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_RemoteProtocolBridge_MatrixInputGroupSelect)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_RemoteProtocolBridge_MatrixInputGroupSelect)))
 			newObjectId = ROI_RemoteProtocolBridge_MatrixInputGroupSelect;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_RemoteProtocolBridge_MatrixOutputGroupSelect)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_RemoteProtocolBridge_MatrixOutputGroupSelect)))
 			newObjectId = ROI_RemoteProtocolBridge_MatrixOutputGroupSelect;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_CoordinateMappingSettings_P1real)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_CoordinateMappingSettings_P1real)))
 			newObjectId = ROI_CoordinateMappingSettings_P1real;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_CoordinateMappingSettings_P2real)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_CoordinateMappingSettings_P2real)))
 			newObjectId = ROI_CoordinateMappingSettings_P2real;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_CoordinateMappingSettings_P3real)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_CoordinateMappingSettings_P3real)))
 			newObjectId = ROI_CoordinateMappingSettings_P3real;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_CoordinateMappingSettings_P4real)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_CoordinateMappingSettings_P4real)))
 			newObjectId = ROI_CoordinateMappingSettings_P4real;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_CoordinateMappingSettings_P1virtual)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_CoordinateMappingSettings_P1virtual)))
 			newObjectId = ROI_CoordinateMappingSettings_P1virtual;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_CoordinateMappingSettings_P3virtual)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_CoordinateMappingSettings_P3virtual)))
 			newObjectId = ROI_CoordinateMappingSettings_P3virtual;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_CoordinateMappingSettings_Flip)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_CoordinateMappingSettings_Flip)))
 			newObjectId = ROI_CoordinateMappingSettings_Flip;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_CoordinateMappingSettings_Name)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_CoordinateMappingSettings_Name)))
 			newObjectId = ROI_CoordinateMappingSettings_Name;
-		else if (addressString.startsWith(GetRemoteObjectString(ROI_Positioning_SpeakerPosition)))
+		else if (addressString.containsWholeWord(GetRemoteObjectString(ROI_Positioning_SpeakerPosition)))
 			newObjectId = ROI_Positioning_SpeakerPosition;
 		else
 			newObjectId = ROI_Invalid;
