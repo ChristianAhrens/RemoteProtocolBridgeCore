@@ -162,6 +162,37 @@ bool RTTrPMProtocolProcessor::setStateXml(XmlElement* stateXml)
 		else
 			stateXmlUpdateSuccess = false;
 
+		auto originOffsetXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::ORIGINOFFSET));
+		if (originOffsetXmlElement)
+		{
+			auto originOffsetTextElement = originOffsetXmlElement->getFirstChildElement();
+			if (originOffsetTextElement && originOffsetTextElement->isTextElement())
+			{
+				auto originOffsetValues = StringArray();
+				if (2 != originOffsetValues.addTokens(originOffsetTextElement->getText(), ";", ""))
+				{
+					m_absoluteOriginOffset = juce::Point<float>(0.0f, 0.0f);
+				}
+				else
+				{
+					auto xOffset = originOffsetValues[0].getFloatValue();
+					auto yOffset = originOffsetValues[1].getFloatValue();
+
+					m_absoluteOriginOffset = juce::Point<float>(xOffset, yOffset);
+				}
+			}
+			else
+				stateXmlUpdateSuccess = false;
+		}
+		else
+			stateXmlUpdateSuccess = false;
+
+		auto xyAxisSwappedXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::XYSWAPPED));
+		if (xyAxisSwappedXmlElement)
+			m_absoluteXYAxisSwapped = 1 == xyAxisSwappedXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE));
+		else
+			stateXmlUpdateSuccess = false;
+
 		auto beaconIdxRemappingsXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::REMAPPINGS));
 		if (beaconIdxRemappingsXmlElement)
 		{
@@ -297,7 +328,13 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 							if (m_mappingAreaId == MAI_Invalid)
 							{
 								newObjectId = ROI_Positioning_SourcePosition_XY;
-								newDualFloatValue = { static_cast<float>(centroidPositionModule->GetX()), static_cast<float>(centroidPositionModule->GetY()) };
+								if (m_absoluteXYAxisSwapped)
+									newDualFloatValue = { static_cast<float>(centroidPositionModule->GetY()), static_cast<float>(centroidPositionModule->GetX()) };
+								else
+									newDualFloatValue = { static_cast<float>(centroidPositionModule->GetX()), static_cast<float>(centroidPositionModule->GetY()) };
+
+								newDualFloatValue[0] += m_absoluteOriginOffset.getX();
+								newDualFloatValue[1] += m_absoluteOriginOffset.getY();
 							}
 							else
 							{
@@ -336,7 +373,13 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 							if (m_mappingAreaId == MAI_Invalid)
 							{
 								newObjectId = ROI_Positioning_SourcePosition_XY;
-								newDualFloatValue = { static_cast<float>(trackedPointPositionModule->GetX()), static_cast<float>(trackedPointPositionModule->GetY()) };
+								if (m_absoluteXYAxisSwapped)
+									newDualFloatValue = { static_cast<float>(trackedPointPositionModule->GetY()), static_cast<float>(trackedPointPositionModule->GetX()) };
+								else
+									newDualFloatValue = { static_cast<float>(trackedPointPositionModule->GetX()), static_cast<float>(trackedPointPositionModule->GetY()) };
+
+								newDualFloatValue[0] += m_absoluteOriginOffset.getX();
+								newDualFloatValue[1] += m_absoluteOriginOffset.getY();
 							}
 							else
 							{
@@ -398,7 +441,13 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 							if (m_mappingAreaId == MAI_Invalid)
 							{
 								newObjectId = ROI_Positioning_SourcePosition_XY;
-								newDualFloatValue = { static_cast<float>(centroidAccelAndVeloModule->GetXCoordinate()), static_cast<float>(centroidAccelAndVeloModule->GetYCoordinate()) };
+								if (m_absoluteXYAxisSwapped)
+									newDualFloatValue = { static_cast<float>(centroidAccelAndVeloModule->GetYCoordinate()), static_cast<float>(centroidAccelAndVeloModule->GetXCoordinate()) };
+								else
+									newDualFloatValue = { static_cast<float>(centroidAccelAndVeloModule->GetXCoordinate()), static_cast<float>(centroidAccelAndVeloModule->GetYCoordinate()) };
+
+								newDualFloatValue[0] += m_absoluteOriginOffset.getX();
+								newDualFloatValue[1] += m_absoluteOriginOffset.getY();
 							}
 							else
 							{
@@ -437,7 +486,13 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 							if (m_mappingAreaId == MAI_Invalid)
 							{
 								newObjectId = ROI_Positioning_SourcePosition_XY;
-								newDualFloatValue = { static_cast<float>(trackedPointAccelAndVeloModule->GetXCoordinate()), static_cast<float>(trackedPointAccelAndVeloModule->GetYCoordinate()) };
+								if (m_absoluteXYAxisSwapped)
+									newDualFloatValue = { static_cast<float>(trackedPointAccelAndVeloModule->GetYCoordinate()), static_cast<float>(trackedPointAccelAndVeloModule->GetXCoordinate()) };
+								else
+									newDualFloatValue = { static_cast<float>(trackedPointAccelAndVeloModule->GetXCoordinate()), static_cast<float>(trackedPointAccelAndVeloModule->GetYCoordinate()) };
+
+								newDualFloatValue[0] += m_absoluteOriginOffset.getX();
+								newDualFloatValue[1] += m_absoluteOriginOffset.getY();
 							}
 							else
 							{
