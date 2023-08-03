@@ -180,7 +180,7 @@ bool ProcessingEngineNode::Stop()
 	auto protocolsRunning = !(successfullyStoppedA && successfullyStoppedB);
 
 	// wait for thread termination
-	auto threadShutdownSuccess = stopThread(100);
+	auto threadShutdownSuccess = stopThread(200);
 
 	// clear pending messages from queue
 	m_messageQueue.clear();
