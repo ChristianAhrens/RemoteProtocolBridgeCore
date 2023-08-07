@@ -74,7 +74,8 @@ private:
 	std::map<int, ChannelId>	m_beaconIdxToChannelMap;
 
 	juce::Point<float>	m_absoluteOriginOffset{ 0.0f, 1.0f };
-	bool				m_absoluteXYAxisSwapped{ false };
+
+	bool				m_xyAxisSwapped{ false };
 
 	float m_floatValueBuffer[3] = { 0.0f, 0.0f, 0.0f };
 	int m_intValueBuffer[2] = { 0, 0 };

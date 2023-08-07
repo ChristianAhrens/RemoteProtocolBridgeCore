@@ -189,7 +189,7 @@ bool RTTrPMProtocolProcessor::setStateXml(XmlElement* stateXml)
 
 		auto xyAxisSwappedXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::XYSWAPPED));
 		if (xyAxisSwappedXmlElement)
-			m_absoluteXYAxisSwapped = 1 == xyAxisSwappedXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE));
+			m_xyAxisSwapped = 1 == xyAxisSwappedXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE));
 		else
 			stateXmlUpdateSuccess = false;
 
@@ -328,7 +328,7 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 							if (m_mappingAreaId == MAI_Invalid)
 							{
 								newObjectId = ROI_Positioning_SourcePosition_XY;
-								if (m_absoluteXYAxisSwapped)
+								if (m_xyAxisSwapped)
 									newDualFloatValue = { static_cast<float>(centroidPositionModule->GetY()), static_cast<float>(centroidPositionModule->GetX()) };
 								else
 									newDualFloatValue = { static_cast<float>(centroidPositionModule->GetX()), static_cast<float>(centroidPositionModule->GetY()) };
@@ -339,7 +339,10 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 							else
 							{
 								newObjectId = ROI_CoordinateMapping_SourcePosition_XY;
-								newDualFloatValue = GetMappedPosition({ static_cast<float>(centroidPositionModule->GetX()), static_cast<float>(centroidPositionModule->GetY()) });
+								if (m_xyAxisSwapped)
+									newDualFloatValue = GetMappedPosition({ static_cast<float>(centroidPositionModule->GetY()), static_cast<float>(centroidPositionModule->GetY()) });
+								else
+									newDualFloatValue = GetMappedPosition({ static_cast<float>(centroidPositionModule->GetX()), static_cast<float>(centroidPositionModule->GetY()) });
 							}
 
 							newMsgData._valType = ROVT_FLOAT;
@@ -373,7 +376,7 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 							if (m_mappingAreaId == MAI_Invalid)
 							{
 								newObjectId = ROI_Positioning_SourcePosition_XY;
-								if (m_absoluteXYAxisSwapped)
+								if (m_xyAxisSwapped)
 									newDualFloatValue = { static_cast<float>(trackedPointPositionModule->GetY()), static_cast<float>(trackedPointPositionModule->GetX()) };
 								else
 									newDualFloatValue = { static_cast<float>(trackedPointPositionModule->GetX()), static_cast<float>(trackedPointPositionModule->GetY()) };
@@ -384,7 +387,10 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 							else
 							{
 								newObjectId = ROI_CoordinateMapping_SourcePosition_XY;
-								newDualFloatValue = GetMappedPosition({ static_cast<float>(trackedPointPositionModule->GetX()), static_cast<float>(trackedPointPositionModule->GetY()) });
+								if (m_xyAxisSwapped)
+									newDualFloatValue = GetMappedPosition({ static_cast<float>(trackedPointPositionModule->GetY()), static_cast<float>(trackedPointPositionModule->GetY()) });
+								else
+									newDualFloatValue = GetMappedPosition({ static_cast<float>(trackedPointPositionModule->GetX()), static_cast<float>(trackedPointPositionModule->GetY()) });
 							}
 
 							newMsgData._valType = ROVT_FLOAT;
@@ -441,7 +447,7 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 							if (m_mappingAreaId == MAI_Invalid)
 							{
 								newObjectId = ROI_Positioning_SourcePosition_XY;
-								if (m_absoluteXYAxisSwapped)
+								if (m_xyAxisSwapped)
 									newDualFloatValue = { static_cast<float>(centroidAccelAndVeloModule->GetYCoordinate()), static_cast<float>(centroidAccelAndVeloModule->GetXCoordinate()) };
 								else
 									newDualFloatValue = { static_cast<float>(centroidAccelAndVeloModule->GetXCoordinate()), static_cast<float>(centroidAccelAndVeloModule->GetYCoordinate()) };
@@ -452,7 +458,11 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 							else
 							{
 								newObjectId = ROI_CoordinateMapping_SourcePosition_XY;
-								newDualFloatValue = GetMappedPosition({ static_cast<float>(centroidAccelAndVeloModule->GetXCoordinate()), static_cast<float>(centroidAccelAndVeloModule->GetYCoordinate()) });
+								if (m_xyAxisSwapped)
+									newDualFloatValue = GetMappedPosition({ static_cast<float>(centroidAccelAndVeloModule->GetYCoordinate()), static_cast<float>(centroidAccelAndVeloModule->GetXCoordinate()) });
+								else
+									newDualFloatValue = GetMappedPosition({ static_cast<float>(centroidAccelAndVeloModule->GetXCoordinate()), static_cast<float>(centroidAccelAndVeloModule->GetYCoordinate()) });
+
 							}
 
 							newMsgData._valType = ROVT_FLOAT;
@@ -486,7 +496,7 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 							if (m_mappingAreaId == MAI_Invalid)
 							{
 								newObjectId = ROI_Positioning_SourcePosition_XY;
-								if (m_absoluteXYAxisSwapped)
+								if (m_xyAxisSwapped)
 									newDualFloatValue = { static_cast<float>(trackedPointAccelAndVeloModule->GetYCoordinate()), static_cast<float>(trackedPointAccelAndVeloModule->GetXCoordinate()) };
 								else
 									newDualFloatValue = { static_cast<float>(trackedPointAccelAndVeloModule->GetXCoordinate()), static_cast<float>(trackedPointAccelAndVeloModule->GetYCoordinate()) };
@@ -497,7 +507,10 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 							else
 							{
 								newObjectId = ROI_CoordinateMapping_SourcePosition_XY;
-								newDualFloatValue = GetMappedPosition({ static_cast<float>(trackedPointAccelAndVeloModule->GetXCoordinate()), static_cast<float>(trackedPointAccelAndVeloModule->GetYCoordinate()) });
+								if (m_xyAxisSwapped)
+									newDualFloatValue = GetMappedPosition({ static_cast<float>(trackedPointAccelAndVeloModule->GetYCoordinate()), static_cast<float>(trackedPointAccelAndVeloModule->GetXCoordinate()) });
+								else
+									newDualFloatValue = GetMappedPosition({ static_cast<float>(trackedPointAccelAndVeloModule->GetXCoordinate()), static_cast<float>(trackedPointAccelAndVeloModule->GetYCoordinate()) });
 							}
 
 							newMsgData._valType = ROVT_FLOAT;
