@@ -340,7 +340,7 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 							{
 								newObjectId = ROI_CoordinateMapping_SourcePosition_XY;
 								if (m_xyAxisSwapped)
-									newDualFloatValue = GetMappedPosition({ static_cast<float>(centroidPositionModule->GetY()), static_cast<float>(centroidPositionModule->GetY()) });
+									newDualFloatValue = GetMappedPosition({ static_cast<float>(centroidPositionModule->GetY()), static_cast<float>(centroidPositionModule->GetX()) });
 								else
 									newDualFloatValue = GetMappedPosition({ static_cast<float>(centroidPositionModule->GetX()), static_cast<float>(centroidPositionModule->GetY()) });
 							}
@@ -388,7 +388,7 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 							{
 								newObjectId = ROI_CoordinateMapping_SourcePosition_XY;
 								if (m_xyAxisSwapped)
-									newDualFloatValue = GetMappedPosition({ static_cast<float>(trackedPointPositionModule->GetY()), static_cast<float>(trackedPointPositionModule->GetY()) });
+									newDualFloatValue = GetMappedPosition({ static_cast<float>(trackedPointPositionModule->GetY()), static_cast<float>(trackedPointPositionModule->GetX()) });
 								else
 									newDualFloatValue = GetMappedPosition({ static_cast<float>(trackedPointPositionModule->GetX()), static_cast<float>(trackedPointPositionModule->GetY()) });
 							}
