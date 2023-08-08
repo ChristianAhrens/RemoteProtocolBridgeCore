@@ -799,6 +799,7 @@ String ProcessingEngineConfig::GetObjectDescription(const RemoteObjectIdentifier
 	case ROI_Positioning_SpeakerPosition:
 		return "Speaker Position";
 	case ROI_Invalid:
+		return "INVALID";
 	default:
 		jassertfalse;
 		return "";
@@ -955,6 +956,7 @@ String ProcessingEngineConfig::GetObjectShortDescription(const RemoteObjectIdent
 	case ROI_Positioning_SpeakerPosition:
 		return "Spkr Pos";
 	case ROI_Invalid:
+		return "INVLD";
 	default:
 		jassertfalse;
 		return "";

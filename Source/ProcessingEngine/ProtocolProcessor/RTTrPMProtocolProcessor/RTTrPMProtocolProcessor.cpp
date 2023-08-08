@@ -262,6 +262,8 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 		ssdbg << __FUNCTION__ << " ERROR: only LittleEndian RTTrPM encoding supported";
 		std::cout << ssdbg.str() << std::endl;
 		DBG(ssdbg.str());
+		if (m_messageListener)
+			m_messageListener->OnProtocolMessageReceived(this, ROI_Invalid, RemoteObjectMessageData());
 		return;
 	}
 
