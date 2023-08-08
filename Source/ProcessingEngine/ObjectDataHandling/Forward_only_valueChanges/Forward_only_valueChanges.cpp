@@ -64,6 +64,14 @@ bool Forward_only_valueChanges::setStateXml(XmlElement* stateXml)
 	else
 		return false;
 
+	auto protocolsAcknowledgeXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::VALUEACK));
+	if (protocolsAcknowledgeXmlElement)
+	{
+		auto typeABAckMask = protocolsAcknowledgeXmlElement->getAllSubText().getIntValue();
+		m_typeAIsAcknowledging = (0 != (typeABAckMask & 0x01));
+		m_typeBIsAcknowledging = (0 != (typeABAckMask & 0x10));
+	}
+
 	return true;
 }
 
@@ -103,7 +111,7 @@ bool Forward_only_valueChanges::OnReceivedMessageFromProtocol(const ProtocolId P
 			if (msgMeta._ExternalId != protocolB || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
 			{
 				auto sendSuccess = parentNode->SendMessageTo(protocolB, roi, msgData);
-				if (sendSuccess)
+				if (sendSuccess && !m_typeBIsAcknowledging)
 					SetCurrentValue(protocolB, roi, msgData._addrVal, msgData); // set the updated value as current for the complementary cache as well
 				overallSendSuccess = sendSuccess && overallSendSuccess;
 			}
@@ -120,7 +128,7 @@ bool Forward_only_valueChanges::OnReceivedMessageFromProtocol(const ProtocolId P
 			if (msgMeta._ExternalId != protocolA || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
 			{
 				auto sendSuccess = parentNode->SendMessageTo(protocolA, roi, msgData);
-				if (sendSuccess)
+				if (sendSuccess && !m_typeAIsAcknowledging)
 					SetCurrentValue(protocolA, roi, msgData._addrVal, msgData); // set the updated value as current for the complementary cache as well
 				overallSendSuccess = sendSuccess && overallSendSuccess;
 			}

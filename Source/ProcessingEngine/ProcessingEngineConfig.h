@@ -86,6 +86,7 @@ public:
 		MAPPINGAREARESCALE,
 		ORIGINOFFSET,
 		OCP1CONNECTIONMODE,
+		VALUEACK,
 	};
 	static String getTagName(TagID Id)
 	{
@@ -161,6 +162,8 @@ public:
 			return "OriginOffset";
 		case OCP1CONNECTIONMODE:
 			return "Ocp1ConnectionMode";
+		case VALUEACK:
+			return "ValueAcknowledge";
 		default:
 			return "INVALID";
 		}
