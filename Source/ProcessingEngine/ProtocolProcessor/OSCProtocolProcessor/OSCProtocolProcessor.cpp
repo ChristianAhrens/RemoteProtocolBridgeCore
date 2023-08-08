@@ -853,7 +853,10 @@ bool OSCProtocolProcessor::createFloatMessageData(const OSCMessage& messageInput
 {
 	if (messageInput.size() == 1)
 	{
-		m_floatValueBuffer[0] = messageInput[0].getFloat32();
+		if (messageInput[0].isFloat32())
+			m_floatValueBuffer[0] = messageInput[0].getFloat32();
+		else
+			return false;
 
 		newMessageData._valType = ROVT_FLOAT;
 		newMessageData._valCount = 1;
@@ -864,8 +867,15 @@ bool OSCProtocolProcessor::createFloatMessageData(const OSCMessage& messageInput
 	}
 	else if (messageInput.size() == 2)
 	{
-		m_floatValueBuffer[0] = messageInput[0].getFloat32();
-		m_floatValueBuffer[1] = messageInput[1].getFloat32();
+		if (messageInput[0].isFloat32())
+			m_floatValueBuffer[0] = messageInput[0].getFloat32();
+		else
+			return false;
+
+		if (messageInput[1].isFloat32())
+			m_floatValueBuffer[1] = messageInput[1].getFloat32();
+		else
+			return false;
 
 		newMessageData._valType = ROVT_FLOAT;
 		newMessageData._valCount = 2;
@@ -876,9 +886,20 @@ bool OSCProtocolProcessor::createFloatMessageData(const OSCMessage& messageInput
 	}
 	else if (messageInput.size() == 3)
 	{
-		m_floatValueBuffer[0] = messageInput[0].getFloat32();
-		m_floatValueBuffer[1] = messageInput[1].getFloat32();
-		m_floatValueBuffer[2] = messageInput[2].getFloat32();
+		if (messageInput[0].isFloat32())
+			m_floatValueBuffer[0] = messageInput[0].getFloat32();
+		else
+			return false;
+		
+		if (messageInput[1].isFloat32())
+			m_floatValueBuffer[1] = messageInput[2].getFloat32();
+		else
+			return false;
+
+		if (messageInput[2].isFloat32())
+			m_floatValueBuffer[2] = messageInput[2].getFloat32();
+		else
+			return false;
 
 		newMessageData._valType = ROVT_FLOAT;
 		newMessageData._valCount = 3;
@@ -889,12 +910,35 @@ bool OSCProtocolProcessor::createFloatMessageData(const OSCMessage& messageInput
 	}
 	else if (messageInput.size() == 6)
 	{
-		m_floatValueBuffer[0] = messageInput[0].getFloat32();
-		m_floatValueBuffer[1] = messageInput[1].getFloat32();
-		m_floatValueBuffer[2] = messageInput[2].getFloat32();
-		m_floatValueBuffer[3] = messageInput[3].getFloat32();
-		m_floatValueBuffer[4] = messageInput[4].getFloat32();
-		m_floatValueBuffer[5] = messageInput[5].getFloat32();
+		if (messageInput[0].isFloat32())
+			m_floatValueBuffer[0] = messageInput[0].getFloat32();
+		else
+			return false;
+
+		if (messageInput[1].isFloat32())
+			m_floatValueBuffer[1] = messageInput[2].getFloat32();
+		else
+			return false;
+
+		if (messageInput[2].isFloat32())
+			m_floatValueBuffer[2] = messageInput[2].getFloat32();
+		else
+			return false;
+
+		if (messageInput[3].isFloat32())
+			m_floatValueBuffer[3] = messageInput[3].getFloat32();
+		else
+			return false;
+
+		if (messageInput[4].isFloat32())
+			m_floatValueBuffer[4] = messageInput[4].getFloat32();
+		else
+			return false;
+
+		if (messageInput[5].isFloat32())
+			m_floatValueBuffer[5] = messageInput[5].getFloat32();
+		else
+			return false;
 
 		newMessageData._valType = ROVT_FLOAT;
 		newMessageData._valCount = 6;
@@ -924,6 +968,8 @@ bool OSCProtocolProcessor::createIntMessageData(const OSCMessage& messageInput, 
 			m_intValueBuffer[0] = messageInput[0].getInt32();
 		else if (messageInput[0].isFloat32())
 			m_intValueBuffer[0] = static_cast<int>(round(messageInput[0].getFloat32()));
+		else
+			return false;
 
 		newMessageData._valType = ROVT_INT;
 		newMessageData._valCount = 1;
@@ -940,10 +986,15 @@ bool OSCProtocolProcessor::createIntMessageData(const OSCMessage& messageInput, 
 			m_intValueBuffer[0] = messageInput[0].getInt32();
 		else if (messageInput[0].isFloat32())
 			m_intValueBuffer[0] = (int)round(messageInput[0].getFloat32());
+		else
+			return false;
+
 		if (messageInput[1].isInt32())
 			m_intValueBuffer[1] = messageInput[1].getInt32();
 		else if (messageInput[1].isFloat32())
 			m_intValueBuffer[1] = (int)round(messageInput[1].getFloat32());
+		else
+			return false;
 
 		newMessageData._valType = ROVT_INT;
 		newMessageData._valCount = 2;
@@ -971,6 +1022,8 @@ bool OSCProtocolProcessor::createStringMessageData(const OSCMessage& messageInpu
 		// we need to be prepared to optionally accept float as well
 		if (messageInput[0].isString())
 			m_stringValueBuffer = messageInput[0].getString();
+		else
+			return false;
 
 		RemoteObjectMessageData tempMessageData;
 		tempMessageData._addrVal = newMessageData._addrVal;
