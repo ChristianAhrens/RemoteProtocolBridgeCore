@@ -546,11 +546,16 @@ void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const S
 		newMsgData._addrVal._first = channelId;
 		newMsgData._addrVal._second = recordId;
 
-		createMessageData(message, newObjectId, newMsgData);
+		auto objCreationSucceeded = createMessageData(message, newObjectId, newMsgData);
 
 		// provide the received message to parent node
 		if (m_messageListener)
-			m_messageListener->OnProtocolMessageReceived(this, newObjectId, newMsgData);
+		{
+			if (objCreationSucceeded)
+				m_messageListener->OnProtocolMessageReceived(this, newObjectId, newMsgData);
+			else
+				m_messageListener->OnProtocolMessageReceived(this, ROI_Invalid, RemoteObjectMessageData());
+		}
 	}
 }
 
