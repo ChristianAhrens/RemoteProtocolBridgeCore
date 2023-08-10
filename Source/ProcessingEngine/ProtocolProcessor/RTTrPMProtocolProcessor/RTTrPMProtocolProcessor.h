@@ -75,7 +75,9 @@ private:
 
 	juce::Point<float>	m_absoluteOriginOffset{ 0.0f, 1.0f };
 
-	bool				m_xyAxisSwapped{ false };
+	bool	m_xyAxisSwapped{ false };
+	float	m_xAxisInversionFactor{ 1.0f };
+	float	m_yAxisInversionFactor{ 1.0f };
 
 	float m_floatValueBuffer[3] = { 0.0f, 0.0f, 0.0f };
 	int m_intValueBuffer[2] = { 0, 0 };

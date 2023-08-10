@@ -189,7 +189,19 @@ bool RTTrPMProtocolProcessor::setStateXml(XmlElement* stateXml)
 
 		auto xyAxisSwappedXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::XYSWAPPED));
 		if (xyAxisSwappedXmlElement)
-			m_xyAxisSwapped = 1 == xyAxisSwappedXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE));
+			m_xyAxisSwapped = (1 == xyAxisSwappedXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE)));
+		else
+			stateXmlUpdateSuccess = false;
+
+		auto xAxisInvertedXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::XINVERTED));
+		if (xAxisInvertedXmlElement)
+			m_xAxisInversionFactor = (1 == xAxisInvertedXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE)) ? -1.0f : 1.0f);
+		else
+			stateXmlUpdateSuccess = false;
+
+		auto yAxisInvertedXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::YINVERTED));
+		if (yAxisInvertedXmlElement)
+			m_yAxisInversionFactor = (1 == yAxisInvertedXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE)) ? -1.0f : 1.0f);
 		else
 			stateXmlUpdateSuccess = false;
 
@@ -214,8 +226,6 @@ bool RTTrPMProtocolProcessor::setStateXml(XmlElement* stateXml)
 				beaconIdxRemappingXmlElement = beaconIdxRemappingXmlElement->getNextElement();
 			}
 		}
-		else
-			stateXmlUpdateSuccess = true; // beaconIdx remapping is not mandatory!
 	}
 	return stateXmlUpdateSuccess;
 }
@@ -247,6 +257,8 @@ bool RTTrPMProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifi
  */
 void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMMessage& rttrpmMessage, const String& senderIPAddress, const int& senderPort)
 {
+	// basic sanity checking of incoming data
+	//////////////////////////////////////////////////
 	if (rttrpmMessage.header.GetPacketSize() == 0)
 	{
 		std::stringstream ssdbg;
@@ -278,6 +290,45 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 		return;
 	}
 
+	// convenience lambda function definition to be used when
+	// doing the module data processing later on,
+	// to avoid codeclones
+	//////////////////////////////////////////////////
+	std::function<void(const juce::Point<float>&, RemoteObjectIdentifier&, RemoteObjectMessageData&, std::vector<float>&)> RTTrPMPositionToMsgData
+		= [=](const juce::Point<float>& rttrpmPosition, RemoteObjectIdentifier& newObjectId, RemoteObjectMessageData& newMsgData, std::vector<float>& floatValueBuffer)
+	{
+		jassert(floatValueBuffer.size() == 2);
+		if (floatValueBuffer.size() != 2)
+			return;
+
+		if (m_mappingAreaId == MAI_Invalid)
+		{
+			newObjectId = ROI_Positioning_SourcePosition_XY;
+			if (m_xyAxisSwapped)
+				floatValueBuffer = { -1.0f * m_yAxisInversionFactor * rttrpmPosition.getY(), m_xAxisInversionFactor * rttrpmPosition.getX() }; // when swapped, we expect y to be positive upstage, therefor the -1 inversion is required
+			else
+				floatValueBuffer = { m_xAxisInversionFactor * rttrpmPosition.getX(), m_yAxisInversionFactor * rttrpmPosition.getY() }; // absolute coordinates are forwarded 1:1
+
+			floatValueBuffer[0] += m_absoluteOriginOffset.getX();
+			floatValueBuffer[1] += m_absoluteOriginOffset.getY();
+		}
+		else
+		{
+			newObjectId = ROI_CoordinateMapping_SourcePosition_XY;
+			if (m_xyAxisSwapped)
+				floatValueBuffer = GetMappedPosition({ m_xAxisInversionFactor * rttrpmPosition.getY(), m_yAxisInversionFactor * rttrpmPosition.getX() });
+			else
+				floatValueBuffer = GetMappedPosition({ m_xAxisInversionFactor * rttrpmPosition.getX(), m_yAxisInversionFactor * rttrpmPosition.getY() });
+		}
+
+		newMsgData._valType = ROVT_FLOAT;
+		newMsgData._valCount = 2;
+		newMsgData._payload = floatValueBuffer.data();
+		newMsgData._payloadSize = 2 * sizeof(float);
+	};
+
+	// actual processing incoming RTTrPM module data
+	//////////////////////////////////////////////////
 	RemoteObjectMessageData newMsgData;
 	newMsgData._addrVal._first = INVALID_ADDRESS_VALUE;
 	newMsgData._addrVal._second = INVALID_ADDRESS_VALUE;
@@ -327,30 +378,7 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 
 						if (m_packetModuleTypesForPositioning.contains(PacketModule::CentroidPosition))
 						{
-							if (m_mappingAreaId == MAI_Invalid)
-							{
-								newObjectId = ROI_Positioning_SourcePosition_XY;
-								if (m_xyAxisSwapped)
-									newDualFloatValue = { static_cast<float>(centroidPositionModule->GetY()), static_cast<float>(centroidPositionModule->GetX()) };
-								else
-									newDualFloatValue = { static_cast<float>(centroidPositionModule->GetX()), static_cast<float>(centroidPositionModule->GetY()) };
-
-								newDualFloatValue[0] += m_absoluteOriginOffset.getX();
-								newDualFloatValue[1] += m_absoluteOriginOffset.getY();
-							}
-							else
-							{
-								newObjectId = ROI_CoordinateMapping_SourcePosition_XY;
-								if (m_xyAxisSwapped)
-									newDualFloatValue = GetMappedPosition({ static_cast<float>(centroidPositionModule->GetY()), static_cast<float>(centroidPositionModule->GetX()) });
-								else
-									newDualFloatValue = GetMappedPosition({ static_cast<float>(centroidPositionModule->GetX()), static_cast<float>(centroidPositionModule->GetY()) });
-							}
-
-							newMsgData._valType = ROVT_FLOAT;
-							newMsgData._valCount = 2;
-							newMsgData._payload = newDualFloatValue.data();
-							newMsgData._payloadSize = 2 * sizeof(float);
+							RTTrPMPositionToMsgData(juce::Point<float>(static_cast<float>(centroidPositionModule->GetX()), static_cast<float>(centroidPositionModule->GetY())), newObjectId, newMsgData, newDualFloatValue);
 
 							// If the received data targets a muted object, dont forward the message
 							if (IsRemoteObjectMuted(RemoteObject(newObjectId, newMsgData._addrVal)))
@@ -375,30 +403,7 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 
 						if (m_packetModuleTypesForPositioning.contains(PacketModule::TrackedPointPosition))
 						{
-							if (m_mappingAreaId == MAI_Invalid)
-							{
-								newObjectId = ROI_Positioning_SourcePosition_XY;
-								if (m_xyAxisSwapped)
-									newDualFloatValue = { static_cast<float>(trackedPointPositionModule->GetY()), static_cast<float>(trackedPointPositionModule->GetX()) };
-								else
-									newDualFloatValue = { static_cast<float>(trackedPointPositionModule->GetX()), static_cast<float>(trackedPointPositionModule->GetY()) };
-
-								newDualFloatValue[0] += m_absoluteOriginOffset.getX();
-								newDualFloatValue[1] += m_absoluteOriginOffset.getY();
-							}
-							else
-							{
-								newObjectId = ROI_CoordinateMapping_SourcePosition_XY;
-								if (m_xyAxisSwapped)
-									newDualFloatValue = GetMappedPosition({ static_cast<float>(trackedPointPositionModule->GetY()), static_cast<float>(trackedPointPositionModule->GetX()) });
-								else
-									newDualFloatValue = GetMappedPosition({ static_cast<float>(trackedPointPositionModule->GetX()), static_cast<float>(trackedPointPositionModule->GetY()) });
-							}
-
-							newMsgData._valType = ROVT_FLOAT;
-							newMsgData._valCount = 2;
-							newMsgData._payload = newDualFloatValue.data();
-							newMsgData._payloadSize = 2 * sizeof(float);
+							RTTrPMPositionToMsgData(juce::Point<float>(static_cast<float>(trackedPointPositionModule->GetX()), static_cast<float>(trackedPointPositionModule->GetY())), newObjectId, newMsgData, newDualFloatValue);
 
 							// If the received data targets a muted object, dont forward the message
 							if (IsRemoteObjectMuted(RemoteObject(newObjectId, newMsgData._addrVal)))
@@ -446,31 +451,7 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 
 						if (m_packetModuleTypesForPositioning.contains(PacketModule::CentroidAccelerationAndVelocity))
 						{
-							if (m_mappingAreaId == MAI_Invalid)
-							{
-								newObjectId = ROI_Positioning_SourcePosition_XY;
-								if (m_xyAxisSwapped)
-									newDualFloatValue = { static_cast<float>(centroidAccelAndVeloModule->GetYCoordinate()), static_cast<float>(centroidAccelAndVeloModule->GetXCoordinate()) };
-								else
-									newDualFloatValue = { static_cast<float>(centroidAccelAndVeloModule->GetXCoordinate()), static_cast<float>(centroidAccelAndVeloModule->GetYCoordinate()) };
-
-								newDualFloatValue[0] += m_absoluteOriginOffset.getX();
-								newDualFloatValue[1] += m_absoluteOriginOffset.getY();
-							}
-							else
-							{
-								newObjectId = ROI_CoordinateMapping_SourcePosition_XY;
-								if (m_xyAxisSwapped)
-									newDualFloatValue = GetMappedPosition({ static_cast<float>(centroidAccelAndVeloModule->GetYCoordinate()), static_cast<float>(centroidAccelAndVeloModule->GetXCoordinate()) });
-								else
-									newDualFloatValue = GetMappedPosition({ static_cast<float>(centroidAccelAndVeloModule->GetXCoordinate()), static_cast<float>(centroidAccelAndVeloModule->GetYCoordinate()) });
-
-							}
-
-							newMsgData._valType = ROVT_FLOAT;
-							newMsgData._valCount = 2;
-							newMsgData._payload = newDualFloatValue.data();
-							newMsgData._payloadSize = 2 * sizeof(float);
+							RTTrPMPositionToMsgData(juce::Point<float>(static_cast<float>(centroidAccelAndVeloModule->GetXCoordinate()), static_cast<float>(centroidAccelAndVeloModule->GetYCoordinate())), newObjectId, newMsgData, newDualFloatValue);
 
 							// If the received data targets a muted object, dont forward the message
 							if (IsRemoteObjectMuted(RemoteObject(newObjectId, newMsgData._addrVal)))
@@ -495,30 +476,7 @@ void RTTrPMProtocolProcessor::RTTrPMModuleReceived(const RTTrPMReceiver::RTTrPMM
 
 						if (m_packetModuleTypesForPositioning.contains(PacketModule::TrackedPointAccelerationAndVelocity))
 						{
-							if (m_mappingAreaId == MAI_Invalid)
-							{
-								newObjectId = ROI_Positioning_SourcePosition_XY;
-								if (m_xyAxisSwapped)
-									newDualFloatValue = { static_cast<float>(trackedPointAccelAndVeloModule->GetYCoordinate()), static_cast<float>(trackedPointAccelAndVeloModule->GetXCoordinate()) };
-								else
-									newDualFloatValue = { static_cast<float>(trackedPointAccelAndVeloModule->GetXCoordinate()), static_cast<float>(trackedPointAccelAndVeloModule->GetYCoordinate()) };
-
-								newDualFloatValue[0] += m_absoluteOriginOffset.getX();
-								newDualFloatValue[1] += m_absoluteOriginOffset.getY();
-							}
-							else
-							{
-								newObjectId = ROI_CoordinateMapping_SourcePosition_XY;
-								if (m_xyAxisSwapped)
-									newDualFloatValue = GetMappedPosition({ static_cast<float>(trackedPointAccelAndVeloModule->GetYCoordinate()), static_cast<float>(trackedPointAccelAndVeloModule->GetXCoordinate()) });
-								else
-									newDualFloatValue = GetMappedPosition({ static_cast<float>(trackedPointAccelAndVeloModule->GetXCoordinate()), static_cast<float>(trackedPointAccelAndVeloModule->GetYCoordinate()) });
-							}
-
-							newMsgData._valType = ROVT_FLOAT;
-							newMsgData._valCount = 2;
-							newMsgData._payload = newDualFloatValue.data();
-							newMsgData._payloadSize = 2 * sizeof(float);
+							RTTrPMPositionToMsgData(juce::Point<float>(static_cast<float>(trackedPointAccelAndVeloModule->GetXCoordinate()), static_cast<float>(trackedPointAccelAndVeloModule->GetYCoordinate())), newObjectId, newMsgData, newDualFloatValue);
 
 							// If the received data targets a muted object, dont forward the message
 							if (IsRemoteObjectMuted(RemoteObject(newObjectId, newMsgData._addrVal)))
