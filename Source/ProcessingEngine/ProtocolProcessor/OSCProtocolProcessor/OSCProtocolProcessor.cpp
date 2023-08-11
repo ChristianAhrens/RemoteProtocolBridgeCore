@@ -952,6 +952,8 @@ bool OSCProtocolProcessor::createFloatMessageData(const OSCMessage& messageInput
 
 		return true;
 	}
+	else if (messageInput.size() == 0)
+		return true;
 	else
 		return false;
 }
@@ -1008,6 +1010,8 @@ bool OSCProtocolProcessor::createIntMessageData(const OSCMessage& messageInput, 
 
 		return true;
 	}
+	else if (messageInput.size() == 0)
+		return true;
 	else
 		return false;
 }
@@ -1042,6 +1046,8 @@ bool OSCProtocolProcessor::createStringMessageData(const OSCMessage& messageInpu
 
 		return true;
 	}
+	else if (messageInput.size() == 0)
+		return true;
 	else
 		return false;
 }
