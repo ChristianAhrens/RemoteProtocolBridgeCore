@@ -897,7 +897,7 @@ bool OSCProtocolProcessor::createFloatMessageData(const OSCMessage& messageInput
 			return false;
 		
 		if (messageInput[1].isFloat32())
-			m_floatValueBuffer[1] = messageInput[2].getFloat32();
+			m_floatValueBuffer[1] = messageInput[1].getFloat32();
 		else
 			return false;
 
@@ -921,7 +921,7 @@ bool OSCProtocolProcessor::createFloatMessageData(const OSCMessage& messageInput
 			return false;
 
 		if (messageInput[1].isFloat32())
-			m_floatValueBuffer[1] = messageInput[2].getFloat32();
+			m_floatValueBuffer[1] = messageInput[1].getFloat32();
 		else
 			return false;
 
