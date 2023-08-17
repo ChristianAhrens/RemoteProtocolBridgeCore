@@ -327,10 +327,13 @@ void ObjectDataHandling_Abstract::UpdateOnlineState(ProtocolId id)
 	ScopedLock	tsAccessLock(m_protocolReactionTSLock);
 
 	// if the protocol is not present in map and therefor seems to have initially received data, set its status to UP
-	if (m_protocolReactionTSMap.count(id) <= 0)
+	if (0 >= m_protocolReactionTSMap.count(id))
 		SetChangedProtocolState(id, OHS_Protocol_Up);
 	// if the protocol is receiving data the first time after 1s of silence, set its status to UP
-	else if (Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(id) <= GetProtocolReactionTimeout())
+	else if (Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(id) > m_protocolReactionTimeout)
+		SetChangedProtocolState(id, OHS_Protocol_Up);
+	// generally if the state is not up, set it to up now
+	else if (OHS_Protocol_Up != (OHS_Protocol_Up | GetProtocolState(id)))
 		SetChangedProtocolState(id, OHS_Protocol_Up);
 
 	m_protocolReactionTSMap[id] = Time::getMillisecondCounterHiRes();
