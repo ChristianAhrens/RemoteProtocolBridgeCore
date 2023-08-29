@@ -1015,6 +1015,10 @@ bool ProcessingEngineConfig::IsChannelAddressingObject(RemoteObjectIdentifier ob
 	case ROI_RemoteProtocolBridge_SoundObjectGroupSelect:
 	case ROI_RemoteProtocolBridge_MatrixInputGroupSelect:
 	case ROI_RemoteProtocolBridge_MatrixOutputGroupSelect:
+	case ROI_Positioning_SpeakerPosition:
+	// CoordinateMappingSettings address a mappingarea (usually record)
+	// but only that for the following objects, which makes the objects
+	// channel addressing objects from RPBC's perspective
 	case ROI_CoordinateMappingSettings_P1real:
 	case ROI_CoordinateMappingSettings_P2real:
 	case ROI_CoordinateMappingSettings_P3real:
@@ -1023,7 +1027,6 @@ bool ProcessingEngineConfig::IsChannelAddressingObject(RemoteObjectIdentifier ob
 	case ROI_CoordinateMappingSettings_P3virtual:
 	case ROI_CoordinateMappingSettings_Flip:
 	case ROI_CoordinateMappingSettings_Name:
-	case ROI_Positioning_SpeakerPosition:
 		return true;
 	case ROI_Settings_DeviceName:
 	case ROI_Error_GnrlErr:
