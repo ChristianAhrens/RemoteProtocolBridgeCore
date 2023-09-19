@@ -248,9 +248,6 @@ public:
 	static bool	WriteActiveObjects(XmlElement* activeObjectsElement, const std::vector<RemoteObject>& remoteObjects);
 	static bool	WriteMutedObjects(XmlElement* mutedObjectsElement, const std::vector<RemoteObject>& remoteObjects);
 
-	static bool	ReplaceActiveObjects(XmlElement* activeObjectsElement, const std::vector<RemoteObject>& remoteObjects);
-	static bool	ReplaceMutedObjects(XmlElement* mutedObjectsElement, const std::vector<RemoteObject>& remoteObjects);
-
 	static String				ProtocolTypeToString(ProtocolType pt);
 	static ProtocolType			ProtocolTypeFromString(String type);
 	static String				ObjectHandlingModeToString(ObjectHandlingMode ohm);
@@ -268,9 +265,10 @@ public:
 	bool isValid() override;
 
 private:
+	static bool	ReadObjectsDeprecated(XmlElement* objectsElement, std::vector<RemoteObject>& remoteObjects);
 	static bool	ReadObjects(XmlElement* objectsElement, std::vector<RemoteObject>& remoteObjects);
 	static bool	WriteObjects(XmlElement* objectsElement, const std::vector<RemoteObject>& remoteObjects);
-	static bool	ReplaceObjects(XmlElement* objectsElement, const std::vector<RemoteObject>& remoteObjects);
+	static bool	IsDeprecatedObjectsFormat(XmlElement* objectsElement);
 
     int GetNextUniqueId();
 	int ValidateUniqueId(int uniqueId);

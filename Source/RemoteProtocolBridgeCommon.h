@@ -39,7 +39,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /**
  * Unique, therefor static, counter for id generation
  */
-static int uniqueIdCounter = 0;
+static int s_uniqueIdCounter = 0;
 
 /**
  * Type definitions.
@@ -243,6 +243,79 @@ struct RemoteObjectAddressing
 		_first = a;
 		_second = b;
 	};
+	/**
+	 * Helper method to create a string representation of the remote object
+	 * @return	The string representation as created
+	 */
+	juce::String toString() const
+	{
+		return juce::String(_first) + "," + juce::String(_second);
+	}
+	/**
+	 * Helper method to create a string representation of a given list of remote object addressings
+	 * @param	remoteObjectAddressings		The list of addressings that shall be dumped into a string representation.
+	 * @return	The string representation as created
+	 */
+	static juce::String toString(const std::vector<RemoteObjectAddressing>& remoteObjectAddressings)
+	{
+		auto objectListString = juce::String();
+
+		for (auto const& objectAddressing : remoteObjectAddressings)
+			objectListString << objectAddressing.toString() << ";";
+
+		return objectListString;
+	}
+	/**
+	 * Helper method to initialize this object instance's members
+	 * from its string representation of the remote object
+	 * @param	commaseparatedStringRepresentation	The string representation of a roiaddressing, comma separated
+	 * @return	False if the input string could not be processed to valid member data
+	 */
+	bool fromString(const juce::String& commaseparatedStringRepresentation)
+	{
+		juce::StringArray sa;
+		auto tokens = sa.addTokens(commaseparatedStringRepresentation, ",", "");
+		if (tokens != 2 || sa.size() != 2)
+			return false;
+
+		_first = ChannelId(sa[0].getIntValue());
+		_second = RecordId(sa[1].getIntValue());
+
+		return true;
+	}
+	/**
+	 * Static helper method to create an object instance
+	 * from its string representation of the remote object
+	 * @param	commaseparatedStringRepresentation	The string representation of a roiaddressing, comma separated
+	 * @return	The remote object as created. Invalid remote object if the string could not be processed correctly
+	 */
+	static RemoteObjectAddressing createFromString(const juce::String& commaseparatedStringRepresentation)
+	{
+		juce::StringArray sa;
+		sa.addTokens(commaseparatedStringRepresentation.trimCharactersAtEnd(","), ",", "");
+		if (sa.size() != 2)
+			return RemoteObjectAddressing();
+
+		return RemoteObjectAddressing(ChannelId(sa[0].getIntValue()), RecordId(sa[1].getIntValue()));
+	}
+	/**
+	 * Static helper method to create an list of object instances
+	 * from their concatenated string representations
+	 * @param	objectListStringRepresentation	The string representation of a list of remote objects, semicolon separated
+	 * @return	The list of remote objects as created. Invalid remote objects might be contained if the string could not be processed correctly
+	 */
+	static std::vector<RemoteObjectAddressing> createFromListString(const juce::String& objectListStringRepresentation)
+	{
+		auto remoteObjects = std::vector<RemoteObjectAddressing>();
+
+		juce::StringArray sa;
+		sa.addTokens(objectListStringRepresentation.trimCharactersAtEnd(";"), ";", "");
+
+		for (auto const& commaseparatedStringRepresentation : sa)
+			remoteObjects.push_back(RemoteObjectAddressing::createFromString(commaseparatedStringRepresentation));
+
+		return remoteObjects;
+	}
 	/**
 	 * Equality comparison operator overload
 	 */
