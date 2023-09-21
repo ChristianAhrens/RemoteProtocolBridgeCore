@@ -148,11 +148,14 @@ bool ADMOSCProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifi
 		{
 			floatValueSendBuffer[0] = ReadFromObjectCache(msgData._addrVal._first, ADMObjectType::AOT_XPos);
 			floatValueSendBuffer[1] = ReadFromObjectCache(msgData._addrVal._first, ADMObjectType::AOT_YPos);
+            floatValueSendBuffer[2] = ReadFromObjectCache(msgData._addrVal._first, ADMObjectType::AOT_ZPos);
+            
+            targetObjType = ADMObjectType::AOT_XYZPos;
 
 			admConvertedMsgData._valType = ROVT_FLOAT;
-			admConvertedMsgData._valCount = 2;
+			admConvertedMsgData._valCount = 3;
 			admConvertedMsgData._payload = floatValueSendBuffer;
-			admConvertedMsgData._payloadSize = 2 * sizeof(float);
+			admConvertedMsgData._payloadSize = 3 * sizeof(float);
 
 			break;
 		}
