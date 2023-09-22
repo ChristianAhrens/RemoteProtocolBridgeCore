@@ -342,7 +342,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
             auto& refMsgData = GetValueCache().GetValue(targetObj);
             if (refMsgData._valCount != 3 || refMsgData._payloadSize != 3 * sizeof(float))
                 return false;
-            reinterpret_cast<float*>(refMsgData._payload)[1] = reinterpret_cast<float*>(msgData._payload)[1];
+            reinterpret_cast<float*>(refMsgData._payload)[1] = reinterpret_cast<float*>(msgData._payload)[0];
 
             //auto x = reinterpret_cast<float*>(refMsgData._payload)[0];
             //auto y = reinterpret_cast<float*>(refMsgData._payload)[1];
