@@ -363,7 +363,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
         break;
     case ROI_Positioning_SourcePosition:
         {
-            if (msgData._valCount != 1 || msgData._payloadSize != 3 * sizeof(float))
+            if (msgData._valCount != 3 || msgData._payloadSize != 3 * sizeof(float))
                 return false;
 
             GetValueCache().SetValue(RemoteObject(roi, RemoteObjectAddressing(channel, record)), msgData);
