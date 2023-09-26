@@ -42,6 +42,8 @@ public:
 	void SetValue(const RemoteObject& ro, const RemoteObjectMessageData& valueData);
 	const RemoteObjectMessageData& GetValue(const RemoteObject& ro);
 
+	const std::map<RemoteObject, RemoteObjectMessageData>& GetCachedValues() const { return m_cachedValues; };
+
 private:
 #ifdef DEBUG
 	void DbgPrintCacheContent();

@@ -1099,6 +1099,8 @@ String  ProcessingEngineConfig::ProtocolTypeToString(ProtocolType pt)
 		return "MIDI";
 	case PT_Invalid:
 		return "Invalid";
+	case PT_NoProtocol:
+		return "NoProtocol";
 	default:
 		return "";
 	}
@@ -1123,6 +1125,8 @@ ProtocolType  ProcessingEngineConfig::ProtocolTypeFromString(String type)
 		return PT_ADMOSCProtocol;
 	if (type == ProtocolTypeToString(PT_RemapOSCProtocol))
 		return PT_RemapOSCProtocol;
+	if (type == ProtocolTypeToString(PT_NoProtocol))
+		return PT_NoProtocol;
 
 	return PT_Invalid;
 }
