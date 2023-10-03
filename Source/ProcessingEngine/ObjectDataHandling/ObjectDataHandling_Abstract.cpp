@@ -243,7 +243,7 @@ void ObjectDataHandling_Abstract::SetChangedProtocolState(ProtocolId id, ObjectH
 
 		for (auto const& listener : m_stateListeners)
 		{
-			listener->SetChangedProtocolState(id, m_currentStateMap.at(id));
+			listener->SetProtocolState(id, m_currentStateMap.at(id));
 		}
 	}
 }
@@ -255,7 +255,13 @@ void ObjectDataHandling_Abstract::SetChangedProtocolState(ProtocolId id, ObjectH
  */
 void ObjectDataHandling_Abstract::AddStateListener(ObjectDataHandling_Abstract::StateListener* listener)
 {
-	m_stateListeners.push_back(listener);
+	if (nullptr != listener && std::find(m_stateListeners.begin(), m_stateListeners.end(), listener) == m_stateListeners.end())
+	{
+		m_stateListeners.push_back(listener);
+		
+		for (auto const& stateKV : m_currentStateMap)
+			listener->SetProtocolState(stateKV.first, stateKV.second);
+	}
 }
 
 /**
