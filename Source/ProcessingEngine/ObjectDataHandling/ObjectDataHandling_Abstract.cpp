@@ -268,12 +268,18 @@ void ObjectDataHandling_Abstract::AddStateListener(ObjectDataHandling_Abstract::
  * Removes an object derived from embedded statuslistener class
  * from internal list of listener objects.
  * @param	listener	The listener object to add.
+ * @return	True if the listener was successfully removed, false if it was not found or is invalid
  */
-void ObjectDataHandling_Abstract::RemoveStateListener(ObjectDataHandling_Abstract::StateListener* listener)
+bool ObjectDataHandling_Abstract::RemoveStateListener(ObjectDataHandling_Abstract::StateListener* listener)
 {
 	auto listenerIter = std::find(m_stateListeners.begin(), m_stateListeners.end(), listener);
-	if (listenerIter != m_stateListeners.end())
+	if (listener && listenerIter != m_stateListeners.end())
+	{
 		m_stateListeners.erase(listenerIter);
+		return true;
+	}
+	else
+		return false;
 }
 
 /**

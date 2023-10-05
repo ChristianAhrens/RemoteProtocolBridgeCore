@@ -180,6 +180,7 @@ public:
 	~ProcessingEngineNode();
 
 	void AddListener(ProcessingEngineNode::NodeListener* listener);
+	bool RemoveListener(ProcessingEngineNode::NodeListener* listener);
 
 	NodeId GetId();
 	Thread::ThreadID GetNodeThreadId();

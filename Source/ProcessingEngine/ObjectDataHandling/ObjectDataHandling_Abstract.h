@@ -102,7 +102,7 @@ public:
 
 	//==============================================================================
 	void AddStateListener(StateListener* listener);
-	void RemoveStateListener(StateListener* listener);
+	bool RemoveStateListener(StateListener* listener);
 
 	ObjectHandlingState GetProtocolState(ProtocolId id);
 

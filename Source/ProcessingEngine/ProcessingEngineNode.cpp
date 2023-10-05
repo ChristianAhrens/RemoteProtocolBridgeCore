@@ -88,6 +88,8 @@ ProcessingEngineNode::ProcessingEngineNode(ProcessingEngineNode::NodeListener* l
  */
 ProcessingEngineNode::~ProcessingEngineNode()
 {
+	m_listeners.clear();
+
 	Stop();
 }
 
@@ -99,6 +101,23 @@ void ProcessingEngineNode::AddListener(ProcessingEngineNode::NodeListener* liste
 {
 	if (listener)
 		m_listeners.push_back(listener);
+}
+
+/**
+ * Method to remove a registered listener object.
+ * @param listener	The listener object to remove from the internal list of listeners
+ * @return	True if the listener was successfully removed, false if it was not found or is invalid
+ */
+bool ProcessingEngineNode::RemoveListener(ProcessingEngineNode::NodeListener* listener)
+{
+	auto listenerIter = std::find(m_listeners.begin(), m_listeners.end(), listener);
+	if (listener && listenerIter != m_listeners.end())
+	{
+		m_listeners.erase(listenerIter);
+		return true;
+	}
+	else
+		return false;
 }
 
 /**
