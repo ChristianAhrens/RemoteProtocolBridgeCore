@@ -18,32 +18,51 @@
 
 #pragma once
 
+#ifdef USE_DBPR_PROJECT_UTILS
+
 #include <JuceHeader.h>
 
 #include <SQLiteCpp/SQLiteCpp.h>
-
-#ifdef USE_DBPR_PROJECT_UTILS
 
 struct CoordinateMappingData
 {
     juce::String    _name;
     bool            _flip;
-    double          _p1x;
-    double          _p1y;
-    double          _p1z;
-    double          _p3x;
-    double          _p3y;
-    double          _p3z;
+    double          _vp1x;
+    double          _vp1y;
+    double          _vp1z;
+    double          _vp3x;
+    double          _vp3y;
+    double          _vp3z;
+    double          _rp1x;
+    double          _rp1y;
+    double          _rp1z;
+    double          _rp2x;
+    double          _rp2y;
+    double          _rp2z;
+    double          _rp3x;
+    double          _rp3y;
+    double          _rp3z;
+    double          _rp4x;
+    double          _rp4y;
+    double          _rp4z;
 
     juce::String ToString() const {
         auto s = juce::String();
-        s << _name << "," << int(_flip) << "," << _p1x << "," << _p1y << "," << _p1z << "," << _p3x << "," << _p3y << "," << _p3z;
+        s   << _name << "," 
+            << int(_flip) << "," 
+            << _vp1x << "," << _vp1y << "," << _vp1z << "," 
+            << _vp3x << "," << _vp3y << "," << _vp3z << ","
+            << _rp1x << "," << _rp1y << "," << _rp1z << ","
+            << _rp2x << "," << _rp2y << "," << _rp2z << ","
+            << _rp3x << "," << _rp3y << "," << _rp3z << ","
+            << _rp4x << "," << _rp4y << "," << _rp4z;
         return s;
     };
     static CoordinateMappingData FromString(const juce::String& coordinateMappingDataString) {
         juce::StringArray sa;
         sa.addTokens(coordinateMappingDataString, ",", {});
-        if (sa.size() != 8)
+        if (sa.size() != 20)
         {
             jassertfalse;
             return {};
@@ -53,12 +72,24 @@ struct CoordinateMappingData
             CoordinateMappingData retv = {};
             retv._name = sa[0];
             retv._flip = sa[1].getIntValue() == 1;
-            retv._p1x = sa[2].getDoubleValue();
-            retv._p1y = sa[3].getDoubleValue();
-            retv._p1z = sa[4].getDoubleValue();
-            retv._p3x = sa[5].getDoubleValue();
-            retv._p3y = sa[6].getDoubleValue();
-            retv._p3z = sa[7].getDoubleValue();
+            retv._vp1x = sa[2].getDoubleValue();
+            retv._vp1y = sa[3].getDoubleValue();
+            retv._vp1z = sa[4].getDoubleValue();
+            retv._vp3x = sa[5].getDoubleValue();
+            retv._vp3y = sa[6].getDoubleValue();
+            retv._vp3z = sa[7].getDoubleValue();
+            retv._rp1x = sa[8].getDoubleValue();
+            retv._rp1y = sa[9].getDoubleValue();
+            retv._rp1z = sa[10].getDoubleValue();
+            retv._rp2x = sa[11].getDoubleValue();
+            retv._rp2y = sa[12].getDoubleValue();
+            retv._rp2z = sa[13].getDoubleValue();
+            retv._rp3x = sa[14].getDoubleValue();
+            retv._rp3y = sa[15].getDoubleValue();
+            retv._rp3z = sa[16].getDoubleValue();
+            retv._rp4x = sa[17].getDoubleValue();
+            retv._rp4y = sa[18].getDoubleValue();
+            retv._rp4z = sa[19].getDoubleValue();
             return retv;
         }
     };
@@ -218,15 +249,15 @@ struct ProjectData
 
                 if (pIdx == 0)
                 {
-                    projectData._coordinateMappingData[mappingAreaId]._p1x = x;
-                    projectData._coordinateMappingData[mappingAreaId]._p1y = y;
-                    projectData._coordinateMappingData[mappingAreaId]._p1z = z;
+                    projectData._coordinateMappingData[mappingAreaId]._vp1x = x;
+                    projectData._coordinateMappingData[mappingAreaId]._vp1y = y;
+                    projectData._coordinateMappingData[mappingAreaId]._vp1z = z;
                 }
                 else
                 {
-                    projectData._coordinateMappingData[mappingAreaId]._p3x = x;
-                    projectData._coordinateMappingData[mappingAreaId]._p3y = y;
-                    projectData._coordinateMappingData[mappingAreaId]._p3z = z;
+                    projectData._coordinateMappingData[mappingAreaId]._vp3x = x;
+                    projectData._coordinateMappingData[mappingAreaId]._vp3y = y;
+                    projectData._coordinateMappingData[mappingAreaId]._vp3z = z;
                 }
             }
 

@@ -18,6 +18,8 @@
 
 #include "NoProtocolProtocolProcessor.h"
 
+#include "../../dbprProjectUtils.h"
+
 
 // **************************************************************************************
 //    class NoProtocolProtocolProcessor
@@ -41,6 +43,30 @@ NoProtocolProtocolProcessor::NoProtocolProtocolProcessor(const NodeId& parentNod
 NoProtocolProtocolProcessor::~NoProtocolProtocolProcessor()
 {
 	Stop();
+}
+
+/**
+ * Sets the xml configuration for the protocol processor object.
+ *
+ * @param stateXml	The XmlElement containing configuration for this protocol processor instance
+ * @return True on success, False on failure
+ */
+bool NoProtocolProtocolProcessor::setStateXml(XmlElement* stateXml)
+{
+    if (!ProtocolProcessorBase::setStateXml(stateXml))
+    {
+        return false;
+    }
+    else if (1 == stateXml->getNumChildElements() && stateXml->getFirstChildElement()->isTextElement())
+    {
+        auto projectData = ProjectData::FromString(stateXml->getFirstChildElement()->getAllSubText());
+        if (!projectData.IsEmpty())
+            InitializeObjectValueCache(projectData);
+
+        return true;
+    }
+    else
+        return false;
 }
 
 /**
@@ -539,6 +565,105 @@ void NoProtocolProtocolProcessor::InitializeObjectValueCache()
     GetValueCache().SetValue(
         RemoteObject(ROI_MatrixSettings_ReverbRearLevel, RemoteObjectAddressing(INVALID_ADDRESS_VALUE, INVALID_ADDRESS_VALUE)),
         RemoteObjectMessageData(RemoteObjectAddressing(INVALID_ADDRESS_VALUE, INVALID_ADDRESS_VALUE), ROVT_FLOAT, 1, &oneFloat, sizeof(float)));
+
+}
+
+/**
+ * Initializes internal cache with dummy values from given projectdata struct.
+ * @param   projectData     The struct to initialize cache from
+ */
+void NoProtocolProtocolProcessor::InitializeObjectValueCache(const ProjectData& projectData)
+{
+    // all input relevant values
+    for (auto const& inputNamesKV : projectData._inputNameData)
+    {
+        auto& in = inputNamesKV.first;
+        auto& name = inputNamesKV.second;
+
+        auto addr = RemoteObjectAddressing(in, INVALID_ADDRESS_VALUE);
+        GetValueCache().SetValue(
+            RemoteObject(ROI_MatrixInput_ChannelName, addr),
+            RemoteObjectMessageData(addr, ROVT_STRING, static_cast<std::uint16_t>(name.length()), name.getCharPointer().getAddress(), static_cast<std::uint32_t>(name.length())));
+    }
+
+    // all output relevant values
+    for (auto const& speakerDataKV : projectData._speakerPositionData)
+    {
+        auto& out = speakerDataKV.first;
+        
+        float spos[6] = { 
+            float(speakerDataKV.second._x), float(speakerDataKV.second._y), float(speakerDataKV.second._z),
+            float(speakerDataKV.second._hor), float(speakerDataKV.second._vrt), float(speakerDataKV.second._rot) };
+
+        auto addr = RemoteObjectAddressing(out, INVALID_ADDRESS_VALUE);
+        GetValueCache().SetValue(
+            RemoteObject(ROI_Positioning_SpeakerPosition, addr),
+            RemoteObjectMessageData(addr, ROVT_FLOAT, 6, spos, 6 * sizeof(float)));
+    }
+
+    // all mapping settings relevant values
+    for (auto const& coordMappingsKV : projectData._coordinateMappingData)
+    {
+        auto& mp = coordMappingsKV.first;
+        auto& data = coordMappingsKV.second;
+
+        auto name = data._name;
+
+        float realp1[3] = { float(data._rp1x), float(data._rp1y), float(data._rp1z) };
+        float realp2[3] = { float(data._rp2x), float(data._rp2y), float(data._rp2z) };
+        float realp3[3] = { float(data._rp3x), float(data._rp3y), float(data._rp3z) };
+        float realp4[3] = { float(data._rp4x), float(data._rp4y), float(data._rp4z) };
+        float virtp1[3] = { float(data._vp1x), float(data._vp1y), float(data._vp1z) };
+        float virtp3[3] = { float(data._vp3x), float(data._vp3y), float(data._vp3z) };
+        int flip = data._flip;
+
+        auto addr = RemoteObjectAddressing(mp, INVALID_ADDRESS_VALUE);
+        GetValueCache().SetValue(
+            RemoteObject(ROI_CoordinateMappingSettings_Name, addr),
+            RemoteObjectMessageData(addr, ROVT_STRING, static_cast<std::uint16_t>(name.length()), name.getCharPointer().getAddress(), static_cast<std::uint32_t>(name.length())));
+
+        GetValueCache().SetValue(
+            RemoteObject(ROI_CoordinateMappingSettings_P1real, addr),
+            RemoteObjectMessageData(addr, ROVT_FLOAT, 3, realp1, 3 * sizeof(float)));
+
+        GetValueCache().SetValue(
+            RemoteObject(ROI_CoordinateMappingSettings_P2real, addr),
+            RemoteObjectMessageData(addr, ROVT_FLOAT, 3, realp2, 3 * sizeof(float)));
+
+        GetValueCache().SetValue(
+            RemoteObject(ROI_CoordinateMappingSettings_P3real, addr),
+            RemoteObjectMessageData(addr, ROVT_FLOAT, 3, realp3, 3 * sizeof(float)));
+
+        GetValueCache().SetValue(
+            RemoteObject(ROI_CoordinateMappingSettings_P4real, addr),
+            RemoteObjectMessageData(addr, ROVT_FLOAT, 3, realp4, 3 * sizeof(float)));
+
+        GetValueCache().SetValue(
+            RemoteObject(ROI_CoordinateMappingSettings_P1virtual, addr),
+            RemoteObjectMessageData(addr, ROVT_FLOAT, 3, virtp1, 3 * sizeof(float)));
+
+        GetValueCache().SetValue(
+            RemoteObject(ROI_CoordinateMappingSettings_P3virtual, addr),
+            RemoteObjectMessageData(addr, ROVT_FLOAT, 3, virtp3, 3 * sizeof(float)));
+
+        GetValueCache().SetValue(
+            RemoteObject(ROI_CoordinateMappingSettings_Flip, addr),
+            RemoteObjectMessageData(addr, ROVT_INT, 1, &flip, sizeof(int)));
+    }
+
+    //// all scenes relevant values
+    //SetSceneIndexToCache(1.0f);
+    //
+    //// all en-space relevant values
+    //GetValueCache().SetValue(
+    //    RemoteObject(ROI_MatrixSettings_ReverbRoomId, RemoteObjectAddressing(INVALID_ADDRESS_VALUE, INVALID_ADDRESS_VALUE)),
+    //    RemoteObjectMessageData(RemoteObjectAddressing(INVALID_ADDRESS_VALUE, INVALID_ADDRESS_VALUE), ROVT_INT, 1, &oneInt, sizeof(int)));
+    //GetValueCache().SetValue(
+    //    RemoteObject(ROI_MatrixSettings_ReverbPredelayFactor, RemoteObjectAddressing(INVALID_ADDRESS_VALUE, INVALID_ADDRESS_VALUE)),
+    //    RemoteObjectMessageData(RemoteObjectAddressing(INVALID_ADDRESS_VALUE, INVALID_ADDRESS_VALUE), ROVT_FLOAT, 1, &oneFloat, sizeof(float)));
+    //GetValueCache().SetValue(
+    //    RemoteObject(ROI_MatrixSettings_ReverbRearLevel, RemoteObjectAddressing(INVALID_ADDRESS_VALUE, INVALID_ADDRESS_VALUE)),
+    //    RemoteObjectMessageData(RemoteObjectAddressing(INVALID_ADDRESS_VALUE, INVALID_ADDRESS_VALUE), ROVT_FLOAT, 1, &oneFloat, sizeof(float)));
 
 }
 

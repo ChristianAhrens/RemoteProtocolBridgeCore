@@ -23,6 +23,11 @@
 
 #include <JuceHeader.h>
 
+/** 
+ * fwd. decls.
+ */
+struct ProjectData;
+
 /**
  * Class NoProtocolProtocolProcessor is a derived class for dummy protocol interaction.
  */
@@ -31,6 +36,8 @@ class NoProtocolProtocolProcessor : public ProtocolProcessorBase
 public:
 	NoProtocolProtocolProcessor(const NodeId& parentNodeId);
 	virtual ~NoProtocolProtocolProcessor() override;
+
+	bool setStateXml(XmlElement* stateXml) override;
 
 	bool Start() override;
 	bool Stop() override;
@@ -43,6 +50,7 @@ private:
 
 	//==============================================================================
 	void InitializeObjectValueCache();
+	void InitializeObjectValueCache(const ProjectData& projectData);
 	void TriggerSendingObjectValueCache();
 	void SetSceneIndexToCache(std::float_t sceneIndex);
 
