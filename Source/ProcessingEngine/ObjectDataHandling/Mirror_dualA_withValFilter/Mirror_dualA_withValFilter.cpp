@@ -104,13 +104,13 @@ bool Mirror_dualA_withValFilter::setStateXml(XmlElement* stateXml)
 /**
  * Method to be called by parent node on receiving data from node protocol with given id
  *
- * @param PId		The id of the protocol that received the data
- * @param roi		The object id to send a message for
- * @param msgData	The actual message value/content data
- * @param msgMeta	The meta information on the message data that was received
+ * @param receiverProtocolId	The id of the protocol that received the data
+ * @param roi					The object id to send a message for
+ * @param msgData				The actual message value/content data
+ * @param msgMeta				The meta information on the message data that was received
  * @return	True if successful sent/forwarded, false if not
  */
-bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta)
+bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId receiverProtocolId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta)
 {
 	// a valid parent node is required to be able to do anything with the received message
 	auto parentNode = ObjectDataHandling_Abstract::GetParentNode();
@@ -119,33 +119,38 @@ bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
 
 	// do some sanity checks on this instances configuration parameters and the given message data origin id
 	auto mirrorConfigValid = (GetProtocolAIds().size() == 2);
-	auto isProtocolTypeA = (std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) != GetProtocolAIds().end());
-	auto isProtocolTypeB = (std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) != GetProtocolBIds().end());
+	auto isProtocolTypeA = (std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), receiverProtocolId) != GetProtocolAIds().end());
+	auto isProtocolTypeB = (std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), receiverProtocolId) != GetProtocolBIds().end());
 	auto protocolIdValid = isProtocolTypeA || isProtocolTypeB;
 
 	if (!mirrorConfigValid || !protocolIdValid)
 		return false;
 
-	UpdateOnlineState(PId);
+	UpdateOnlineState(receiverProtocolId);
 
 	if (IsCachedValuesQuery(roi))
-		return SendValueCacheToProtocol(PId);
+		return SendValueCacheToProtocol(receiverProtocolId);
 
 	// check the incoming data regarding value change to then forward and if required mirror it to other protocols
-	if (IsChangedDataValue(PId, roi, msgData._addrVal, msgData))
+	if (IsChangedDataValue(receiverProtocolId, roi, msgData._addrVal, msgData))
 	{
 		// mirror and forward to all B if data comes from A
 		if (isProtocolTypeA)
 		{
 			// data mirroring is only done inbetween typeA protocols
-			MirrorDataIfRequired(PId, roi, msgData);
+			MirrorDataIfRequired(receiverProtocolId, roi, msgData);
 
-			// now do the basic A to B forwarding
-			auto sendSuccess = true;
-			for (auto const& pId : GetProtocolBIds())
-				if (msgMeta._ExternalId != pId || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
-					sendSuccess = parentNode->SendMessageTo(pId, roi, msgData) && sendSuccess;
-			return sendSuccess;
+			// now do the basic A to B forwarding - only from master A
+			if (receiverProtocolId == m_currentMaster)
+			{
+				auto sendSuccess = true;
+				for (auto const& protocolBId : GetProtocolBIds())
+					if (msgMeta._ExternalId != roi || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
+						sendSuccess = parentNode->SendMessageTo(protocolBId, roi, msgData) && sendSuccess;
+				return sendSuccess;
+			}
+			else
+				return true;
 		}
 		// forward to A current master if data comes from B
 		else if (isProtocolTypeB)
