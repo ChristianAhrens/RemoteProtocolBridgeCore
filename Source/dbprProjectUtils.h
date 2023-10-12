@@ -247,17 +247,21 @@ struct ProjectData
                 auto queryVO = SQLite::Statement(db, "SELECT * FROM VenueObjects WHERE VenueObjectID==" + std::to_string(cmDataKV.second._venueObjectId));
                 while (queryVO.executeStep())
                 {
-                    auto originX = queryVO.getColumn("OriginX").getDouble();
-                    auto originY = queryVO.getColumn("OriginY").getDouble();
-                    auto originZ = queryVO.getColumn("OriginZ").getDouble();
-                    auto rotationX = queryVO.getColumn("RotationX").getDouble();
-                    auto rotationY = queryVO.getColumn("RotationY").getDouble();
-                    auto rotationZ = queryVO.getColumn("RotationZ").getDouble();
-                    auto scaleX = queryVO.getColumn("ScaleX").getDouble();
-                    auto scaleY = queryVO.getColumn("ScaleY").getDouble();
-                    auto scaleZ = queryVO.getColumn("ScaleZ").getDouble();
+                    auto originX = float(queryVO.getColumn("OriginX").getDouble());
+                    auto originY = float(queryVO.getColumn("OriginY").getDouble());
+                    auto originZ = float(queryVO.getColumn("OriginZ").getDouble());
+                    auto rotationX = float(queryVO.getColumn("RotationX").getDouble());
+                    auto rotationY = float(queryVO.getColumn("RotationY").getDouble());
+                    auto rotationZ = float(queryVO.getColumn("RotationZ").getDouble());
+                    auto scaleX = float(queryVO.getColumn("ScaleX").getDouble());
+                    auto scaleY = float(queryVO.getColumn("ScaleY").getDouble());
+                    auto scaleZ = float(queryVO.getColumn("ScaleZ").getDouble());
                     auto parentVenueObject = queryVO.getColumn("ParentVenueObjectId").getInt();
                     jassert(parentVenueObject == 0);
+                    ignoreUnused(rotationX);
+                    ignoreUnused(rotationY);
+                    ignoreUnused(scaleZ);
+                    ignoreUnused(originZ);
 
                     auto translationMatrix = juce::AffineTransform::translation(originX, originY);
                     auto scalingMatrix = juce::AffineTransform::scale(scaleX, scaleY, originX, originY);

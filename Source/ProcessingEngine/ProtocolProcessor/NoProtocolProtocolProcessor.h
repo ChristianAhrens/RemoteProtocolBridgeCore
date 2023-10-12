@@ -52,7 +52,10 @@ private:
 	void InitializeObjectValueCache();
 	void InitializeObjectValueCache(const ProjectData& projectData);
 	void TriggerSendingObjectValueCache();
+	void SetInputValuesToCache(ChannelId channel, const juce::String& inputName);
 	void SetSceneIndexToCache(std::float_t sceneIndex);
+	void SetSpeakerPositionToCache(ChannelId channel, float x, float y, float z, float hor, float vrt, float rot);
+	void SetMappingSettingsToCache(ChannelId mapping, const juce::String& mappingName, float realp3[3], float realp2[3], float realp1[3], float realp4[3], float virtp1[3], float virtp3[3], int flip);
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NoProtocolProtocolProcessor)
 };
