@@ -27,6 +27,7 @@
 struct CoordinateMappingData
 {
     juce::String    _name;
+    int             _venueObjectId;
     bool            _flip;
     double          _vp1x;
     double          _vp1y;
@@ -219,6 +220,7 @@ struct ProjectData
     };
     static ProjectData OpenAndReadProject(const juce::String& projectFilePath)
     {
+        // SQLiteCpp requires exception handling
         try
         {
             ProjectData projectData;
@@ -230,22 +232,87 @@ struct ProjectData
             auto queryCM = SQLite::Statement(db, "SELECT * FROM MatrixCoordinateMappings");
             while (queryCM.executeStep())
             {
-                auto mappingAreaId = queryCM.getColumn(1).getInt();
-                auto flip = bool(queryCM.getColumn(3).getUInt());
-                auto mappingAreaName = queryCM.getColumn(4).getString();
+                auto mappingAreaId = queryCM.getColumn(1).getInt(); // RecordNumber col 1
+                auto venueObjectId = queryCM.getColumn(2).getInt(); // VenueObjectId col 2
+                auto flip = bool(queryCM.getColumn(3).getUInt()); // Flip col 3
+                auto mappingAreaName = queryCM.getColumn(4).getString(); // Name col 4
 
+                projectData._coordinateMappingData[mappingAreaId]._venueObjectId = venueObjectId;
                 projectData._coordinateMappingData[mappingAreaId]._flip = flip;
                 projectData._coordinateMappingData[mappingAreaId]._name = mappingAreaName;
+            }
+
+            for (auto& cmDataKV : projectData._coordinateMappingData)
+            {
+                auto queryVO = SQLite::Statement(db, "SELECT * FROM VenueObjects WHERE VenueObjectID==" + std::to_string(cmDataKV.second._venueObjectId));
+                while (queryVO.executeStep())
+                {
+                    auto originX = queryVO.getColumn("OriginX").getDouble();
+                    auto originY = queryVO.getColumn("OriginY").getDouble();
+                    auto originZ = queryVO.getColumn("OriginZ").getDouble();
+                    auto rotationX = queryVO.getColumn("RotationX").getDouble();
+                    auto rotationY = queryVO.getColumn("RotationY").getDouble();
+                    auto rotationZ = queryVO.getColumn("RotationZ").getDouble();
+                    auto scaleX = queryVO.getColumn("ScaleX").getDouble();
+                    auto scaleY = queryVO.getColumn("ScaleY").getDouble();
+                    auto scaleZ = queryVO.getColumn("ScaleZ").getDouble();
+                    auto parentVenueObject = queryVO.getColumn("ParentVenueObjectId").getInt();
+                    jassert(parentVenueObject == 0);
+
+                    auto translationMatrix = juce::AffineTransform::translation(originX, originY);
+                    auto scalingMatrix = juce::AffineTransform::scale(scaleX, scaleY, originX, originY);
+                    auto rotationMatrix = juce::AffineTransform::rotation(juce::degreesToRadians(rotationZ), originX, originY);
+
+                    auto queryVOP = SQLite::Statement(db, "SELECT * FROM VenueObjectPoints WHERE VenueObjectID==" + std::to_string(cmDataKV.second._venueObjectId));
+                    while (queryVOP.executeStep())
+                    {
+                        auto pointIndex = queryVOP.getColumn("PointIndex").getInt(); // col 1
+                        auto x = queryVOP.getColumn("X").getDouble(); // col 2
+                        auto y = queryVOP.getColumn("Y").getDouble(); // col 3
+                        auto z = queryVOP.getColumn("Z").getDouble(); // col 4
+
+                        auto transformedVenuePoint = juce::Point<double>(x, y)
+                            .transformedBy(translationMatrix)
+                            .transformedBy(scalingMatrix)
+                            .transformedBy(rotationMatrix);
+
+                        switch (pointIndex)
+                        {
+                        case 0:
+                            cmDataKV.second._rp1x = transformedVenuePoint.getX();
+                            cmDataKV.second._rp1y = transformedVenuePoint.getY();
+                            cmDataKV.second._rp1z = z;
+                            break;
+                        case 1:
+                            cmDataKV.second._rp2x = transformedVenuePoint.getX();
+                            cmDataKV.second._rp2y = transformedVenuePoint.getY();
+                            cmDataKV.second._rp2z = z;
+                            break;
+                        case 2:
+                            cmDataKV.second._rp3x = transformedVenuePoint.getX();
+                            cmDataKV.second._rp3y = transformedVenuePoint.getY();
+                            cmDataKV.second._rp3z = z;
+                            break;
+                        case 3:
+                            cmDataKV.second._rp4x = transformedVenuePoint.getX();
+                            cmDataKV.second._rp4y = transformedVenuePoint.getY();
+                            cmDataKV.second._rp4z = z;
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                }
             }
 
             auto queryCMP = SQLite::Statement(db, "SELECT * FROM MatrixCoordinateMappingPoints");
             while (queryCMP.executeStep())
             {
-                auto mappingAreaId = queryCMP.getColumn(1).getInt();
-                auto pIdx = queryCMP.getColumn(2).getInt();
-                auto x = queryCMP.getColumn(3).getDouble();
-                auto y = queryCMP.getColumn(4).getDouble();
-                auto z = queryCMP.getColumn(5).getDouble();
+                auto mappingAreaId = queryCMP.getColumn("RecordNumber").getInt(); // col 1
+                auto pIdx = queryCMP.getColumn("PointIndex").getInt(); // col 2
+                auto x = queryCMP.getColumn("X").getDouble(); // col 3
+                auto y = queryCMP.getColumn("Y").getDouble(); // col 4
+                auto z = queryCMP.getColumn("Z").getDouble(); // col 5
 
                 if (pIdx == 0)
                 {
@@ -265,23 +332,23 @@ struct ProjectData
             auto queryMO = SQLite::Statement(db, "SELECT * FROM MatrixOutputs");
             while (queryMO.executeStep())
             {
-                auto outputNumber = queryMO.getColumn(1).getInt();
+                auto outputNumber = queryMO.getColumn("MatrixOutput").getInt(); // col 1
 
-                projectData._speakerPositionData[outputNumber]._x = queryMO.getColumn(4).getDouble();
-                projectData._speakerPositionData[outputNumber]._y = queryMO.getColumn(5).getDouble();
-                projectData._speakerPositionData[outputNumber]._z = queryMO.getColumn(6).getDouble();
-                projectData._speakerPositionData[outputNumber]._hor = queryMO.getColumn(7).getDouble();
-                projectData._speakerPositionData[outputNumber]._vrt = queryMO.getColumn(8).getDouble();
-                projectData._speakerPositionData[outputNumber]._rot = queryMO.getColumn(9).getDouble();
+                projectData._speakerPositionData[outputNumber]._x = queryMO.getColumn("CenterOfAudioX").getDouble(); // col 4
+                projectData._speakerPositionData[outputNumber]._y = queryMO.getColumn("CenterOfAudioY").getDouble(); // col 5
+                projectData._speakerPositionData[outputNumber]._z = queryMO.getColumn("CenterOfAudioZ").getDouble(); // col 6
+                projectData._speakerPositionData[outputNumber]._hor = queryMO.getColumn("AimingAngleHorizontal").getDouble(); // col 7
+                projectData._speakerPositionData[outputNumber]._vrt = queryMO.getColumn("AimingAngleVertical").getDouble(); // col 8
+                projectData._speakerPositionData[outputNumber]._rot = queryMO.getColumn("AimingAngleRotation").getDouble(); // col 9
             }
 
             // read data for input names
             auto queryMI = SQLite::Statement(db, "SELECT * FROM MatrixInputs");
             while (queryMI.executeStep())
             {
-                auto inputNumber = queryMI.getColumn(1).getInt();
+                auto inputNumber = queryMI.getColumn("MatrixInput").getInt(); // col 1
 
-                projectData._inputNameData[inputNumber] = queryMI.getColumn(2).getString();
+                projectData._inputNameData[inputNumber] = queryMI.getColumn("Name").getString(); // col 2
             }
 
             return projectData;
