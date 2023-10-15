@@ -94,6 +94,26 @@ struct CoordinateMappingData
             return retv;
         }
     };
+    bool IsNull() const {
+        return (_vp1x == 0.0f &&
+            _vp1y == 0.0f &&
+            _vp1z == 0.0f &&
+            _vp3x == 0.0f &&
+            _vp3y == 0.0f &&
+            _vp3z == 0.0f &&
+            _rp1x == 0.0f &&
+            _rp1y == 0.0f &&
+            _rp1z == 0.0f &&
+            _rp2x == 0.0f &&
+            _rp2y == 0.0f &&
+            _rp2z == 0.0f &&
+            _rp3x == 0.0f &&
+            _rp3y == 0.0f &&
+            _rp3z == 0.0f &&
+            _rp4x == 0.0f &&
+            _rp4y == 0.0f &&
+            _rp4z == 0.0f);
+    };
 };
 typedef std::map<int, CoordinateMappingData> CoordinateMappingDataMap;
 struct SpeakerPositionData
@@ -130,6 +150,14 @@ struct SpeakerPositionData
             return retv;
         }
     };
+    bool IsNull() const {
+        return (    _x == 0.0f &&
+                    _y == 0.0f &&
+                    _z == 0.0f &&
+                    _hor == 0.0f &&
+                    _vrt == 0.0f &&
+                    _rot == 0.0f);
+    };
 };
 typedef std::map<int, SpeakerPositionData> SpeakerPositionDataMap;
 typedef std::map<int, juce::String> InputNameDataMap;
@@ -144,7 +172,15 @@ struct ProjectData
     };
     juce::String GetInfoString() const {
         auto s = juce::String();
-        s << _coordinateMappingData.size() << " CMP, " << _speakerPositionData.size() << " SPK";
+        auto cmdCount = 0;
+        auto spdCount = 0;
+        for (auto const& cmdKV : _coordinateMappingData)
+            if (!cmdKV.second.IsNull())
+                cmdCount++;
+        for (auto const& spdKV : _speakerPositionData)
+            if (!spdKV.second.IsNull())
+                spdCount++;
+        s << cmdCount << " CMP, " << spdCount << " SPK";
         return s;
     };
     void Clear() {
