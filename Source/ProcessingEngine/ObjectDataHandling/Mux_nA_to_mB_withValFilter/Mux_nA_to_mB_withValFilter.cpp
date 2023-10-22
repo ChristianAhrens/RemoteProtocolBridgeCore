@@ -53,16 +53,7 @@ Mux_nA_to_mB_withValFilter::~Mux_nA_to_mB_withValFilter()
  */
 bool Mux_nA_to_mB_withValFilter::setStateXml(XmlElement* stateXml)
 {
-	if (!ObjectDataHandling_Abstract::setStateXml(stateXml))
-		return false;
-
-	if (stateXml->getStringAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::MODE)) != ProcessingEngineConfig::ObjectHandlingModeToString(OHM_Mux_nA_to_mB_withValFilter))
-		return false;
-
-	auto precisionXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::DATAPRECISION));
-	if (precisionXmlElement)
-		SetPrecision(precisionXmlElement->getAllSubText().getFloatValue());
-	else
+	if (!Forward_only_valueChanges::setStateXml(stateXml))
 		return false;
 
 	auto protoChCntAElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::PROTOCOLACHCNT));
@@ -106,12 +97,11 @@ bool Mux_nA_to_mB_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
 		return false;
 
 	UpdateOnlineState(PId);
-    
-    auto modMsgData = msgData;
 
 	if (IsCachedValuesQuery(roi))
 		return SendValueCacheToProtocol(PId);
 
+	auto modMsgData = msgData;
 	// check for changed value based on mapped addressing and target protocol id before forwarding data
 	auto targetProtoSrc = GetTargetProtocolsAndSource(PId, modMsgData);
 	auto mappedOrigAddr = GetMappedOriginAddressing(PId, modMsgData);
@@ -123,8 +113,25 @@ bool Mux_nA_to_mB_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
         modMsgData._addrVal._first = targetProtoSrc.second;
 		auto sendSuccess = true;
 		for (auto const& targetPId : targetProtoSrc.first)
+		{
 			if (msgMeta._ExternalId != targetPId || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
-				sendSuccess = parentNode->SendMessageTo(targetPId, roi, modMsgData) && sendSuccess;
+			{
+				// sending is only done when the value about to be sent is differing from the last known value from the protocol in question
+				if (IsChangedDataValue(targetPId, roi, modMsgData._addrVal, modMsgData, false))
+				{
+					auto isTargetProtocolTypeA = (std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), targetPId) != GetProtocolAIds().end());
+					auto isAcknowledgingProtocol = isTargetProtocolTypeA ? IsTypeAAcknowledging() : IsTypeBAcknowledging();
+
+					sendSuccess = parentNode->SendMessageTo(targetPId, roi, modMsgData) && sendSuccess;
+					// If the value was sent successfully, save it to cache (to make it the 'last known' from this protocol).
+					// In case the protocol is expected to acknowledge the value, we make an exception, since acknowledge values are
+					// used to update bridged protocols that have not yet received that latest value. E.g. DS100 ack values that are a
+					// reaction on a GenericOSC SET have to be bridged back to connected DiGiCo.
+					if (sendSuccess && !isAcknowledgingProtocol)
+						SetCurrentValue(targetPId, roi, modMsgData._addrVal, modMsgData); // set the updated value as current for the complementary cache as well
+				}
+			}
+		}
 		return sendSuccess;
 	}
 	else

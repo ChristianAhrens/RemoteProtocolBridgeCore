@@ -55,9 +55,6 @@ bool Forward_only_valueChanges::setStateXml(XmlElement* stateXml)
 	if (!ObjectDataHandling_Abstract::setStateXml(stateXml))
 		return false;
 
-	if (stateXml->getStringAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::MODE)) != ProcessingEngineConfig::ObjectHandlingModeToString(OHM_Forward_only_valueChanges))
-		return false;
-
 	auto precisionXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::DATAPRECISION));
 	if (precisionXmlElement)
 		m_precision = precisionXmlElement->getAllSubText().getFloatValue();
@@ -110,10 +107,18 @@ bool Forward_only_valueChanges::OnReceivedMessageFromProtocol(const ProtocolId P
 		{
 			if (msgMeta._ExternalId != protocolB || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
 			{
-				auto sendSuccess = parentNode->SendMessageTo(protocolB, roi, msgData);
-				if (sendSuccess && !m_typeBIsAcknowledging)
-					SetCurrentValue(protocolB, roi, msgData._addrVal, msgData); // set the updated value as current for the complementary cache as well
-				overallSendSuccess = sendSuccess && overallSendSuccess;
+				// sending is only done when the value about to be sent is differing from the last known value from the protocol in question
+				if (IsChangedDataValue(protocolB, roi, msgData._addrVal, msgData, false))
+				{
+					auto sendSuccess = parentNode->SendMessageTo(protocolB, roi, msgData);
+					// If the value was sent successfully, save it to cache (to make it the 'last known' from this protocol).
+					// In case the protocol is expected to acknowledge the value, we make an exception, since acknowledge values are
+					// used to update bridged protocols that have not yet received that latest value. E.g. DS100 ack values that are a
+					// reaction on a GenericOSC SET have to be bridged back to connected DiGiCo.
+					if (sendSuccess && !IsTypeBAcknowledging())
+						SetCurrentValue(protocolB, roi, msgData._addrVal, msgData); // set the updated value as current for the complementary cache as well
+					overallSendSuccess = sendSuccess && overallSendSuccess;
+				}
 			}
 		}
 
@@ -127,10 +132,18 @@ bool Forward_only_valueChanges::OnReceivedMessageFromProtocol(const ProtocolId P
 		{
 			if (msgMeta._ExternalId != protocolA || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
 			{
-				auto sendSuccess = parentNode->SendMessageTo(protocolA, roi, msgData);
-				if (sendSuccess && !m_typeAIsAcknowledging)
-					SetCurrentValue(protocolA, roi, msgData._addrVal, msgData); // set the updated value as current for the complementary cache as well
-				overallSendSuccess = sendSuccess && overallSendSuccess;
+				// sending is only done when the value about to be sent is differing from the last known value from the protocol in question
+				if (IsChangedDataValue(protocolA, roi, msgData._addrVal, msgData, false))
+				{
+					auto sendSuccess = parentNode->SendMessageTo(protocolA, roi, msgData);
+					// If the value was sent successfully, save it to cache (to make it the 'last known' from this protocol).
+					// In case the protocol is expected to acknowledge the value, we make an exception, since acknowledge values are
+					// used to update bridged protocols that have not yet received that latest value. E.g. DS100 ack values that are a
+					// reaction on a GenericOSC SET have to be bridged back to connected DiGiCo.
+					if (sendSuccess && !IsTypeAAcknowledging())
+						SetCurrentValue(protocolA, roi, msgData._addrVal, msgData); // set the updated value as current for the complementary cache as well
+					overallSendSuccess = sendSuccess && overallSendSuccess;
+				}
 			}
 		}
 

@@ -80,16 +80,7 @@ void Mirror_dualA_withValFilter::AddProtocolAId(ProtocolId PAId)
  */
 bool Mirror_dualA_withValFilter::setStateXml(XmlElement* stateXml)
 {
-	if (!ObjectDataHandling_Abstract::setStateXml(stateXml))
-		return false;
-
-	if (stateXml->getStringAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::MODE)) != ProcessingEngineConfig::ObjectHandlingModeToString(OHM_Mirror_dualA_withValFilter))
-		return false;
-
-	auto precisionXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::DATAPRECISION));
-	if (precisionXmlElement)
-		SetPrecision(precisionXmlElement->getAllSubText().getFloatValue());
-	else
+	if (!Forward_only_valueChanges::setStateXml(stateXml))
 		return false;
 
 	auto protoFailoverTimeElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::FAILOVERTIME));
@@ -145,8 +136,22 @@ bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
 			{
 				auto sendSuccess = true;
 				for (auto const& protocolBId : GetProtocolBIds())
+				{
 					if (msgMeta._ExternalId != roi || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
-						sendSuccess = parentNode->SendMessageTo(protocolBId, roi, msgData) && sendSuccess;
+					{
+						// sending is only done when the value about to be sent is differing from the last known value from the protocol in question
+						if (IsChangedDataValue(protocolBId, roi, msgData._addrVal, msgData))
+						{
+							sendSuccess = parentNode->SendMessageTo(protocolBId, roi, msgData) && sendSuccess;
+							// If the value was sent successfully, save it to cache (to make it the 'last known' from this protocol).
+							// In case the protocol is expected to acknowledge the value, we make an exception, since acknowledge values are
+							// used to update bridged protocols that have not yet received that latest value. E.g. DS100 ack values that are a
+							// reaction on a GenericOSC SET have to be bridged back to connected DiGiCo.
+							if (sendSuccess && !IsTypeBAcknowledging())
+								SetCurrentValue(protocolBId, roi, msgData._addrVal, msgData); // set the updated value as current for the complementary cache as well
+						}
+					}
+				}
 				return sendSuccess;
 			}
 			else
@@ -155,7 +160,21 @@ bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
 		// forward to A current master if data comes from B
 		else if (isProtocolTypeB)
 		{
-			return parentNode->SendMessageTo(m_currentMaster, roi, msgData);
+			// sending is only done when the value about to be sent is differing from the last known value from the protocol in question
+			if (IsChangedDataValue(m_currentMaster, roi, msgData._addrVal, msgData))
+			{
+				auto sendSuccess = parentNode->SendMessageTo(m_currentMaster, roi, msgData);
+				// If the value was sent successfully, save it to cache (to make it the 'last known' from this protocol).
+				// In case the protocol is expected to acknowledge the value, we make an exception, since acknowledge values are
+				// used to update bridged protocols that have not yet received that latest value. E.g. DS100 ack values that are a
+				// reaction on a GenericOSC SET have to be bridged back to connected DiGiCo.
+				if (sendSuccess && !IsTypeAAcknowledging())
+					SetCurrentValue(m_currentMaster, roi, msgData._addrVal, msgData); // set the updated value as current for the complementary cache as well
+
+				return sendSuccess;
+			}
+			else
+				return true;
 		}
 		else
 			return false;
@@ -196,7 +215,7 @@ void Mirror_dualA_withValFilter::UpdateOnlineState(ProtocolId id)
  * @param PId		The id of the protocol that received the data
  * @param roi		The object id that was received
  * @param msgData	The actual message value/content data
- * @return			True if the mirroring was executed, false if not
+ * @return			True if the mirroring was executed or not required, otherwise false
  */
 bool Mirror_dualA_withValFilter::MirrorDataIfRequired(ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData)
 {
@@ -212,7 +231,21 @@ bool Mirror_dualA_withValFilter::MirrorDataIfRequired(ProtocolId PId, const Remo
 	// send values received from master to slave
 	if (PId == m_currentMaster && m_currentSlave != INVALID_ADDRESS_VALUE)
 	{
-		return parentNode->SendMessageTo(m_currentSlave, roi, msgData);
+		// sending is only done when the value about to be sent is differing from the last known value from the protocol in question
+		if (IsChangedDataValue(m_currentSlave, roi, msgData._addrVal, msgData))
+		{
+			auto sendSuccess = parentNode->SendMessageTo(m_currentSlave, roi, msgData);
+			// If the value was sent successfully, save it to cache (to make it the 'last known' from this protocol).
+			// In case the protocol is expected to acknowledge the value, we make an exception, since acknowledge values are
+			// used to update bridged protocols that have not yet received that latest value. E.g. DS100 ack values that are a
+			// reaction on a GenericOSC SET have to be bridged back to connected DiGiCo.
+			if (sendSuccess && !IsTypeAAcknowledging())
+				SetCurrentValue(m_currentSlave, roi, msgData._addrVal, msgData); // set the updated value as current for the complementary cache as well
+
+			return sendSuccess;
+		}
+		else
+			return true;
 	}
 	else
 		return false;

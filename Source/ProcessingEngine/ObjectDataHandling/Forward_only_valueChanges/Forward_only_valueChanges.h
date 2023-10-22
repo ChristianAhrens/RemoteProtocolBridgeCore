@@ -49,6 +49,9 @@ protected:
 
 	bool IsCachedValuesQuery(const RemoteObjectIdentifier roi);
 	bool SendValueCacheToProtocol(const ProtocolId PId);
+
+	bool IsTypeAAcknowledging() { return m_typeAIsAcknowledging; };
+	bool IsTypeBAcknowledging() { return m_typeBIsAcknowledging; };
 	
 private:
 	std::map<RemoteObjectIdentifier, std::map<RemoteObjectAddressing, RemoteObjectMessageData>>	m_currentAValues;	/**< Hash of current value data present on RoleA protocols side of ProcessingNode to use to compare to incoming data regarding value changes. */
