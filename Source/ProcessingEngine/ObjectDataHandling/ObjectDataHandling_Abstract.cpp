@@ -243,7 +243,7 @@ void ObjectDataHandling_Abstract::SetChangedProtocolState(ProtocolId id, ObjectH
 
 		for (auto const& listener : m_stateListeners)
 		{
-			listener->SetProtocolState(id, m_currentStateMap.at(id));
+			listener->SetState(id, m_currentStateMap.at(id));
 		}
 	}
 }
@@ -260,7 +260,7 @@ void ObjectDataHandling_Abstract::AddStateListener(ObjectDataHandling_Abstract::
 		m_stateListeners.push_back(listener);
 		
 		for (auto const& stateKV : m_currentStateMap)
-			listener->SetProtocolState(stateKV.first, stateKV.second);
+			listener->SetState(stateKV.first, stateKV.second);
 	}
 }
 
