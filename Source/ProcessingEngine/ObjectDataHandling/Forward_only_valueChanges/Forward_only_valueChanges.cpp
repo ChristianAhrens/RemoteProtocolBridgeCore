@@ -176,19 +176,12 @@ bool Forward_only_valueChanges::IsChangedDataValue(const ProtocolId PId, const R
 
 	auto isChangedDataValue = false;
     
-    // determine what protocol type has received the data to check
-    auto isProtocolTypeA = std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) != GetProtocolAIds().end();
-    auto isProtocolTypeB = std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) != GetProtocolBIds().end();
-    if (!isProtocolTypeA && !isProtocolTypeB)
-    {
-        jassertfalse;
-        return true;
-    }
+    // verify the protocol in question has a set of cached values
+	if (1 != m_currentValues.count(PId))
+		isChangedDataValue = true;
     
     // Depending on what protocol received the value, use the corresponding value cache for the protocol type
-    auto currentValues = &m_currentAValues;
-    if (isProtocolTypeB)
-        currentValues = &m_currentBValues;
+	auto currentValues = &m_currentValues[PId];
 
 	// if our hash does not yet contain our ROI, initialize it
 	if ((currentValues->count(roi) == 0) || (currentValues->at(roi).count(roAddr) == 0))
@@ -277,19 +270,8 @@ bool Forward_only_valueChanges::IsChangedDataValue(const ProtocolId PId, const R
  */
 void Forward_only_valueChanges::SetCurrentValue(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectAddressing& roAddr, const RemoteObjectMessageData& msgData)
 {
-    // determine what protocol type has received the data to check
-    auto isProtocolTypeA = std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) != GetProtocolAIds().end();
-    auto isProtocolTypeB = std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) != GetProtocolBIds().end();
-    if (!isProtocolTypeA && !isProtocolTypeB)
-    {
-        jassertfalse;
-        return;
-    }
-    
-    // Depending on what protocol received the value, use the corresponding value cache for the protocol type
-    auto currentValues = &m_currentAValues;
-    if (isProtocolTypeB)
-        currentValues = &m_currentBValues;
+	// Depending on what protocol received the value, use the corresponding value cache for the protocol type
+	auto currentValues = &m_currentValues[PId];
     
 	// Check if the new data value addressing is currently not present in internal hash
 	// or if it differs in its value size and needs to be reinitialized
@@ -356,24 +338,31 @@ bool Forward_only_valueChanges::SendValueCacheToProtocol(const ProtocolId PId)
 	if (!parentNode)
 		return false;
 
-	auto isProtocolA = (std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) == GetProtocolAIds().end());
-	auto isProtocolB = (std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) == GetProtocolBIds().end());
-	if (isProtocolA)
-    {
-        auto sendSuccess = true;
-        for (auto const& cachedValue : m_currentAValues)
-            for (auto const& cachedValueObject : cachedValue.second)
-                sendSuccess = sendSuccess && parentNode->SendMessageTo(PId, cachedValue.first, cachedValueObject.second);
-        return sendSuccess;
-    }
-    else if (isProtocolB)
-    {
-        auto sendSuccess = true;
-        for (auto const& cachedValue : m_currentBValues)
-            for (auto const& cachedValueObject : cachedValue.second)
-                sendSuccess = sendSuccess && parentNode->SendMessageTo(PId, cachedValue.first, cachedValueObject.second);
-        return sendSuccess;
-    }
-    else
-        return false;
+	// verify the protocol in question has a set of cached values
+	if (1 != m_currentValues.count(PId))
+		return false;
+
+    auto sendSuccess = true;
+    for (auto const& cachedValue : m_currentValues.at(PId))
+        for (auto const& cachedValueObject : cachedValue.second)
+            sendSuccess = sendSuccess && parentNode->SendMessageTo(PId, cachedValue.first, cachedValueObject.second);
+    return sendSuccess;
+}
+
+/**
+ * Protected getter for the type A is acknowledging member field.
+ * @return	The bool member value as currently set.
+ */
+bool Forward_only_valueChanges::IsTypeAAcknowledging()
+{
+	return m_typeAIsAcknowledging;
+}
+
+/**
+ * Protected getter for the type B is acknowledging member field.
+ * @return	The bool member value as currently set.
+ */
+bool Forward_only_valueChanges::IsTypeBAcknowledging()
+{
+	return m_typeBIsAcknowledging;
 }
