@@ -188,6 +188,9 @@ struct ProjectData
         _speakerPositionData.clear();
     };
     juce::String ToString() const {
+        if (IsEmpty())
+            return {};
+
         auto s = juce::String();
         s << "|COORDMAPDATA|";
         for (auto const& cmKV : _coordinateMappingData)
@@ -207,6 +210,9 @@ struct ProjectData
         return s;
     };
     static ProjectData FromString(const juce::String& projectDataString) {
+        if (projectDataString.isEmpty())
+            return ProjectData();
+
         juce::StringArray sa;
         sa.addTokens(projectDataString, "|", {});
         if (sa.size() != 7)

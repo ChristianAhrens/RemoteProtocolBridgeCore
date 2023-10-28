@@ -62,6 +62,8 @@ bool NoProtocolProtocolProcessor::setStateXml(XmlElement* stateXml)
         auto projectData = ProjectData::FromString(stateXml->getFirstChildElement()->getAllSubText());
         if (!projectData.IsEmpty())
             InitializeObjectValueCache(projectData);
+        else
+            InitializeObjectValueCache();
 
         return true;
     }
