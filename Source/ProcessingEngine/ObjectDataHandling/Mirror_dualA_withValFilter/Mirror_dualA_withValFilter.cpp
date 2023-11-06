@@ -140,7 +140,7 @@ bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
 					if (msgMeta._ExternalId != roi || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
 					{
 						// sending is only done when the value about to be sent is differing from the last known value from the protocol in question
-						if (IsChangedDataValue(protocolBId, roi, msgData._addrVal, msgData))
+						if (IsChangedDataValue(protocolBId, roi, msgData._addrVal, msgData, false))
 						{
 							sendSuccess = parentNode->SendMessageTo(protocolBId, roi, msgData) && sendSuccess;
 							// If the value was sent successfully, save it to cache (to make it the 'last known' from this protocol).
@@ -161,7 +161,7 @@ bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
 		else if (isProtocolTypeB)
 		{
 			// sending is only done when the value about to be sent is differing from the last known value from the protocol in question
-			if (IsChangedDataValue(m_currentMaster, roi, msgData._addrVal, msgData))
+			if (IsChangedDataValue(m_currentMaster, roi, msgData._addrVal, msgData, false))
 			{
 				auto sendSuccess = parentNode->SendMessageTo(m_currentMaster, roi, msgData);
 				// If the value was sent successfully, save it to cache (to make it the 'last known' from this protocol).
