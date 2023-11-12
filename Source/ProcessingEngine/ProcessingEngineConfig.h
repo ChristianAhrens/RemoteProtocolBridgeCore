@@ -274,6 +274,6 @@ private:
 	int ValidateUniqueId(int uniqueId);
 
 	// ============================================================
-	static std::map<RemoteObjectIdentifier, juce::Range<float>>	m_objectRanges;
+	static std::map<RemoteObjectIdentifier, juce::Range<float>>	s_objectRanges;
 
 };

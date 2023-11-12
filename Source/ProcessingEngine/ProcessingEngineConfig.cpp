@@ -45,7 +45,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * This is predefined here, but not const, nor is the access getter return ref,
  * to still be able to modify and update it during runtime, should this be required.
  */
-std::map<RemoteObjectIdentifier, juce::Range<float>>	ProcessingEngineConfig::m_objectRanges = {
+std::map<RemoteObjectIdentifier, juce::Range<float>>	ProcessingEngineConfig::s_objectRanges = {
 	// Soundobject ROIs
 	std::make_pair(ROI_Positioning_SourceDelayMode, juce::Range<float>(0.0f, 2.0f)),
 	std::make_pair(ROI_MatrixInput_ReverbSendGain, juce::Range<float>(-120.0f, 24.0f)),
@@ -53,6 +53,7 @@ std::map<RemoteObjectIdentifier, juce::Range<float>>	ProcessingEngineConfig::m_o
 	std::make_pair(ROI_CoordinateMapping_SourcePosition_X, juce::Range<float>(0.0f, 1.0f)),
 	std::make_pair(ROI_CoordinateMapping_SourcePosition_Y, juce::Range<float>(0.0f, 1.0f)),
 	std::make_pair(ROI_CoordinateMapping_SourcePosition_XY, juce::Range<float>(0.0f, 1.0f)),
+	std::make_pair(ROI_CoordinateMapping_SourcePosition, juce::Range<float>(0.0f, 1.0f)),
 	// MatrixInput ROIs
 	std::make_pair(ROI_MatrixInput_LevelMeterPreMute, juce::Range<float>(-120.0f, 24.0f)),
 	std::make_pair(ROI_MatrixInput_Gain, juce::Range<float>(-120.0f, 24.0f)),
@@ -1073,7 +1074,7 @@ bool ProcessingEngineConfig::IsKeepaliveObject(RemoteObjectIdentifier objectId)
  */
 juce::Range<float>& ProcessingEngineConfig::GetRemoteObjectRange(const RemoteObjectIdentifier roi)
 {
-	return m_objectRanges[roi];
+	return s_objectRanges[roi];
 }
 
 /**

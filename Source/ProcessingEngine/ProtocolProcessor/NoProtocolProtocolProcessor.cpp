@@ -32,7 +32,7 @@ NoProtocolProtocolProcessor::NoProtocolProtocolProcessor(const NodeId& parentNod
 {
 	m_type = ProtocolType::PT_NoProtocol;
 
-	SetActiveRemoteObjectsInterval(4000); // used as 4s KeepAlive interval
+	SetActiveRemoteObjectsInterval(-1); // default value in ProtocolProcessorBase is 100 which we do not want to use, so invalidate it to overcome potential misunderstandings when reading code
 
 	InitializeObjectValueCache();
 }
@@ -53,22 +53,38 @@ NoProtocolProtocolProcessor::~NoProtocolProtocolProcessor()
  */
 bool NoProtocolProtocolProcessor::setStateXml(XmlElement* stateXml)
 {
-    if (!ProtocolProcessorBase::setStateXml(stateXml))
+    if (nullptr == stateXml || !ProtocolProcessorBase::setStateXml(stateXml))
     {
         return false;
-    }
-    else if (1 == stateXml->getNumChildElements() && stateXml->getFirstChildElement()->isTextElement())
-    {
-        auto projectData = ProjectData::FromString(stateXml->getFirstChildElement()->getAllSubText());
-        if (!projectData.IsEmpty())
-            InitializeObjectValueCache(projectData);
-        else
-            InitializeObjectValueCache();
-
-        return true;
     }
     else
-        return false;
+    {
+        if (1 == stateXml->getNumChildElements() && stateXml->getFirstChildElement()->isTextElement())
+        {
+            auto projectData = ProjectData::FromString(stateXml->getFirstChildElement()->getAllSubText());
+            if (!projectData.IsEmpty())
+                InitializeObjectValueCache(projectData);
+            else
+                InitializeObjectValueCache();
+        }
+        
+        m_animationMode = static_cast<AnimationMode>(stateXml->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::MODE), AM_Off));
+
+        if (AM_Rand == m_animationMode)
+        {
+            srand(static_cast <unsigned> (time(0)));
+            for (int channel = 1; channel <= sc_chCnt; channel++)
+            {
+                m_channelRandomizedFactors[channel] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+                m_channelRandomizedScaleFactors[channel] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+            }
+            m_valueIdRandomizedFactors[0] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+            m_valueIdRandomizedFactors[1] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+            m_valueIdRandomizedFactors[2] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+        }
+        
+        return true;
+    }
 }
 
 /**
@@ -79,7 +95,7 @@ bool NoProtocolProtocolProcessor::Start()
 {
 	m_IsRunning = true;
 
-	startTimerThread(GetActiveRemoteObjectsInterval(), 100);
+	startTimerThread(GetCallbackRate(), 100); // used for 4s heartbeat triggering
 
     TriggerSendingObjectValueCache();
 
@@ -372,14 +388,20 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
 }
 
 /**
- * TimerThreadBase callback to send keepalive queries cyclically
+ * TimerThreadBase callback to send keepalive queries cyclically and update potentially active animation
  */
 void NoProtocolProtocolProcessor::timerThreadCallback()
 {
 	if (m_IsRunning)
 	{
-		m_messageListener->OnProtocolMessageReceived(this, ROI_HeartbeatPong, RemoteObjectMessageData(), RemoteObjectMessageMetaInfo(RemoteObjectMessageMetaInfo::MessageCategory::MC_UnsolicitedMessage, -1));
+        if (IsHeartBeatCallback())
+		    m_messageListener->OnProtocolMessageReceived(this, ROI_HeartbeatPong, RemoteObjectMessageData(), RemoteObjectMessageMetaInfo(RemoteObjectMessageMetaInfo::MessageCategory::MC_UnsolicitedMessage, -1));
+
+        if (IsAnimationActive())
+            StepAnimation();
 	}
+
+    BumpCallbackCount();
 }
 
 /**
@@ -424,7 +446,7 @@ void NoProtocolProtocolProcessor::InitializeObjectValueCache()
 
     // all input relevant values
     auto& ind = pd._inputNameData;
-    for (int in = 1; in <= 128; in++)
+    for (int in = 1; in <= sc_chCnt; in++)
         ind[in] = juce::String("Input ") + juce::String(in);
 
     // all output relevant values
@@ -484,6 +506,47 @@ void NoProtocolProtocolProcessor::InitializeObjectValueCache()
  */
 void NoProtocolProtocolProcessor::InitializeObjectValueCache(const ProjectData& projectData)
 {
+    // helper function to avoid code duplicates
+    std::function<void(const RemoteObjectIdentifier& roi, const ChannelId& channel, const RecordId& record)> svtc
+        = [=](const RemoteObjectIdentifier& roi, const ChannelId& channel, const RecordId& record)
+    {
+        switch (roi)
+        {
+        case ROI_Positioning_SourcePosition:
+            return SetValueToCache(roi, channel, record, { 0.0f, 0.0f, 0.0f });
+        case ROI_CoordinateMapping_SourcePosition:
+            return SetValueToCache(roi, channel, record, { 0.5f, 0.5f, 0.5f });
+        case ROI_Positioning_SourcePosition_XY:
+            return SetValueToCache(roi, channel, record, { 0.0f, 0.0f });
+        case ROI_CoordinateMapping_SourcePosition_XY:
+            return SetValueToCache(roi, channel, record, { 0.5f, 0.5f });
+        default:
+            return SetValueToCache(roi, channel, record, { 0.0f });
+        };
+    };
+
+    // default init all bridging roi
+    for (auto i = ROI_Invalid + 1; i < ROI_BridgingMAX; i++)
+    {
+        auto roi = static_cast<RemoteObjectIdentifier>(i);
+        if (IsAnimatedObject(roi))
+        {
+            if (ProcessingEngineConfig::IsChannelAddressingObject(roi))
+            {
+                for (int channel = 1; channel <= sc_chCnt; channel++)
+                {
+                    if (ProcessingEngineConfig::IsRecordAddressingObject(roi))
+                    {
+                        for (int record = 1; record <= 4; record++)
+                            svtc(roi, channel, static_cast<RecordId>(record));
+                    }
+                    else
+                        svtc(roi, channel, INVALID_ADDRESS_VALUE);
+                }
+            }
+        }
+    }
+
     // all input relevant values
     for (auto const& inputNamesKV : projectData._inputNameData)
     {
@@ -543,6 +606,183 @@ void NoProtocolProtocolProcessor::TriggerSendingObjectValueCache()
         m_messageListener->OnProtocolMessageReceived(this, value.first._Id, value.second,
             RemoteObjectMessageMetaInfo(RemoteObjectMessageMetaInfo::MessageCategory::MC_UnsolicitedMessage, -1));
     }
+}
+
+/**
+ * Helper method to set a given variant set of value as current value for a given remote object
+ * @param   roi         The remote object id to set a value for
+ * @param   channel     The channel of the object to set a value for
+ * @param   record      The record of the object to set a value for
+ * @param   vals        The value(s) to set
+ */
+void NoProtocolProtocolProcessor::SetValueToCache(const RemoteObjectIdentifier& roi, const ChannelId& channel, const RecordId& record, const juce::Array<juce::var>& vals)
+{
+    int iVals[6] = { 0,0,0,0,0,0 };
+    float fVals[6] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+
+    auto addr = RemoteObjectAddressing(channel, record);
+
+    auto valType = ROVT_NONE;
+    auto valCount = std::uint16_t(0);
+
+    switch (roi)
+    {
+    case ROI_MatrixInput_Mute:
+        valType = ROVT_INT;
+        valCount = 1;
+        break;
+    case ROI_MatrixInput_Gain:
+        valType = ROVT_FLOAT;
+        valCount = 1;
+        break;
+    case ROI_MatrixInput_Delay:
+        valType = ROVT_FLOAT;
+        valCount = 1;
+        break;
+    case ROI_MatrixInput_LevelMeterPreMute:
+        valType = ROVT_FLOAT;
+        valCount = 1;
+        break;
+    case ROI_MatrixInput_LevelMeterPostMute:
+        valType = ROVT_FLOAT;
+        valCount = 1;
+        break;
+    case ROI_MatrixOutput_Mute:
+        valType = ROVT_INT;
+        valCount = 1;
+        break;
+    case ROI_MatrixOutput_Gain:
+        valType = ROVT_FLOAT;
+        valCount = 1;
+        break;
+    case ROI_MatrixOutput_Delay:
+        valType = ROVT_FLOAT;
+        valCount = 1;
+        break;
+    case ROI_MatrixOutput_LevelMeterPreMute:
+        valType = ROVT_FLOAT;
+        valCount = 1;
+        break;
+    case ROI_MatrixOutput_LevelMeterPostMute:
+        valType = ROVT_FLOAT;
+        valCount = 1;
+        break;
+    case ROI_Positioning_SourceSpread:
+        valType = ROVT_FLOAT;
+        valCount = 1;
+        break;
+    case ROI_Positioning_SourceDelayMode:
+        valType = ROVT_INT;
+        valCount = 1;
+        break;
+    case ROI_Positioning_SourcePosition:
+        valType = ROVT_FLOAT;
+        valCount = 3;
+        break;
+    case ROI_Positioning_SourcePosition_XY:
+        valType = ROVT_FLOAT;
+        valCount = 2;
+        break;
+    case ROI_Positioning_SourcePosition_X:
+        valType = ROVT_FLOAT;
+        valCount = 1;
+        break;
+    case ROI_Positioning_SourcePosition_Y:
+        valType = ROVT_FLOAT;
+        valCount = 1;
+        break;
+    case ROI_CoordinateMapping_SourcePosition:
+        valType = ROVT_FLOAT;
+        valCount = 3;
+        break;
+    case ROI_CoordinateMapping_SourcePosition_XY:
+        valType = ROVT_FLOAT;
+        valCount = 2;
+        break;
+    case ROI_CoordinateMapping_SourcePosition_X:
+        valType = ROVT_FLOAT;
+        valCount = 1;
+        break;
+    case ROI_CoordinateMapping_SourcePosition_Y:
+        valType = ROVT_FLOAT;
+        valCount = 1;
+        break;
+    case ROI_MatrixSettings_ReverbRoomId:
+        valType = ROVT_INT;
+        valCount = 1;
+        break;
+    case ROI_MatrixSettings_ReverbPredelayFactor:
+        valType = ROVT_FLOAT;
+        valCount = 1;
+        break;
+    case ROI_MatrixSettings_ReverbRearLevel:
+        valType = ROVT_FLOAT;
+        valCount = 1;
+        break;
+    case ROI_MatrixInput_ReverbSendGain:
+        valType = ROVT_FLOAT;
+        valCount = 1;
+        break;
+    case ROI_CoordinateMappingSettings_P1real:
+        valType = ROVT_FLOAT;
+        valCount = 3;
+        break;
+    case ROI_CoordinateMappingSettings_P2real:
+        valType = ROVT_FLOAT;
+        valCount = 3;
+        break;
+    case ROI_CoordinateMappingSettings_P3real:
+        valType = ROVT_FLOAT;
+        valCount = 3;
+        break;
+    case ROI_CoordinateMappingSettings_P4real:
+        valType = ROVT_FLOAT;
+        valCount = 3;
+        break;
+    case ROI_CoordinateMappingSettings_P1virtual:
+        valType = ROVT_FLOAT;
+        valCount = 3;
+        break;
+    case ROI_CoordinateMappingSettings_P3virtual:
+        valType = ROVT_FLOAT;
+        valCount = 3;
+        break;
+    case ROI_CoordinateMappingSettings_Flip:
+        valType = ROVT_INT;
+        valCount = 1;
+        break;
+    case ROI_Positioning_SpeakerPosition:
+        valType = ROVT_FLOAT;
+        valCount = 6;
+        break;
+    default:
+        jassertfalse; // not implemented
+        break;
+    }
+
+    if (vals.size() != valCount)
+        return;
+
+    if (ROVT_FLOAT == valType)
+    {
+        for (int i = 0; i < vals.size(); i++)
+            fVals[i] = vals[i];
+
+        GetValueCache().SetValue(
+            RemoteObject(roi, addr),
+            RemoteObjectMessageData(addr, ROVT_FLOAT, valCount, fVals, valCount * sizeof(float)));
+    }
+    else if (ROVT_INT == valType)
+    {
+        for (int i = 0; i < vals.size(); i++)
+            iVals[i] = vals[i];
+
+        GetValueCache().SetValue(
+            RemoteObject(roi, addr),
+            RemoteObjectMessageData(addr, ROVT_INT, valCount, iVals, valCount * sizeof(float)));
+    }
+    else
+        jassertfalse; // not implemented
 }
 
 /**
@@ -632,7 +872,14 @@ void NoProtocolProtocolProcessor::SetSpeakerPositionToCache(ChannelId channel, f
 /**
  * Helper method to update the coordinate mapping settings cached remote objects to
  * contain data matching a new scene index
- * @param   
+ * @param   mapping     The mapping number to which the updated values refer
+ * @param   mappingName The name of the mapping to which the values are updated
+ * @param   realp1      P1 coords in real world values
+ * @param   realp2      P2 coords in real world values
+ * @param   realp3      P3 coords in real world values
+ * @param   realp4      P4 coords in real world values
+ * @param   virtp1      P1 coords in virtual (normalized) values
+ * @param   virtp3      P3 coords in virtual (normalized) values
  */
 void NoProtocolProtocolProcessor::SetMappingSettingsToCache(ChannelId mapping, const juce::String& mappingName, float realp1[3], float realp2[3], float realp3[3], float realp4[3], float virtp1[3], float virtp3[3], int flip)
 {
@@ -668,4 +915,181 @@ void NoProtocolProtocolProcessor::SetMappingSettingsToCache(ChannelId mapping, c
     GetValueCache().SetValue(
         RemoteObject(ROI_CoordinateMappingSettings_Flip, addr),
         RemoteObjectMessageData(addr, ROVT_INT, 1, &flip, sizeof(int)));
+}
+
+/**
+ * Helper method to calculate a next animation step.
+ */
+void NoProtocolProtocolProcessor::StepAnimation()
+{
+    for (auto const& valueKV : GetValueCache().GetCachedValues())
+    {
+        auto& objInfo = valueKV.first;
+        auto& objData = valueKV.second;
+
+        auto& roi = objInfo._Id;
+
+        if (!IsAnimatedObject(roi))
+            continue;
+
+        auto& channel = objInfo._Addr._first;
+        auto& record = objInfo._Addr._second;
+        auto& dataCount = objData._valCount;
+        auto& dataType = objData._valType;
+
+        switch (dataType)
+        {
+        case ROVT_INT:
+            if (nullptr != objData._payload && objData._payloadSize == sizeof(int) * dataCount)
+            {
+                for (auto i = 0; i < dataCount; i++)
+                {
+                    auto intValPtr = &static_cast<int*>(objData._payload)[i];
+                    *intValPtr = CalculateValueStep(*intValPtr, roi, channel, record, i);
+                }
+            }
+            break;
+        case ROVT_FLOAT:
+            if (nullptr != objData._payload && objData._payloadSize == sizeof(float) * dataCount)
+            {       
+                for (auto i = 0; i < dataCount; i++)
+                {
+                    auto floatValPtr = &static_cast<float*>(objData._payload)[i];
+                    *floatValPtr = CalculateValueStep(*floatValPtr, roi, channel, record, i);
+                }
+            }
+            break;
+        default:
+            break;
+        }
+
+        auto msgsToReflect = std::vector<std::pair<RemoteObjectIdentifier, RemoteObjectMessageData>>();
+        msgsToReflect.push_back(std::make_pair(roi, objData));
+
+        switch (roi)
+        {
+        case ROI_CoordinateMapping_SourcePosition:
+            msgsToReflect.push_back(std::make_pair(ROI_CoordinateMapping_SourcePosition_X, RemoteObjectMessageData(objData._addrVal, ROVT_FLOAT, 1, &reinterpret_cast<float*>(objData._payload)[0], sizeof(float))));
+            msgsToReflect.push_back(std::make_pair(ROI_CoordinateMapping_SourcePosition_Y, RemoteObjectMessageData(objData._addrVal, ROVT_FLOAT, 1, &reinterpret_cast<float*>(objData._payload)[1], sizeof(float))));
+            msgsToReflect.push_back(std::make_pair(ROI_CoordinateMapping_SourcePosition_XY, RemoteObjectMessageData(objData._addrVal, ROVT_FLOAT, 2, &reinterpret_cast<float*>(objData._payload)[0], 2 * sizeof(float))));
+            break;
+        default:
+            break;
+        }
+
+        for (auto const& msgIdNData : msgsToReflect)
+            m_messageListener->OnProtocolMessageReceived(this, msgIdNData.first, msgIdNData.second,
+                RemoteObjectMessageMetaInfo(RemoteObjectMessageMetaInfo::MessageCategory::MC_SetMessageAcknowledgement, -1));
+
+    }
+
+}
+
+/**
+ * Helper to get the info if a given object is part of what can be animated if configured.
+ * @param   roi     The remote object id to get the info for
+ * @return  True or false depending if the object is animatable or not.
+ */
+bool NoProtocolProtocolProcessor::IsAnimatedObject(const RemoteObjectIdentifier& roi)
+{
+    switch (roi)
+    {
+    case ROI_MatrixInput_Mute:
+    case ROI_MatrixInput_Gain:
+    case ROI_MatrixInput_Delay:
+    case ROI_MatrixInput_LevelMeterPreMute:
+    case ROI_MatrixInput_LevelMeterPostMute:
+    case ROI_MatrixOutput_Mute:
+    case ROI_MatrixOutput_Gain:
+    case ROI_MatrixOutput_Delay:
+    case ROI_MatrixOutput_LevelMeterPreMute:
+    case ROI_MatrixOutput_LevelMeterPostMute:
+    case ROI_Positioning_SourceSpread:
+    case ROI_Positioning_SourceDelayMode:
+    case ROI_Positioning_SourcePosition:
+    case ROI_Positioning_SourcePosition_XY:
+    case ROI_Positioning_SourcePosition_X:
+    case ROI_Positioning_SourcePosition_Y:
+    case ROI_CoordinateMapping_SourcePosition:		
+    case ROI_CoordinateMapping_SourcePosition_XY:	
+    case ROI_CoordinateMapping_SourcePosition_X:		
+    case ROI_CoordinateMapping_SourcePosition_Y:
+    case ROI_MatrixSettings_ReverbRoomId:
+    case ROI_MatrixSettings_ReverbPredelayFactor:
+    case ROI_MatrixSettings_ReverbRearLevel:
+    case ROI_MatrixInput_ReverbSendGain:
+        return true;
+    default:
+        return false;
+    }
+}
+
+/**
+ * Method to calculate the next value in the chain of animation for a given object.
+ * @param   lastValue   The last calculated float value
+ * @param   roi         The remote object id to calculate for
+ * @param   channel     The channel of the object to calculate
+ * @param   record      The record of the object to calculate
+ * @param   valueIndex  The index of the value to calculate
+ * @return  The calculated next object value.
+ */
+float NoProtocolProtocolProcessor::CalculateValueStep(const float& lastValue, const RemoteObjectIdentifier& roi, const ChannelId& channel, const RecordId& record, const int& valueIndex)
+{
+    //auto val1 = (sin((0.1f * GetCallbackCount()) + (channel * 0.1f)) + 1.0f) * 0.5f;
+    //auto val2 = (cos((0.1f * GetCallbackCount()) + (channel * 0.1f)) + 1.0f) * 0.5f;
+    ignoreUnused(record);
+
+    auto normalizedValue = 0.0f;
+    
+    if (AM_Circle == GetAnimationMode())
+        normalizedValue = (sin((0.1f * GetCallbackCount()) + (channel * 0.1f) + (valueIndex * juce::MathConstants<float>::halfPi)) + 1.0f) * 0.5f;
+    else if (AM_Rand == GetAnimationMode())
+        normalizedValue = jlimit(0.0f, 1.0f, 
+            (sin((0.1f * GetCallbackCount()) + (m_channelRandomizedFactors[channel] * channel * 0.1f) + (m_valueIdRandomizedFactors[valueIndex] * valueIndex * juce::MathConstants<float>::halfPi)) + 1.0f) * m_channelRandomizedScaleFactors[channel]);
+    else
+    {
+        jassertfalse;
+        return lastValue;
+    }
+
+    auto valueRange = ProcessingEngineConfig::GetRemoteObjectRange(roi);
+    if (valueRange.isEmpty())
+        return normalizedValue;
+    else
+        return juce::jmap(normalizedValue, valueRange.getStart(), valueRange.getEnd());
+}
+
+/**
+ * Method to calculate the next value in the chain of animation for a given object.
+ * @param   lastValue   The last calculated float value
+ * @param   roi         The remote object id to calculate for
+ * @param   channel     The channel of the object to calculate
+ * @param   record      The record of the object to calculate
+ * @param   valueIndex  The index of the value to calculate
+ * @return  The calculated next object value.
+ */
+int NoProtocolProtocolProcessor::CalculateValueStep(const int& lastValue, const RemoteObjectIdentifier& roi, const ChannelId& channel, const RecordId& record, const int& valueIndex)
+{
+    //auto val1 = (sin((0.1f * GetCallbackCount()) + (channel * 0.1f)) + 1.0f) * 0.5f;
+    //auto val2 = (cos((0.1f * GetCallbackCount()) + (channel * 0.1f)) + 1.0f) * 0.5f;
+    ignoreUnused(record);
+
+    auto normalizedValue = 0.0f;
+
+    if (AM_Circle == GetAnimationMode())
+        normalizedValue = (sin((0.1f * GetCallbackCount()) + (channel * 0.1f) + (valueIndex * juce::MathConstants<float>::halfPi)) + 1.0f) * 0.6f;
+    else if (AM_Rand == GetAnimationMode())
+        normalizedValue = jlimit(0.0f, 1.0f,
+            (sin((0.1f * GetCallbackCount()) + (m_channelRandomizedFactors[channel] * channel * 0.1f) + (m_valueIdRandomizedFactors[valueIndex] * valueIndex * juce::MathConstants<float>::halfPi)) + 1.0f) * m_channelRandomizedScaleFactors[channel]);
+    else
+    {
+        jassertfalse;
+        return lastValue;
+    }
+
+    auto valueRange = ProcessingEngineConfig::GetRemoteObjectRange(roi);
+    if (valueRange.isEmpty())
+        return static_cast<int>(normalizedValue + 0.5f);
+    else
+        return static_cast<int>(juce::jmap(normalizedValue, valueRange.getStart(), valueRange.getEnd()));
 }
