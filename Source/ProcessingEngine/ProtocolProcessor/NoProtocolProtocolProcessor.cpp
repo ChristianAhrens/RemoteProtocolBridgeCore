@@ -1042,10 +1042,14 @@ float NoProtocolProtocolProcessor::CalculateValueStep(const float& lastValue, co
     auto normalizedValue = 0.0f;
     
     if (AM_Circle == GetAnimationMode())
+    {
         normalizedValue = (sin((0.1f * GetCallbackCount()) + (channel * 0.1f) + (valueIndex * juce::MathConstants<float>::halfPi)) + 1.0f) * 0.5f;
+    }
     else if (AM_Rand == GetAnimationMode())
-        normalizedValue = jlimit(0.0f, 1.0f, 
-            (sin((0.1f * GetCallbackCount()) + (m_channelRandomizedFactors[channel] * channel * 0.1f) + (m_valueIdRandomizedFactors[valueIndex] * valueIndex * juce::MathConstants<float>::halfPi)) + 1.0f) * m_channelRandomizedScaleFactors[channel]);
+    {
+        auto randomizedValue = static_cast<float>((sin((0.1f * GetCallbackCount()) + (m_channelRandomizedFactors[channel] * channel * 0.1f) + (m_valueIdRandomizedFactors[valueIndex] * valueIndex * juce::MathConstants<float>::halfPi)) + 1.0f) * m_channelRandomizedScaleFactors[channel]);
+        normalizedValue = jlimit(0.0f, 1.0f, randomizedValue);
+    }
     else
     {
         jassertfalse;
@@ -1077,10 +1081,14 @@ int NoProtocolProtocolProcessor::CalculateValueStep(const int& lastValue, const 
     auto normalizedValue = 0.0f;
 
     if (AM_Circle == GetAnimationMode())
+    {
         normalizedValue = (sin((0.1f * GetCallbackCount()) + (channel * 0.1f) + (valueIndex * juce::MathConstants<float>::halfPi)) + 1.0f) * 0.6f;
+    }
     else if (AM_Rand == GetAnimationMode())
-        normalizedValue = jlimit(0.0f, 1.0f,
-            (sin((0.1f * GetCallbackCount()) + (m_channelRandomizedFactors[channel] * channel * 0.1f) + (m_valueIdRandomizedFactors[valueIndex] * valueIndex * juce::MathConstants<float>::halfPi)) + 1.0f) * m_channelRandomizedScaleFactors[channel]);
+    {
+        auto randomizedValue = static_cast<float>((sin((0.1f * GetCallbackCount()) + (m_channelRandomizedFactors[channel] * channel * 0.1f) + (m_valueIdRandomizedFactors[valueIndex] * valueIndex * juce::MathConstants<float>::halfPi)) + 1.0f) * m_channelRandomizedScaleFactors[channel]);
+        normalizedValue = jlimit(0.0f, 1.0f, randomizedValue);
+    }
     else
     {
         jassertfalse;

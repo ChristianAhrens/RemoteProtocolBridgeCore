@@ -304,6 +304,7 @@ struct ProjectData
                     ignoreUnused(rotationY);
                     ignoreUnused(scaleZ);
                     ignoreUnused(originZ);
+                    ignoreUnused(parentVenueObject);
 
                     auto translationMatrix = juce::AffineTransform::translation(originX, originY);
                     auto scalingMatrix = juce::AffineTransform::scale(scaleX, scaleY, originX, originY);
@@ -401,6 +402,9 @@ struct ProjectData
         }
         catch (std::exception& e)
         {
+#ifndef DEBUG
+            ignoreUnused(e);
+#endif
             DBG(juce::String(__FUNCTION__) << " SQLite exception: " << e.what());
         }
 
