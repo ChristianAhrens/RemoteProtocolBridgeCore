@@ -135,7 +135,7 @@ bool ProtocolProcessorBase::setStateXml(XmlElement* stateXml)
 
 		// special handling for heartbeats - this shall always be activated if active object usage is set to true
 		m_activeRemoteObjects.push_back(RemoteObject(ROI_HeartbeatPing, RemoteObjectAddressing()));
-		if (!isTimerThreadRunning())
+		if (!isTimerThreadRunning() && m_activeRemoteObjectsInterval > 0)
 			startTimerThread(m_activeRemoteObjectsInterval);
 	}
 
@@ -181,7 +181,7 @@ void ProtocolProcessorBase::SetRemoteObjectsActive(XmlElement* activeObjsXmlElem
 	// Start timer callback if objects are to be polled
 	if (m_IsRunning)
 	{
-		if (GetActiveRemoteObjects().size() > 0)
+		if (GetActiveRemoteObjects().size() > 0 && m_activeRemoteObjectsInterval > 0)
 		{
 			startTimerThread(m_activeRemoteObjectsInterval);
 		}
