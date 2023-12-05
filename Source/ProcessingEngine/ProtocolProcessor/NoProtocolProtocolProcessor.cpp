@@ -199,8 +199,8 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
 
                 msgsToReflect.push_back(std::make_pair(roi, msgData));
                 msgsToReflect.push_back(std::make_pair(targetObj._Id, refMsgData));
-                msgsToReflect.push_back(std::make_pair(ROI_CoordinateMapping_SourcePosition_X, RemoteObjectMessageData(msgData._addrVal, ROVT_FLOAT, 1, &reinterpret_cast<float*>(msgData._payload)[0], sizeof(float))));
-                msgsToReflect.push_back(std::make_pair(ROI_CoordinateMapping_SourcePosition_Y, RemoteObjectMessageData(msgData._addrVal, ROVT_FLOAT, 1, &reinterpret_cast<float*>(msgData._payload)[1], sizeof(float))));
+                msgsToReflect.push_back(std::make_pair(ROI_CoordinateMapping_SourcePosition_X, RemoteObjectMessageData(msgData._addrVal, ROVT_FLOAT, 1, &reinterpret_cast<float*>(refMsgData._payload)[0], sizeof(float))));
+                msgsToReflect.push_back(std::make_pair(ROI_CoordinateMapping_SourcePosition_Y, RemoteObjectMessageData(msgData._addrVal, ROVT_FLOAT, 1, &reinterpret_cast<float*>(refMsgData._payload)[1], sizeof(float))));
             }
             break;
         case ROI_CoordinateMapping_SourcePosition_X:
@@ -227,8 +227,7 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
 
                 msgsToReflect.push_back(std::make_pair(roi, msgData));
                 msgsToReflect.push_back(std::make_pair(targetObj._Id, refMsgData));
-                msgsToReflect.push_back(std::make_pair(ROI_CoordinateMapping_SourcePosition_XY, RemoteObjectMessageData(msgData._addrVal, ROVT_FLOAT, 2, msgData._payload, 2 * sizeof(float))));
-                msgsToReflect.push_back(std::make_pair(ROI_CoordinateMapping_SourcePosition_Y, RemoteObjectMessageData(msgData._addrVal, ROVT_FLOAT, 1, &reinterpret_cast<float*>(msgData._payload)[1], sizeof(float))));
+                msgsToReflect.push_back(std::make_pair(ROI_CoordinateMapping_SourcePosition_XY, RemoteObjectMessageData(msgData._addrVal, ROVT_FLOAT, 2, refMsgData._payload, 2 * sizeof(float))));
             }
             break;
         case ROI_CoordinateMapping_SourcePosition_Y:
@@ -255,8 +254,7 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
 
                 msgsToReflect.push_back(std::make_pair(roi, msgData));
                 msgsToReflect.push_back(std::make_pair(targetObj._Id, refMsgData));
-                msgsToReflect.push_back(std::make_pair(ROI_CoordinateMapping_SourcePosition_X, RemoteObjectMessageData(msgData._addrVal, ROVT_FLOAT, 1, &reinterpret_cast<float*>(msgData._payload)[0], sizeof(float))));
-                msgsToReflect.push_back(std::make_pair(ROI_CoordinateMapping_SourcePosition_XY, RemoteObjectMessageData(msgData._addrVal, ROVT_FLOAT, 2, msgData._payload, 2 * sizeof(float))));
+                msgsToReflect.push_back(std::make_pair(ROI_CoordinateMapping_SourcePosition_XY, RemoteObjectMessageData(msgData._addrVal, ROVT_FLOAT, 2, refMsgData._payload, 2 * sizeof(float))));
             }
             break;
         case ROI_Positioning_SourcePosition:
@@ -294,8 +292,8 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
 
                 msgsToReflect.push_back(std::make_pair(roi, msgData));
                 msgsToReflect.push_back(std::make_pair(targetObj._Id, refMsgData));
-                msgsToReflect.push_back(std::make_pair(ROI_Positioning_SourcePosition_X, RemoteObjectMessageData(msgData._addrVal, ROVT_FLOAT, 1, &reinterpret_cast<float*>(msgData._payload)[0], sizeof(float))));
-                msgsToReflect.push_back(std::make_pair(ROI_Positioning_SourcePosition_Y, RemoteObjectMessageData(msgData._addrVal, ROVT_FLOAT, 1, &reinterpret_cast<float*>(msgData._payload)[1], sizeof(float))));
+                msgsToReflect.push_back(std::make_pair(ROI_Positioning_SourcePosition_X, RemoteObjectMessageData(msgData._addrVal, ROVT_FLOAT, 1, &reinterpret_cast<float*>(refMsgData._payload)[0], sizeof(float))));
+                msgsToReflect.push_back(std::make_pair(ROI_Positioning_SourcePosition_Y, RemoteObjectMessageData(msgData._addrVal, ROVT_FLOAT, 1, &reinterpret_cast<float*>(refMsgData._payload)[1], sizeof(float))));
             }
             break;
         case ROI_Positioning_SourcePosition_X:
@@ -322,8 +320,7 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
 
                 msgsToReflect.push_back(std::make_pair(roi, msgData));
                 msgsToReflect.push_back(std::make_pair(targetObj._Id, refMsgData));
-                msgsToReflect.push_back(std::make_pair(ROI_Positioning_SourcePosition_XY, RemoteObjectMessageData(msgData._addrVal, ROVT_FLOAT, 2, msgData._payload, 2 * sizeof(float))));
-                msgsToReflect.push_back(std::make_pair(ROI_Positioning_SourcePosition_Y, RemoteObjectMessageData(msgData._addrVal, ROVT_FLOAT, 1, &reinterpret_cast<float*>(msgData._payload)[1], sizeof(float))));
+                msgsToReflect.push_back(std::make_pair(ROI_Positioning_SourcePosition_XY, RemoteObjectMessageData(msgData._addrVal, ROVT_FLOAT, 2, refMsgData._payload, 2 * sizeof(float))));
             }
             break;
         case ROI_Positioning_SourcePosition_Y:
@@ -350,8 +347,7 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
 
                 msgsToReflect.push_back(std::make_pair(roi, msgData));
                 msgsToReflect.push_back(std::make_pair(targetObj._Id, refMsgData));
-                msgsToReflect.push_back(std::make_pair(ROI_Positioning_SourcePosition_X, RemoteObjectMessageData(msgData._addrVal, ROVT_FLOAT, 1, &reinterpret_cast<float*>(msgData._payload)[0], sizeof(float))));
-                msgsToReflect.push_back(std::make_pair(ROI_Positioning_SourcePosition_XY, RemoteObjectMessageData(msgData._addrVal, ROVT_FLOAT, 2, msgData._payload, 2 * sizeof(float))));
+                msgsToReflect.push_back(std::make_pair(ROI_Positioning_SourcePosition_XY, RemoteObjectMessageData(msgData._addrVal, ROVT_FLOAT, 2, refMsgData._payload, 2 * sizeof(float))));
             }
             break;
         case ROI_Scene_Recall:
