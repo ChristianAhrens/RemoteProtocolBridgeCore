@@ -357,7 +357,7 @@ namespace SenderAwareOSC
 			if (!disconnect())
 				return false;
 
-			socket.setOwned(new DatagramSocket(false));
+            socket.setOwned(new DatagramSocket(false, SocketOptions{}.withReceiveBufferSize(700'000)));
 
 			if (!socket->bindToPort(portNumber))
 				return false;
