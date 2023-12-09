@@ -1274,6 +1274,60 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
                 //  << " channel:" << juce::String(channel) << ")");
             }
             break;
+        case ROI_MatrixSettings_ReverbRoomId:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixSettings_ReverbRoomId().AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ROI_MatrixSettings_ReverbRoomId ("
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_MatrixSettings_ReverbPredelayFactor:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixSettings_ReverbPredelayFactor().AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ROI_MatrixSettings_ReverbPredelayFactor ("
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_MatrixSettings_ReverbRearLevel:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixSettings_ReverbRearLevel().AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ROI_MatrixSettings_ReverbRearLevel ("
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_Scene_SceneIndex:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_Scene_SceneIndex().AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ROI_Scene_SceneIndex ("
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_Scene_SceneName:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_Scene_SceneName().AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ROI_Scene_SceneName ("
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_Scene_SceneComment:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_Scene_SceneComment().AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ROI_Scene_SceneComment ("
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
         case ROI_CoordinateMappingSettings_Name:
             {
                 success = success && m_nanoOcp->sendData(
