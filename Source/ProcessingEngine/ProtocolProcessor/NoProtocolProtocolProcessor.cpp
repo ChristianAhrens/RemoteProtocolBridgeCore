@@ -138,6 +138,10 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
                     {
                         auto sceneIndex = juce::String(static_cast<char*>(sceneIndexMsgData._payload), sceneIndexMsgData._payloadSize).getFloatValue();
                         SetSceneIndexToCache(sceneIndex + (roi == ROI_Scene_Previous ? -1.0f : 1.0f));
+
+                        m_messageListener->OnProtocolMessageReceived(this, ROI_Scene_SceneIndex,
+                            GetValueCache().GetValue(ro),
+                            RemoteObjectMessageMetaInfo(RemoteObjectMessageMetaInfo::MessageCategory::MC_UnsolicitedMessage, -1));
                     }
                 }
             }
@@ -974,8 +978,14 @@ void NoProtocolProtocolProcessor::StepAnimation()
         }
 
         for (auto const& msgIdNData : msgsToReflect)
-            m_messageListener->OnProtocolMessageReceived(this, msgIdNData.first, msgIdNData.second,
-                RemoteObjectMessageMetaInfo(RemoteObjectMessageMetaInfo::MessageCategory::MC_SetMessageAcknowledgement, -1));
+        {
+            auto& aro = GetActiveRemoteObjects();
+            if (std::find(aro.begin(), aro.end(), RemoteObject(msgIdNData.first, msgIdNData.second._addrVal)) != aro.end())
+            {
+                m_messageListener->OnProtocolMessageReceived(this, msgIdNData.first, msgIdNData.second,
+                    RemoteObjectMessageMetaInfo(RemoteObjectMessageMetaInfo::MessageCategory::MC_SetMessageAcknowledgement, -1));
+            }
+        }
 
     }
 
