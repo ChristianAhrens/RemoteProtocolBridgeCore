@@ -73,7 +73,7 @@ bool NoProtocolProtocolProcessor::setStateXml(XmlElement* stateXml)
         if (AM_Rand == m_animationMode)
         {
             srand(static_cast <unsigned> (time(0)));
-            for (int channel = 1; channel <= sc_chCnt; channel++)
+            for (int channel = INVALID_ADDRESS_VALUE; channel <= sc_chCnt; channel++)
             {
                 m_channelRandomizedFactors[channel] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
                 m_channelRandomizedScaleFactors[channel] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
