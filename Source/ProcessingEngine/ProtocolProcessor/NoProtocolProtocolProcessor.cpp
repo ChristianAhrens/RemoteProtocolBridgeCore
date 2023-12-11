@@ -603,8 +603,12 @@ void NoProtocolProtocolProcessor::TriggerSendingObjectValueCache()
 {
     for (auto const& value : GetValueCache().GetCachedValues())
     {
-        m_messageListener->OnProtocolMessageReceived(this, value.first._Id, value.second,
-            RemoteObjectMessageMetaInfo(RemoteObjectMessageMetaInfo::MessageCategory::MC_UnsolicitedMessage, -1));
+        auto& aro = GetActiveRemoteObjects();
+        if (std::find(aro.begin(), aro.end(), value.first) != aro.end())
+        {
+            m_messageListener->OnProtocolMessageReceived(this, value.first._Id, value.second,
+                RemoteObjectMessageMetaInfo(RemoteObjectMessageMetaInfo::MessageCategory::MC_UnsolicitedMessage, INVALID_EXTID));
+        }
     }
 }
 
