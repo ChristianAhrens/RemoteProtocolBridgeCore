@@ -248,7 +248,7 @@ struct ProjectData
 
             auto inputNamesDataString = sa[6];
             juce::StringArray sain;
-            sasp.addTokens(inputNamesDataString, ";", {});
+            sain.addTokens(inputNamesDataString, ";", {});
             for (auto const& sains : sain)
             {
                 juce::StringArray sainse;
