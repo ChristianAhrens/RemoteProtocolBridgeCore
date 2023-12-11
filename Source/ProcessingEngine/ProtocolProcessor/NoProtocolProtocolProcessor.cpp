@@ -59,9 +59,10 @@ bool NoProtocolProtocolProcessor::setStateXml(XmlElement* stateXml)
     }
     else
     {
-        if (1 == stateXml->getNumChildElements() && stateXml->getFirstChildElement()->isTextElement())
+        auto dbprDataXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::DBPRDATA));
+        if (nullptr != dbprDataXmlElement && 1 == dbprDataXmlElement->getNumChildElements() && dbprDataXmlElement->getFirstChildElement()->isTextElement())
         {
-            auto projectData = ProjectData::FromString(stateXml->getFirstChildElement()->getAllSubText());
+            auto projectData = ProjectData::FromString(dbprDataXmlElement->getFirstChildElement()->getAllSubText());
             if (!projectData.IsEmpty())
                 InitializeObjectValueCache(projectData);
             else
