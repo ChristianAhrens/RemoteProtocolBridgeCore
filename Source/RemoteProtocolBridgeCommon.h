@@ -128,9 +128,10 @@ enum RemoteObjectIdentifier
 									   * value to allow iteration over enum starting 
 									   * here (e.g. to not show the user the internal-only ping/pong). */
 	ROI_Settings_DeviceName,
+	ROI_Status_StatusText,
+	ROI_Status_AudioNetworkSampleStatus,
 	ROI_Error_GnrlErr,
 	ROI_Error_ErrorText,
-	ROI_Status_StatusText,
 	ROI_MatrixInput_Select,
 	ROI_MatrixInput_Mute,
 	ROI_MatrixInput_Gain,
@@ -141,6 +142,7 @@ enum RemoteObjectIdentifier
 	ROI_MatrixInput_ChannelName,
 	ROI_MatrixInput_LevelMeterPreMute,
 	ROI_MatrixInput_LevelMeterPostMute,
+	ROI_MatrixInput_ReverbSendGain,				/**< reverbsendgain remote object id. */
 	ROI_MatrixNode_Enable,
 	ROI_MatrixNode_Gain,
 	ROI_MatrixNode_DelayEnable,
@@ -167,12 +169,14 @@ enum RemoteObjectIdentifier
 	ROI_MatrixSettings_ReverbRoomId,
 	ROI_MatrixSettings_ReverbPredelayFactor,
 	ROI_MatrixSettings_ReverbRearLevel,
-	ROI_MatrixInput_ReverbSendGain,				/**< reverbsendgain remote object id. */
+	ROI_FunctionGroup_Name,
+	ROI_FunctionGroup_Delay,
+	ROI_FunctionGroup_SpreadFactor,
 	ROI_ReverbInput_Gain,
 	ROI_ReverbInputProcessing_Mute,
 	ROI_ReverbInputProcessing_Gain,
-	ROI_ReverbInputProcessing_LevelMeter,
 	ROI_ReverbInputProcessing_EqEnable,
+	ROI_ReverbInputProcessing_LevelMeter,
 	ROI_Scene_SceneIndex,
 	ROI_Scene_SceneName,
 	ROI_Scene_SceneComment,
@@ -187,7 +191,10 @@ enum RemoteObjectIdentifier
 	ROI_CoordinateMappingSettings_P3virtual,
 	ROI_CoordinateMappingSettings_Flip,
 	ROI_CoordinateMappingSettings_Name,
+	ROI_CoordinateMappingSettings_Type,
 	ROI_Positioning_SpeakerPosition,			// 6-float loudspeaker position (x, y, z, hor, vert, rot)
+	ROI_SoundObjectRouting_Mute,
+	ROI_SoundObjectRouting_Gain,
 	ROI_BridgingMAX,							/**< Value to mark max enum iteration scope. ROIs greater than this can/will not be bridged.*/
 	ROI_Device_Clear,
 	ROI_RemoteProtocolBridge_SoundObjectSelect,

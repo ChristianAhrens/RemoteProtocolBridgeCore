@@ -641,12 +641,14 @@ String ProcessingEngineConfig::GetObjectTagName(RemoteObjectIdentifier Id)
 		return "PONG";
 	case ROI_Settings_DeviceName:
 		return "DeviceName";
+	case ROI_Status_StatusText:
+		return "StatusText";
+	case ROI_Status_AudioNetworkSampleStatus:
+		return "AudioNetworkSampleStatus";
 	case ROI_Error_GnrlErr:
 		return "GeneralError";
 	case ROI_Error_ErrorText:
 		return "ErrorText";
-	case ROI_Status_StatusText:
-		return "StatusText";
 	case ROI_MatrixInput_Select:
 		return "MatrixInputSelect";
 	case ROI_MatrixInput_Mute:
@@ -721,6 +723,12 @@ String ProcessingEngineConfig::GetObjectTagName(RemoteObjectIdentifier Id)
 		return "MatrixSettingsReverbRearLevel";
 	case ROI_MatrixInput_ReverbSendGain:
 		return "MatrixInputReverbSendGain";
+	case ROI_FunctionGroup_Name:
+		return "FunctionGroupName";
+	case ROI_FunctionGroup_Delay:
+		return "FunctionGroupDelay";
+	case ROI_FunctionGroup_SpreadFactor:
+		return "FunctionGroupSpreadFactor";
 	case ROI_ReverbInput_Gain:
 		return "ReverbInputGain";
 	case ROI_ReverbInputProcessing_Mute:
@@ -757,6 +765,10 @@ String ProcessingEngineConfig::GetObjectTagName(RemoteObjectIdentifier Id)
 		return "RPBMISelectionSelect";
 	case ROI_RemoteProtocolBridge_MatrixOutputGroupSelect:
 		return "RPBMOSelectionSelect";
+	case ROI_SoundObjectRouting_Mute:
+		return "SoundObjectRoutingMute";
+	case ROI_SoundObjectRouting_Gain:
+		return "SoundObjectRoutingGain";
 	case ROI_Invalid:
 		return "INVALID";
 	default:
@@ -786,6 +798,8 @@ String ProcessingEngineConfig::GetObjectDescription(const RemoteObjectIdentifier
 		return "Error Text";
 	case ROI_Status_StatusText:
 		return "Status Text";
+	case ROI_Status_AudioNetworkSampleStatus:
+		return "Status AudioNetworkSampleStatus";
 	case ROI_MatrixInput_Select:
 		return "Matrix Input Select";
 	case ROI_MatrixInput_Mute:
@@ -860,6 +874,12 @@ String ProcessingEngineConfig::GetObjectDescription(const RemoteObjectIdentifier
 		return "Matrix Settings ReverbRearLevel";
 	case ROI_MatrixInput_ReverbSendGain:
 		return "Matrix Input ReverbSendGain";
+	case ROI_FunctionGroup_Name:
+		return "FunctionGroup Name";
+	case ROI_FunctionGroup_Delay:
+		return "FunctionGroup Delay";
+	case ROI_FunctionGroup_SpreadFactor:
+		return "FunctionGroup SpreadFactor";
 	case ROI_ReverbInput_Gain:
 		return "Reverb Input Gain";
 	case ROI_ReverbInputProcessing_Mute:
@@ -908,12 +928,18 @@ String ProcessingEngineConfig::GetObjectDescription(const RemoteObjectIdentifier
 		return "Mapping Area P1 virt";
 	case ROI_CoordinateMappingSettings_P3virtual:
 		return "Mapping Area P3 virt";
+	case ROI_CoordinateMappingSettings_Type:
+		return "Mapping Area type";
 	case ROI_CoordinateMappingSettings_Flip:
 		return "Mapping Area flip";
 	case ROI_CoordinateMappingSettings_Name:
 		return "Mapping Area name";
 	case ROI_Positioning_SpeakerPosition:
 		return "Speaker Position";
+	case ROI_SoundObjectRouting_Mute:
+		return "Soundobject Routing Mute";
+	case ROI_SoundObjectRouting_Gain:
+		return "Soundobject Routing Gain";
 	case ROI_Invalid:
 		return "INVALID";
 	default:

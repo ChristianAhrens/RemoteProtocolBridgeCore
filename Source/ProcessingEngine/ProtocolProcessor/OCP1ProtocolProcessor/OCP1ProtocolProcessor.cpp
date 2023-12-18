@@ -904,7 +904,13 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
     auto record = static_cast<RecordId>(INVALID_ADDRESS_VALUE);
     auto channel = static_cast<ChannelId>(INVALID_ADDRESS_VALUE);
 
+    // definitions without record and channel
     m_ROIsToDefsMap[ROI_Settings_DeviceName][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_Settings_DeviceName();
+    m_ROIsToDefsMap[ROI_Status_StatusText][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_Status_StatusText();
+    m_ROIsToDefsMap[ROI_Status_AudioNetworkSampleStatus][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_Status_AudioNetworkSampleStatus();
+    m_ROIsToDefsMap[ROI_Error_GnrlErr][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_Error_GnrlErr();
+    m_ROIsToDefsMap[ROI_Error_ErrorText][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_Error_ErrorText();
+
     m_ROIsToDefsMap[ROI_MatrixSettings_ReverbRoomId][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixSettings_ReverbRoomId();
     m_ROIsToDefsMap[ROI_MatrixSettings_ReverbPredelayFactor][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixSettings_ReverbPredelayFactor();
     m_ROIsToDefsMap[ROI_MatrixSettings_ReverbRearLevel][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixSettings_ReverbRearLevel();
@@ -912,6 +918,7 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
     m_ROIsToDefsMap[ROI_Scene_SceneName][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_Scene_SceneName();
     m_ROIsToDefsMap[ROI_Scene_SceneComment][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_Scene_SceneComment();
 
+    // definitions with channel
     for (channel = ChannelId(1); channel <= NanoOcp1::DS100::MaxChannelCount; channel++)
     {
         record = static_cast<RecordId>(0);
@@ -919,20 +926,47 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
         m_ROIsToDefsMap[ROI_Positioning_SourcePosition][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);       
         m_ROIsToDefsMap[ROI_Positioning_SourceSpread][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Spread(channel);
         m_ROIsToDefsMap[ROI_Positioning_SourceDelayMode][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(channel);
-        m_ROIsToDefsMap[ROI_MatrixInput_ReverbSendGain][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ReverbSendGain(channel);
-        m_ROIsToDefsMap[ROI_MatrixInput_Gain][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Gain(channel);
         m_ROIsToDefsMap[ROI_MatrixInput_Mute][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Mute(channel);
+        m_ROIsToDefsMap[ROI_MatrixInput_Gain][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Gain(channel);
+        m_ROIsToDefsMap[ROI_MatrixInput_Delay][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Delay(channel);
+        m_ROIsToDefsMap[ROI_MatrixInput_DelayEnable][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_DelayEnable(channel);
+        m_ROIsToDefsMap[ROI_MatrixInput_EqEnable][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_EqEnable(channel);
+        m_ROIsToDefsMap[ROI_MatrixInput_Polarity][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Polarity(channel);
         m_ROIsToDefsMap[ROI_MatrixInput_ChannelName][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ChannelName(channel);
         m_ROIsToDefsMap[ROI_MatrixInput_LevelMeterPreMute][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_LevelMeterPreMute(channel);
-        m_ROIsToDefsMap[ROI_MatrixOutput_Gain][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Gain(channel);
+        m_ROIsToDefsMap[ROI_MatrixInput_LevelMeterPostMute][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_LevelMeterPostMute(channel);
+        m_ROIsToDefsMap[ROI_MatrixInput_ReverbSendGain][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ReverbSendGain(channel);
         m_ROIsToDefsMap[ROI_MatrixOutput_Mute][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Mute(channel);
+        m_ROIsToDefsMap[ROI_MatrixOutput_Gain][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Gain(channel);
+        m_ROIsToDefsMap[ROI_MatrixOutput_Delay][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Delay(channel);
+        m_ROIsToDefsMap[ROI_MatrixOutput_DelayEnable][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_DelayEnable(channel);
+        m_ROIsToDefsMap[ROI_MatrixOutput_EqEnable][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_EqEnable(channel);
+        m_ROIsToDefsMap[ROI_MatrixOutput_Polarity][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Polarity(channel);
         m_ROIsToDefsMap[ROI_MatrixOutput_ChannelName][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_ChannelName(channel);
         m_ROIsToDefsMap[ROI_MatrixOutput_LevelMeterPreMute][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_LevelMeterPreMute(channel);
         m_ROIsToDefsMap[ROI_MatrixOutput_LevelMeterPostMute][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_LevelMeterPostMute(channel);
+        m_ROIsToDefsMap[ROI_FunctionGroup_Name][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_Name(channel);
+        m_ROIsToDefsMap[ROI_FunctionGroup_Delay][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_Delay(channel);
+        m_ROIsToDefsMap[ROI_FunctionGroup_SpreadFactor][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_SpreadFactor(channel);
+        m_ROIsToDefsMap[ROI_ReverbInputProcessing_Mute][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_Mute(channel);
+        m_ROIsToDefsMap[ROI_ReverbInputProcessing_Gain][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_Gain(channel);
+        m_ROIsToDefsMap[ROI_ReverbInputProcessing_EqEnable][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_EqEnable(channel);
+        m_ROIsToDefsMap[ROI_ReverbInputProcessing_LevelMeter][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_LevelMeter(channel);
+        // definitions with channel and record
         for (record = RecordId(MappingAreaId::MAI_First); record <= MappingAreaId::MAI_Fourth; record++)
+        {
             m_ROIsToDefsMap[ROI_CoordinateMapping_SourcePosition][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
+            m_ROIsToDefsMap[ROI_MatrixNode_Enable][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Enable(record, channel);
+            m_ROIsToDefsMap[ROI_MatrixNode_Gain][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Gain(record, channel);
+            m_ROIsToDefsMap[ROI_MatrixNode_Delay][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Delay(record, channel);
+            m_ROIsToDefsMap[ROI_MatrixNode_DelayEnable][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_DelayEnable(record, channel);
+            m_ROIsToDefsMap[ROI_ReverbInput_Gain][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_ReverbInput_Gain(record, channel);
+            m_ROIsToDefsMap[ROI_SoundObjectRouting_Mute][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_SoundObjectRouting_Mute(record, channel);
+            m_ROIsToDefsMap[ROI_SoundObjectRouting_Gain][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_SoundObjectRouting_Gain(record, channel);
+        }
     }
 
+    // definitions with record
     for (record = static_cast<RecordId>(MappingAreaId::MAI_First); record <= MappingAreaId::MAI_Fourth; record++)
     {
         m_ROIsToDefsMap[ROI_CoordinateMappingSettings_P1real][std::make_pair(record, INVALID_ADDRESS_VALUE)] = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P1_real(record);
@@ -943,6 +977,8 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
         m_ROIsToDefsMap[ROI_CoordinateMappingSettings_P3virtual][std::make_pair(record, INVALID_ADDRESS_VALUE)] = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P3_virtual(record);
         m_ROIsToDefsMap[ROI_CoordinateMappingSettings_Flip][std::make_pair(record, INVALID_ADDRESS_VALUE)] = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Flip(record);
         m_ROIsToDefsMap[ROI_CoordinateMappingSettings_Name][std::make_pair(record, INVALID_ADDRESS_VALUE)] = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Name(record);
+        m_ROIsToDefsMap[ROI_CoordinateMappingSettings_Type][std::make_pair(record, INVALID_ADDRESS_VALUE)] = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Type(record);
+
     }
 }
 
