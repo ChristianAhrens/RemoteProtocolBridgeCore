@@ -923,7 +923,7 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
     {
         record = static_cast<RecordId>(0);
         m_ROIsToDefsMap[ROI_Positioning_SpeakerPosition][std::make_pair(static_cast<RecordId>(INVALID_ADDRESS_VALUE), channel)] = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Speaker_Position(channel);
-        m_ROIsToDefsMap[ROI_Positioning_SourcePosition][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);       
+        m_ROIsToDefsMap[ROI_Positioning_SourcePosition][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
         m_ROIsToDefsMap[ROI_Positioning_SourceSpread][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Spread(channel);
         m_ROIsToDefsMap[ROI_Positioning_SourceDelayMode][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(channel);
         m_ROIsToDefsMap[ROI_MatrixInput_Mute][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Mute(channel);
@@ -1121,7 +1121,51 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
                 success = success && m_nanoOcp->sendData(
                     NanoOcp1::Ocp1CommandResponseRequired(
                         NanoOcp1::DS100::dbOcaObjectDef_Settings_DeviceName().AddSubscriptionCommand(), handle).GetMemoryBlock());
-                //DBG(juce::String(__FUNCTION__) << " ROI_Settings_DeviceName (" 
+                //DBG(juce::String(__FUNCTION__) << " ROI_Settings_DeviceName ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_Status_StatusText:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_Status_StatusText().AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ROI_Status_StatusText ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_Status_AudioNetworkSampleStatus:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_Status_AudioNetworkSampleStatus().AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ROI_Status_AudioNetworkSampleStatus ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_Error_GnrlErr:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_Error_GnrlErr().AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ROI_Error_GnrlErr ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_Error_ErrorText:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_Error_ErrorText().AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ROI_Error_ErrorText ("
                 //    << "record:" << juce::String(record)
                 //    << " channel:" << juce::String(channel)
                 //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
@@ -1193,23 +1237,56 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
                 //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
             }
             break;
-        case ROI_MatrixInput_ReverbSendGain:
-            {
-                success = success && m_nanoOcp->sendData(
-                    NanoOcp1::Ocp1CommandResponseRequired(
-                        NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ReverbSendGain(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
-                //DBG(juce::String(__FUNCTION__) << " ROI_MatrixInput_ReverbSendGain (" 
-                //    << "record:" << juce::String(record)
-                //    << " channel:" << juce::String(channel)
-                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
-            }
-            break;
         case ROI_MatrixInput_Gain:
             {
                 success = success && m_nanoOcp->sendData(
                     NanoOcp1::Ocp1CommandResponseRequired(
                         NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Gain(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
                 //DBG(juce::String(__FUNCTION__) << " ROI_MatrixInput_Gain (" 
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_MatrixInput_Delay:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Delay(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " MatrixInput_Delay ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_MatrixInput_DelayEnable:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_DelayEnable(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " MatrixInput_DelayEnable ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_MatrixInput_EqEnable:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_EqEnable(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " MatrixInput_EqEnable ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_MatrixInput_Polarity:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Polarity(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " MatrixInput_Polarity ("
                 //    << "record:" << juce::String(record)
                 //    << " channel:" << juce::String(channel)
                 //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
@@ -1237,6 +1314,72 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
                 //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
             }
             break;
+        case ROI_MatrixInput_LevelMeterPostMute:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_LevelMeterPostMute(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " MatrixInput_LevelMeterPostMute ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_MatrixInput_ReverbSendGain:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ReverbSendGain(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " MatrixInput_ReverbSendGain ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_MatrixNode_Enable:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Enable(record, channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " MatrixNode_Enable ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_MatrixNode_Gain:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Gain(record, channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " MatrixNode_Gain ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_MatrixNode_Delay:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Delay(record, channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " MatrixNode_Delay ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_MatrixNode_DelayEnable:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_DelayEnable(record, channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " MatrixNode_DelayEnable ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
         case ROI_MatrixOutput_Mute:
             {
                 success = success && m_nanoOcp->sendData(
@@ -1259,6 +1402,50 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
                 //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
             }
             break;
+        case ROI_MatrixOutput_Delay:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Delay(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " MatrixOutput_Delay ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_MatrixOutput_DelayEnable:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_DelayEnable(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " MatrixOutput_DelayEnable ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_MatrixOutput_EqEnable:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_EqEnable(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " MatrixOutput_EqEnable ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_MatrixOutput_Polarity:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Polarity(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " MatrixOutput_Polarity ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
         case ROI_MatrixOutput_ChannelName:
             {
                 success = success && m_nanoOcp->sendData(
@@ -1275,7 +1462,7 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
                 success = success && m_nanoOcp->sendData(
                     NanoOcp1::Ocp1CommandResponseRequired(
                         NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_LevelMeterPreMute(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
-                //DBG(juce::String(__FUNCTION__) << " ROI_MatrixInput_LevelMeterPreMute (" 
+                //DBG(juce::String(__FUNCTION__) << " ROI_MatrixOutput_LevelMeterPreMute (" 
                 //    << "record:" << juce::String(record)
                 //    << " channel:" << juce::String(channel)
                 //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
@@ -1286,7 +1473,7 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
                 success = success && m_nanoOcp->sendData(
                     NanoOcp1::Ocp1CommandResponseRequired(
                         NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_LevelMeterPostMute(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
-                //DBG(juce::String(__FUNCTION__) << " ROI_MatrixInput_LevelMeterPostMute (" 
+                //DBG(juce::String(__FUNCTION__) << " ROI_MatrixOutput_LevelMeterPostMute (" 
                 //    << "record:" << juce::String(record)
                 //    << " channel:" << juce::String(channel)
                 //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
@@ -1337,6 +1524,94 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
                 //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
             }
             break;
+        case ROI_FunctionGroup_Name:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_Name(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " FunctionGroup_Name ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_FunctionGroup_Delay:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_Delay(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " FunctionGroup_Delay ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_FunctionGroup_SpreadFactor:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_SpreadFactor(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " FunctionGroup_SpreadFactor ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_ReverbInput_Gain:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_ReverbInput_Gain(record, channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ReverbInput_Gain ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_ReverbInputProcessing_Mute:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_Mute(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ReverbInputProcessing_Mute ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_ReverbInputProcessing_Gain:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_Gain(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ReverbInputProcessing_Gain ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_ReverbInputProcessing_EqEnable:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_EqEnable(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ReverbInputProcessing_EqEnable ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_ReverbInputProcessing_LevelMeter:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_LevelMeter(channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " ReverbInputProcessing_LevelMeter ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
         case ROI_Scene_SceneIndex:
             {
                 success = success && m_nanoOcp->sendData(
@@ -1371,6 +1646,17 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
                         NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Name(record).AddSubscriptionCommand(), handle).GetMemoryBlock());
                 //DBG(juce::String(__FUNCTION__) << " ROI_CoordinateMappingSettings_Name (" 
                 //    << "record:" << juce::String(record)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_CoordinateMappingSettings_Type:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Type(record).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " CoordinateMappingSettings_Type ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
                 //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
             }
             break;
@@ -1441,6 +1727,28 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
                     NanoOcp1::Ocp1CommandResponseRequired(
                         NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P3_virtual(record).AddSubscriptionCommand(), handle).GetMemoryBlock());
                 //DBG(juce::String(__FUNCTION__) << " ROI_CoordinateMappingSettings_P3virtual ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_SoundObjectRouting_Mute:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_SoundObjectRouting_Mute(record, channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " SoundObjectRouting_Mute ("
+                //    << "record:" << juce::String(record)
+                //    << " channel:" << juce::String(channel)
+                //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
+            }
+            break;
+        case ROI_SoundObjectRouting_Gain:
+            {
+                success = success && m_nanoOcp->sendData(
+                    NanoOcp1::Ocp1CommandResponseRequired(
+                        NanoOcp1::DS100::dbOcaObjectDef_SoundObjectRouting_Gain(record, channel).AddSubscriptionCommand(), handle).GetMemoryBlock());
+                //DBG(juce::String(__FUNCTION__) << " SoundObjectRouting_Gain ("
                 //    << "record:" << juce::String(record)
                 //    << " channel:" << juce::String(channel)
                 //    << " handle:" << NanoOcp1::HandleToString(handle) << ")");
