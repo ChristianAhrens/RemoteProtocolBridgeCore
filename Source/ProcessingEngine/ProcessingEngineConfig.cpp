@@ -58,14 +58,31 @@ std::map<RemoteObjectIdentifier, juce::Range<float>>	ProcessingEngineConfig::s_o
 	std::make_pair(ROI_MatrixInput_LevelMeterPreMute, juce::Range<float>(-120.0f, 24.0f)),
 	std::make_pair(ROI_MatrixInput_Gain, juce::Range<float>(-120.0f, 24.0f)),
 	std::make_pair(ROI_MatrixInput_Mute, juce::Range<float>(0.0f, 1.0f)),
+	std::make_pair(ROI_MatrixInput_Delay, juce::Range<float>(0.0f, 0.5f)),
+	std::make_pair(ROI_MatrixInput_ReverbSendGain, juce::Range<float>(-120.0f, 24.0f)),
+	// MatrixNode ROIs
+	std::make_pair(ROI_MatrixNode_Gain, juce::Range<float>(-120.0f, 10.0f)),
+	std::make_pair(ROI_MatrixNode_Delay, juce::Range<float>(0.0f, 0.5f)),
 	// MatrixOutput ROIs
 	std::make_pair(ROI_MatrixOutput_LevelMeterPostMute, juce::Range<float>(-120.0f, 10.0f)),
 	std::make_pair(ROI_MatrixOutput_Gain, juce::Range<float>(-120.0f, 10.0f)),
 	std::make_pair(ROI_MatrixOutput_Mute, juce::Range<float>(0.0f, 1.0f)),
+	std::make_pair(ROI_MatrixOutput_Delay, juce::Range<float>(0.0f, 0.5f)),
 	// MatrixSettings ROIs
 	std::make_pair(ROI_MatrixSettings_ReverbRoomId, juce::Range<float>(0.0f, 9.0f)),
 	std::make_pair(ROI_MatrixSettings_ReverbPredelayFactor, juce::Range<float>(0.2f, 2.0f)),
-	std::make_pair(ROI_MatrixSettings_ReverbRearLevel, juce::Range<float>(-24.0f, 24.0f))};
+	std::make_pair(ROI_MatrixSettings_ReverbRearLevel, juce::Range<float>(-24.0f, 24.0f)),
+	// FunctionGroup
+	std::make_pair(ROI_FunctionGroup_Delay, juce::Range<float>(0.0f, 0.5f)),
+	std::make_pair(ROI_FunctionGroup_SpreadFactor, juce::Range<float>(0.5f, 2.0f)),
+	// ReverbInput
+	std::make_pair(ROI_ReverbInput_Gain, juce::Range<float>(-120.0f, 24.0f)),
+	std::make_pair(ROI_ReverbInputProcessing_Mute, juce::Range<float>(0.0f, 1.0f)),
+	std::make_pair(ROI_ReverbInputProcessing_Gain, juce::Range<float>(-120.0f, 24.0f)),
+	// SoundObject Routing
+	std::make_pair(ROI_SoundObjectRouting_Mute, juce::Range<float>(0.0f, 1.0f)),
+	std::make_pair(ROI_SoundObjectRouting_Gain, juce::Range<float>(-120.0f, 10.0f)),
+	};
 
 /**
  * Constructs an object
@@ -963,12 +980,14 @@ String ProcessingEngineConfig::GetObjectShortDescription(const RemoteObjectIdent
 		return "PONG";
 	case ROI_Settings_DeviceName:
 		return "Dev. Name";
+	case ROI_Status_StatusText:
+		return "Stat Txt";
+	case ROI_Status_AudioNetworkSampleStatus:
+		return "Stat AudioNetSmpl";
 	case ROI_Error_GnrlErr:
 		return "Gnrl Err";
 	case ROI_Error_ErrorText:
 		return "Err Txt";
-	case ROI_Status_StatusText:
-		return "Stat Txt";
 	case ROI_MatrixInput_Select:
 		return "Mtrx In Sel";
 	case ROI_MatrixInput_Mute:
@@ -1043,6 +1062,12 @@ String ProcessingEngineConfig::GetObjectShortDescription(const RemoteObjectIdent
 		return "Mtrx Set. RevRearLevel";
 	case ROI_MatrixInput_ReverbSendGain:
 		return "Mtrx In RevSndGain";
+	case ROI_FunctionGroup_Name:
+		return "FctGrp Name";
+	case ROI_FunctionGroup_Delay:
+		return "FctGrp Dly";
+	case ROI_FunctionGroup_SpreadFactor:
+		return "FunctionGroup_SpreadFactor";
 	case ROI_ReverbInput_Gain:
 		return "Rev. In Gain";
 	case ROI_ReverbInputProcessing_Mute:
@@ -1097,6 +1122,10 @@ String ProcessingEngineConfig::GetObjectShortDescription(const RemoteObjectIdent
 		return "Map name";
 	case ROI_Positioning_SpeakerPosition:
 		return "Spkr Pos";
+	case ROI_SoundObjectRouting_Mute:
+		return "SO Route Mute";
+	case ROI_SoundObjectRouting_Gain:
+		return "SO Route Gain";
 	case ROI_Invalid:
 		return "INVLD";
 	default:
@@ -1116,43 +1145,46 @@ bool ProcessingEngineConfig::IsChannelAddressingObject(RemoteObjectIdentifier ob
 	{
 	case ROI_MatrixInput_Select:
 	case ROI_MatrixInput_Mute:
+	case ROI_MatrixInput_Gain:
+	case ROI_MatrixInput_Delay:
 	case ROI_MatrixInput_DelayEnable:
 	case ROI_MatrixInput_EqEnable:
 	case ROI_MatrixInput_Polarity:
+	case ROI_MatrixInput_ChannelName:
+	case ROI_MatrixInput_LevelMeterPreMute:
+	case ROI_MatrixInput_LevelMeterPostMute:
+	case ROI_MatrixInput_ReverbSendGain:
+	case ROI_MatrixNode_Gain:
 	case ROI_MatrixNode_Enable:
+	case ROI_MatrixNode_Delay:
 	case ROI_MatrixNode_DelayEnable:
 	case ROI_MatrixOutput_Mute:
+	case ROI_MatrixOutput_Gain:
+	case ROI_MatrixOutput_Delay:
 	case ROI_MatrixOutput_DelayEnable:
 	case ROI_MatrixOutput_EqEnable:
 	case ROI_MatrixOutput_Polarity:
-	case ROI_Positioning_SourceDelayMode:
-	case ROI_ReverbInputProcessing_Mute:
-	case ROI_ReverbInputProcessing_EqEnable:
-	case ROI_MatrixInput_Gain:
-	case ROI_MatrixInput_Delay:
-	case ROI_MatrixInput_LevelMeterPreMute:
-	case ROI_MatrixInput_LevelMeterPostMute:
-	case ROI_MatrixNode_Gain:
-	case ROI_MatrixNode_Delay:
-	case ROI_MatrixOutput_Gain:
-	case ROI_MatrixOutput_Delay:
+	case ROI_MatrixOutput_ChannelName:
 	case ROI_MatrixOutput_LevelMeterPreMute:
 	case ROI_MatrixOutput_LevelMeterPostMute:
+	case ROI_Positioning_SourceDelayMode:
 	case ROI_Positioning_SourceSpread:
 	case ROI_Positioning_SourcePosition_XY:
 	case ROI_Positioning_SourcePosition_X:
 	case ROI_Positioning_SourcePosition_Y:
 	case ROI_Positioning_SourcePosition:
-	case ROI_MatrixInput_ReverbSendGain:
+	case ROI_FunctionGroup_Name:
+	case ROI_FunctionGroup_Delay:
+	case ROI_FunctionGroup_SpreadFactor:
 	case ROI_ReverbInput_Gain:
+	case ROI_ReverbInputProcessing_Mute:
 	case ROI_ReverbInputProcessing_Gain:
+	case ROI_ReverbInputProcessing_EqEnable:
 	case ROI_ReverbInputProcessing_LevelMeter:
 	case ROI_CoordinateMapping_SourcePosition_XY:
 	case ROI_CoordinateMapping_SourcePosition_X:
 	case ROI_CoordinateMapping_SourcePosition_Y:
 	case ROI_CoordinateMapping_SourcePosition:
-	case ROI_MatrixInput_ChannelName:
-	case ROI_MatrixOutput_ChannelName:
 	case ROI_RemoteProtocolBridge_SoundObjectSelect:
 	case ROI_RemoteProtocolBridge_SoundObjectGroupSelect:
 	case ROI_RemoteProtocolBridge_MatrixInputGroupSelect:
@@ -1169,6 +1201,9 @@ bool ProcessingEngineConfig::IsChannelAddressingObject(RemoteObjectIdentifier ob
 	case ROI_CoordinateMappingSettings_P3virtual:
 	case ROI_CoordinateMappingSettings_Flip:
 	case ROI_CoordinateMappingSettings_Name:
+	case ROI_CoordinateMappingSettings_Type:
+	case ROI_SoundObjectRouting_Mute:
+	case ROI_SoundObjectRouting_Gain:
 		return true;
 	case ROI_Settings_DeviceName:
 	case ROI_Error_GnrlErr:
@@ -1209,6 +1244,8 @@ bool ProcessingEngineConfig::IsRecordAddressingObject(RemoteObjectIdentifier obj
 	case ROI_CoordinateMapping_SourcePosition_Y:
 	case ROI_CoordinateMapping_SourcePosition:
 	case ROI_ReverbInput_Gain:
+	case ROI_SoundObjectRouting_Mute:
+	case ROI_SoundObjectRouting_Gain:
 		return true;
 	default:
 		return false;
