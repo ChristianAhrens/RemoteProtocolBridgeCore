@@ -271,7 +271,7 @@ bool ProcessingEngineConfig::ReadObjectsDeprecated(XmlElement* objectsElement, s
 		for (int i = ROI_Invalid + 1; i < ROI_BridgingMAX; ++i)
 		{
 			RemoteObjectIdentifier ROId = (RemoteObjectIdentifier)i;
-			if (objectChild->getTagName() == GetObjectDescription(ROId).removeCharacters(" "))
+			if (objectChild->getTagName() == GetObjectTagName(ROId))
 			{
 				obj._Id = ROId;
 	
@@ -624,6 +624,145 @@ bool ProcessingEngineConfig::RemoveNodeOrProtocol(int Id)
 	}
 	else
 		return false;
+}
+
+/**
+* Helper to resolve ROI to tag name.
+*
+* @param Id	The remote objectid to be resolved to a string.
+*/
+String ProcessingEngineConfig::GetObjectTagName(RemoteObjectIdentifier Id)
+{
+	switch (Id)
+	{
+	case ROI_HeartbeatPing:
+		return "PING";
+	case ROI_HeartbeatPong:
+		return "PONG";
+	case ROI_Settings_DeviceName:
+		return "DeviceName";
+	case ROI_Error_GnrlErr:
+		return "GeneralError";
+	case ROI_Error_ErrorText:
+		return "ErrorText";
+	case ROI_Status_StatusText:
+		return "StatusText";
+	case ROI_MatrixInput_Select:
+		return "MatrixInputSelect";
+	case ROI_MatrixInput_Mute:
+		return "MatrixInputMute";
+	case ROI_MatrixInput_Gain:
+		return "MatrixInputGain";
+	case ROI_MatrixInput_Delay:
+		return "MatrixInputDelay";
+	case ROI_MatrixInput_DelayEnable:
+		return "MatrixInputDelayEnable";
+	case ROI_MatrixInput_EqEnable:
+		return "MatrixInputEqEnable";
+	case ROI_MatrixInput_Polarity:
+		return "MatrixInputPolarity";
+	case ROI_MatrixInput_ChannelName:
+		return "MatrixInputChannelName";
+	case ROI_MatrixInput_LevelMeterPreMute:
+		return "MatrixInputLevelMeterPreMute";
+	case ROI_MatrixInput_LevelMeterPostMute:
+		return "MatrixInputLevelMeterPostMute";
+	case ROI_MatrixNode_Enable:
+		return "MatrixNodeEnable";
+	case ROI_MatrixNode_Gain:
+		return "MatrixNodeGain";
+	case ROI_MatrixNode_DelayEnable:
+		return "MatrixNodeDelayEnable";
+	case ROI_MatrixNode_Delay:
+		return "MatrixNodeDelay";
+	case ROI_MatrixOutput_Mute:
+		return "MatrixOutputMute";
+	case ROI_MatrixOutput_Gain:
+		return "MatrixOutputGain";
+	case ROI_MatrixOutput_Delay:
+		return "MatrixOutputDelay";
+	case ROI_MatrixOutput_DelayEnable:
+		return "MatrixOutputDelayEnable";
+	case ROI_MatrixOutput_EqEnable:
+		return "MatrixOutputEqEnable";
+	case ROI_MatrixOutput_Polarity:
+		return "MatrixOutputPolarity";
+	case ROI_MatrixOutput_ChannelName:
+		return "MatrixOutputChannelName";
+	case ROI_MatrixOutput_LevelMeterPreMute:
+		return "MatrixOutputLevelMeterPreMute";
+	case ROI_MatrixOutput_LevelMeterPostMute:
+		return "MatrixOutputLevelMeterPostMute";
+	case ROI_Positioning_SourceSpread:
+		return "SoundObjectSpread";
+	case ROI_Positioning_SourceDelayMode:
+		return "SoundObjectDelayMode";
+	case ROI_Positioning_SourcePosition:
+		return "AbsoluteSoundObjectPositionXYZ";
+	case ROI_Positioning_SourcePosition_XY:
+		return "AbsoluteSoundObjectPositionXY";
+	case ROI_Positioning_SourcePosition_X:
+		return "AbsoluteSoundObjectPositionX";
+	case ROI_Positioning_SourcePosition_Y:
+		return "AbsoluteSoundObjectPositionY";
+	case ROI_CoordinateMapping_SourcePosition:
+		return "MappedSoundObjectPositionXYZ";
+	case ROI_CoordinateMapping_SourcePosition_XY:
+		return "MappedSoundObjectPositionXY";
+	case ROI_CoordinateMapping_SourcePosition_X:
+		return "MappedSoundObjectPositionX";
+	case ROI_CoordinateMapping_SourcePosition_Y:
+		return "MappedSoundObjectPositionY";
+	case ROI_MatrixSettings_ReverbRoomId:
+		return "MatrixSettingsReverbRoomId";
+	case ROI_MatrixSettings_ReverbPredelayFactor:
+		return "MatrixSettingsReverbPredelayFactor";
+	case ROI_MatrixSettings_ReverbRearLevel:
+		return "MatrixSettingsReverbRearLevel";
+	case ROI_MatrixInput_ReverbSendGain:
+		return "MatrixInputReverbSendGain";
+	case ROI_ReverbInput_Gain:
+		return "ReverbInputGain";
+	case ROI_ReverbInputProcessing_Mute:
+		return "ReverbInputProcessingMute";
+	case ROI_ReverbInputProcessing_Gain:
+		return "ReverbInputProcessingGain";
+	case ROI_ReverbInputProcessing_LevelMeter:
+		return "ReverbInputProcessingLevelMeter";
+	case ROI_ReverbInputProcessing_EqEnable:
+		return "ReverbInputProcessingEqEnable";
+	case ROI_Device_Clear:
+		return "DeviceClear";
+	case ROI_Scene_Previous:
+		return "ScenePrevious";
+	case ROI_Scene_Next:
+		return "SceneNext";
+	case ROI_Scene_Recall:
+		return "SceneRecall";
+	case ROI_Scene_SceneIndex:
+		return "SceneSceneIndex";
+	case ROI_Scene_SceneName:
+		return "SceneSceneName";
+	case ROI_Scene_SceneComment:
+		return "SceneSceneComment";
+	case ROI_RemoteProtocolBridge_SoundObjectSelect:
+		return "RPBSoundObjectSelect";
+	case ROI_RemoteProtocolBridge_UIElementIndexSelect:
+		return "RPBUIElementSelect";
+	case ROI_RemoteProtocolBridge_GetAllKnownValues:
+		return "RPBgetallknownvalues";
+	case ROI_RemoteProtocolBridge_SoundObjectGroupSelect:
+		return "RPBSOSelectionSelect";
+	case ROI_RemoteProtocolBridge_MatrixInputGroupSelect:
+		return "RPBMISelectionSelect";
+	case ROI_RemoteProtocolBridge_MatrixOutputGroupSelect:
+		return "RPBMOSelectionSelect";
+	case ROI_Invalid:
+		return "INVALID";
+	default:
+		jassertfalse;
+		return "";
+	}
 }
 
 /**

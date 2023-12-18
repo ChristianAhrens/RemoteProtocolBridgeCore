@@ -52,7 +52,7 @@ bool RemapOSCProtocolProcessor::setStateXml(XmlElement* stateXml)
 				for (int i = ROI_Invalid + 1; i < ROI_BridgingMAX; ++i)
 				{
 					auto roid = static_cast<RemoteObjectIdentifier>(i);
-					if (oscRemappingXmlElement->getTagName() == ProcessingEngineConfig::GetObjectDescription(roid).removeCharacters(" "))
+					if (oscRemappingXmlElement->getTagName() == ProcessingEngineConfig::GetObjectTagName(roid))
 					{
 						auto oscRemappingTextElement = oscRemappingXmlElement->getFirstChildElement();
 						if (oscRemappingTextElement && oscRemappingTextElement->isTextElement())

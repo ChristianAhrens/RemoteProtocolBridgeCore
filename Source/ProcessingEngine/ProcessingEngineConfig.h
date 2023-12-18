@@ -256,8 +256,9 @@ public:
 	static String				ObjectHandlingModeToString(ObjectHandlingMode ohm);
 	static ObjectHandlingMode	ObjectHandlingModeFromString(String mode);
 
-	static String GetObjectDescription(RemoteObjectIdentifier roi);
-	static String GetObjectShortDescription(RemoteObjectIdentifier roi);
+	static String GetObjectTagName(RemoteObjectIdentifier Id);
+	static String GetObjectDescription(RemoteObjectIdentifier Id);
+	static String GetObjectShortDescription(RemoteObjectIdentifier Id);
 	static bool IsChannelAddressingObject(RemoteObjectIdentifier objectId);
 	static bool IsRecordAddressingObject(RemoteObjectIdentifier objectId);
     static bool IsKeepaliveObject(RemoteObjectIdentifier objectId);

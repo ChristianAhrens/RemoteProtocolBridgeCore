@@ -521,7 +521,7 @@ bool MIDIProtocolProcessor::setStateXml(XmlElement* stateXml)
 		// read all available midi assignment mappings from xml
 		for (auto const& roi : m_supportedRemoteObjects)
 		{
-			auto assiMapXmlElement = stateXml->getChildByName(ProcessingEngineConfig::GetObjectDescription(roi).removeCharacters(" "));
+			auto assiMapXmlElement = stateXml->getChildByName(ProcessingEngineConfig::GetObjectTagName(roi));
 			if (assiMapXmlElement)
 			{
 				if (assiMapXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::MULTIVALUE)) == 1)
