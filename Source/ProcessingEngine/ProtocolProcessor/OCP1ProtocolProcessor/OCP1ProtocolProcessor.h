@@ -55,6 +55,7 @@ public:
 	bool Stop() override;
 
 	//==============================================================================
+	bool PreparePositionMessageData(const RemoteObject& targetObj, RemoteObjectMessageData& msgDataToSet);
 	bool SendRemoteObjectMessage(const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const int externalId = -1) override;
 
 	//==============================================================================
@@ -112,4 +113,41 @@ private:
 	//==============================================================================
 	std::map<RemoteObjectIdentifier, std::map<std::pair<RecordId, ChannelId>, NanoOcp1::Ocp1CommandDefinition>>	m_ROIsToDefsMap;
 
+	//==============================================================================
+	// Helpers
+	
+	/**
+	 *  @brief Helper to check the msgData against parameter count and payload size
+	 *  @tparam		T			Template class (int | float | char)
+	 *  @param[in]	paramCount	Amount of expected parameters within msgData
+	 *  @param[in]	msgData		The message data to check
+	 *  @returns				True if the message data has expected parameter count and size
+	 */
+	template <class T>
+	bool CheckMessagePayload(const uint8_t paramCount, const RemoteObjectMessageData& msgData)
+	{
+		return (msgData._valCount != paramCount && msgData._payloadSize != paramCount * sizeof(T));
+	}
+
+	/**
+	 *  @brief Helper to check the msgData for 1 parameter with payload matching type and convert the data
+	 *  @note Use this only for simple types
+	 *  @tparam		T		Template class (int | float | char)
+	 *  @param[in]	msgData	The message data to check
+	 *  @param[out]	value	The parsed msgData as juce::var
+	 *  @returns			True if the message data exactly 1 parameter matching the template class size
+	 */
+	template <class T>
+	bool CheckAndParseMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value)
+	{
+		if (CheckMessagePayload<T>(1, msgData))
+			return false;
+		value = juce::var(*static_cast<T*>(msgData._payload));
+		return true;
+	}
+
+	bool CheckAndParseStringMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value);
+	bool CheckAndParseMuteMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value);
+	bool ParsePositionMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value, NanoOcp1::Ocp1CommandDefinition* objDef);
+	bool ParsePositionAndRotationMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value, NanoOcp1::Ocp1CommandDefinition* objDef);
 };
