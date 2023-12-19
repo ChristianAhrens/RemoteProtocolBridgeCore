@@ -69,6 +69,7 @@ private:
 
 	//==============================================================================
 	bool ocp1MessageReceived(const juce::MemoryBlock& data);
+	bool GetObjectDefinition(const RemoteObjectIdentifier& roi, const ChannelId& channel, const RecordId& record, NanoOcp1::Ocp1CommandDefinition* objDef);
 	bool CreateObjectSubscriptions();
 	bool DeleteObjectSubscriptions();
 	bool QueryObjectValues();
