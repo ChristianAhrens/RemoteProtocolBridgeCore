@@ -1557,7 +1557,7 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
     remObjMsgData._addrVal = RemoteObjectAddressing(objAddr.second, objAddr.first);
 
     auto objectsDataToForward = std::map<RemoteObjectIdentifier, RemoteObjectMessageData>();
-
+    
     int newIntValue[3];
     float newFloatValue[6];
     juce::String newStringValue;
@@ -1625,10 +1625,10 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
             objectsDataToForward[ROI_Positioning_SourcePosition_Y] = RemoteObjectMessageData(remObjMsgData._addrVal, ROVT_FLOAT, 1, &newFloatValue, sizeof(float));
         }
         break;
-    case ROI_Positioning_SourceDelayMode:
-    case ROI_MatrixSettings_ReverbRoomId:
+    // OcaInt32Sensor / OcaInt32Actuator
+    case ROI_Status_AudioNetworkSampleStatus:
         {
-            *newIntValue = NanoOcp1::DataToUint16(msgObj->GetParameterData());  // off=0, tight=1, full=2
+            *newIntValue = NanoOcp1::DataToInt32(msgObj->GetParameterData());
 
             remObjMsgData._payloadSize = sizeof(int);
             remObjMsgData._valCount = 1;
@@ -1638,13 +1638,44 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
             objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
         }
         break;
+    // OcaBoolean
+    case ROI_Error_GnrlErr:
+    // OcaPolarity
+    case ROI_MatrixInput_Polarity:
+    case ROI_MatrixOutput_Polarity:
+        {
+            *newIntValue = NanoOcp1::DataToUint8(msgObj->GetParameterData());
+
+            remObjMsgData._payloadSize = sizeof(int);
+            remObjMsgData._valCount = 1;
+            remObjMsgData._valType = ROVT_INT;
+            remObjMsgData._payload = &newIntValue;
+
+            objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
+        }
+        break;
+    // OcaSwitch
+    case ROI_CoordinateMappingSettings_Type:
     case ROI_CoordinateMappingSettings_Flip:
         {
-            *newIntValue = NanoOcp1::DataToUint16(msgObj->GetParameterData());  // off=0, tight=1, full=2
-
+            // CoordinateMappingSettings address mappingarea, RPBC expect this value as channel - OCP1 holds it as record
             remObjMsgData._addrVal = RemoteObjectAddressing(
                 static_cast<ChannelId>(objAddr.first), 
-                static_cast<RecordId>(objAddr.second)); // CoordinateMappingSettings address mappingarea, RPBC expect this value as channel - OCP1 holds it as record
+                static_cast<RecordId>(objAddr.second));
+        }
+        [[fallthrough]]; // intentional fallthrough
+    case ROI_MatrixInput_DelayEnable:
+    case ROI_MatrixInput_EqEnable:
+    case ROI_MatrixNode_Enable:
+    case ROI_MatrixNode_DelayEnable:
+    case ROI_MatrixOutput_DelayEnable:
+    case ROI_MatrixOutput_EqEnable:
+    case ROI_Positioning_SourceDelayMode:
+    case ROI_MatrixSettings_ReverbRoomId:
+    case ROI_ReverbInputProcessing_EqEnable:
+        {
+            *newIntValue = NanoOcp1::DataToUint16(msgObj->GetParameterData());
+
             remObjMsgData._payloadSize = sizeof(int);
             remObjMsgData._valCount = 1;
             remObjMsgData._valType = ROVT_INT;
@@ -1653,8 +1684,11 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
             objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
         }
         break;
+    // OcaMute
     case ROI_MatrixInput_Mute:
     case ROI_MatrixOutput_Mute:
+    case ROI_ReverbInputProcessing_Mute:
+    case ROI_SoundObjectRouting_Mute:
         {
             auto ocaMuteValue = NanoOcp1::DataToUint8(msgObj->GetParameterData());
 
@@ -1678,15 +1712,26 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
             objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
         }
         break;
+    // OcaFloat32Sensor / OcaFloat32Actuator
     case ROI_Positioning_SourceSpread:
     case ROI_MatrixInput_ReverbSendGain:
     case ROI_MatrixInput_Gain:
+    case ROI_MatrixInput_Delay:
     case ROI_MatrixInput_LevelMeterPreMute:
+    case ROI_MatrixNode_Gain:
+    case ROI_MatrixNode_Delay:
     case ROI_MatrixOutput_Gain:
+    case ROI_MatrixOutput_Delay:
     case ROI_MatrixOutput_LevelMeterPreMute:
     case ROI_MatrixOutput_LevelMeterPostMute:
     case ROI_MatrixSettings_ReverbPredelayFactor:
     case ROI_MatrixSettings_ReverbRearLevel:
+    case ROI_FunctionGroup_Delay:
+    case ROI_FunctionGroup_SpreadFactor:
+    case ROI_ReverbInput_Gain:
+    case ROI_ReverbInputProcessing_Gain:
+    case ROI_ReverbInputProcessing_LevelMeter:
+    case ROI_SoundObjectRouting_Gain:
         {
             *newFloatValue = NanoOcp1::DataToFloat(msgObj->GetParameterData());
 
@@ -1698,12 +1743,24 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
             objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
         }
         break;
+    // OcaStringSensor / OcaStringActuator
+    case ROI_CoordinateMappingSettings_Name:
+        {
+            // CoordinateMappingSettings address mappingarea, RPBC expect this value as channel - OCP1 holds it as record
+            remObjMsgData._addrVal = RemoteObjectAddressing(
+                static_cast<ChannelId>(objAddr.first),
+                static_cast<RecordId>(objAddr.second)); 
+        }
+        [[fallthrough]]; // intentional fallthrough
     case ROI_Settings_DeviceName:
+    case ROI_Status_StatusText:
+    case ROI_Error_ErrorText:
     case ROI_MatrixInput_ChannelName:
     case ROI_MatrixOutput_ChannelName:
     case ROI_Scene_SceneIndex:
     case ROI_Scene_SceneName:
     case ROI_Scene_SceneComment:
+    case ROI_FunctionGroup_Name:
         {
             newStringValue = NanoOcp1::DataToString(msgObj->GetParameterData());
 
@@ -1715,21 +1772,7 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
             objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
         }
         break;
-    case ROI_CoordinateMappingSettings_Name:
-        {
-            newStringValue = NanoOcp1::DataToString(msgObj->GetParameterData());
-
-            remObjMsgData._addrVal = RemoteObjectAddressing(
-                static_cast<ChannelId>(objAddr.first),
-                static_cast<RecordId>(objAddr.second)); // CoordinateMappingSettings address mappingarea, RPBC expect this value as channel - OCP1 holds it as record
-            remObjMsgData._payloadSize = static_cast<std::uint32_t>(newStringValue.length() * sizeof(char));
-            remObjMsgData._valCount = static_cast<std::uint16_t>(newStringValue.length());
-            remObjMsgData._valType = ROVT_STRING;
-            remObjMsgData._payload = newStringValue.getCharPointer().getAddress();
-
-            objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
-        }
-        break;
+    // dbOcaPositionAgentDeprecated
     case ROI_CoordinateMappingSettings_P1real:
     case ROI_CoordinateMappingSettings_P2real:
     case ROI_CoordinateMappingSettings_P3real:
