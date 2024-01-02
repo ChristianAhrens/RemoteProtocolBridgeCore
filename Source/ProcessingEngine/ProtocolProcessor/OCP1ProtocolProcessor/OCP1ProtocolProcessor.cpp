@@ -986,86 +986,93 @@ bool OCP1ProtocolProcessor::ocp1MessageReceived(const juce::MemoryBlock& data)
  * @param[in]	roi		The RemoteObjectIdentifier to resolve into object definition
  * @param[in]	record	The Record for the object definition
  * @param[in]	channel	The Channel for the object definition
- * @param[out]	objDef	Pointer to the object definition to be retured
+ * @param[out]	objDef	Pointer to the object definition to be retured or nullptr
  * @returns				True if the RemoteObjectIdentifier was resolved to a Ocp1CommandDefinition
  */
-bool OCP1ProtocolProcessor::GetObjectDefinition(const RemoteObjectIdentifier& roi, const ChannelId& channel, const RecordId& record, NanoOcp1::Ocp1CommandDefinition* objDef)
+bool OCP1ProtocolProcessor::GetObjectDefinition(const RemoteObjectIdentifier& roi, const ChannelId& channel, const RecordId& record, NanoOcp1::Ocp1CommandDefinition** objDef)
 {
+    // reset the objDef
+    if (nullptr != objDef)
+    {
+        delete *objDef;
+        *objDef = nullptr;
+    }
+
     switch (roi)
     {
     case ROI_Settings_DeviceName:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_Settings_DeviceName();
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Settings_DeviceName();
         }
         break;
     case ROI_Status_StatusText:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_Status_StatusText();
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Status_StatusText();
         }
         break;
     case ROI_Status_AudioNetworkSampleStatus:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_Status_AudioNetworkSampleStatus();
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Status_AudioNetworkSampleStatus();
         }
         break;
     case ROI_Error_GnrlErr:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_Error_GnrlErr();
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Error_GnrlErr();
         }
         break;
     case ROI_Error_ErrorText:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_Error_ErrorText();
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Error_ErrorText();
         }
         break;
     case ROI_CoordinateMappingSettings_Name:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Name(record);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Name(record);
         }
         break;
     case ROI_CoordinateMappingSettings_Type:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Type(record);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Type(record);
         }
         break;
     case ROI_CoordinateMappingSettings_Flip:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Flip(record);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Flip(record);
         }
         break;
     case ROI_CoordinateMappingSettings_P1real:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P1_real(record);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P1_real(record);
         }
         break;
     case ROI_CoordinateMappingSettings_P2real:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P2_real(record);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P2_real(record);
         }
         break;
     case ROI_CoordinateMappingSettings_P3real:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P3_real(record);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P3_real(record);
         }
         break;
     case ROI_CoordinateMappingSettings_P4real:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P4_real(record);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P4_real(record);
         }
         break;
     case ROI_CoordinateMappingSettings_P1virtual:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P1_virtual(record);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P1_virtual(record);
         }
         break;
     case ROI_CoordinateMappingSettings_P3virtual:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P3_virtual(record);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P3_virtual(record);
         }
         break;
     case ROI_Positioning_SourcePosition:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
         }
         break;
     case ROI_Positioning_SourcePosition_XY:
@@ -1073,12 +1080,12 @@ bool OCP1ProtocolProcessor::GetObjectDefinition(const RemoteObjectIdentifier& ro
     case ROI_Positioning_SourcePosition_Y:
         {
             DBG(juce::String(__FUNCTION__) + " skipping ROI_Positioning_SourcePosition X Y XY");
-            return true;
+            return false;
         }
         break;
     case ROI_CoordinateMapping_SourcePosition:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
         }
         break;
     case ROI_CoordinateMapping_SourcePosition_XY:
@@ -1086,229 +1093,225 @@ bool OCP1ProtocolProcessor::GetObjectDefinition(const RemoteObjectIdentifier& ro
     case ROI_CoordinateMapping_SourcePosition_Y:
         {
             DBG(juce::String(__FUNCTION__) + " skipping ROI_CoordinateMapping_SourcePosition X Y XY");
-            return true;
+            return false;
         }
         break;
     case ROI_Positioning_SourceSpread:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Spread(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Spread(channel);
         }
         break;
     case ROI_Positioning_SourceDelayMode:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(channel);
         }
         break;
     case ROI_Positioning_SpeakerPosition:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Speaker_Position(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Speaker_Position(channel);
         }
         break;
     case ROI_FunctionGroup_Name:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_Name(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_Name(channel);
         }
         break;
     case ROI_FunctionGroup_Delay:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_Delay(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_Delay(channel);
         }
         break;
     case ROI_FunctionGroup_SpreadFactor:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_SpreadFactor(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_SpreadFactor(channel);
         }
         break;
     case ROI_MatrixInput_Mute:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Mute(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Mute(channel);
         }
         break;
     case ROI_MatrixInput_Gain:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Gain(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Gain(channel);
         }
         break;
     case ROI_MatrixInput_Delay:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Delay(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Delay(channel);
         }
         break;
     case ROI_MatrixInput_DelayEnable:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_DelayEnable(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_DelayEnable(channel);
         }
         break;
     case ROI_MatrixInput_EqEnable:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_EqEnable(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_EqEnable(channel);
         }
         break;
     case ROI_MatrixInput_Polarity:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Polarity(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Polarity(channel);
         }
         break;
     case ROI_MatrixInput_ChannelName:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ChannelName(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ChannelName(channel);
         }
         break;
     case ROI_MatrixInput_LevelMeterPreMute:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_LevelMeterPreMute(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_LevelMeterPreMute(channel);
         }
         break;
     case ROI_MatrixInput_LevelMeterPostMute:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_LevelMeterPostMute(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_LevelMeterPostMute(channel);
         }
         break;
     case ROI_MatrixInput_ReverbSendGain:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ReverbSendGain(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ReverbSendGain(channel);
         }
         break;
     case ROI_MatrixNode_Enable:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Enable(record, channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Enable(record, channel);
         }
         break;
     case ROI_MatrixNode_Gain:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Gain(record, channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Gain(record, channel);
         }
         break;
     case ROI_MatrixNode_Delay:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Delay(record, channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Delay(record, channel);
         }
         break;
     case ROI_MatrixNode_DelayEnable:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_DelayEnable(record, channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_DelayEnable(record, channel);
         }
         break;
     case ROI_MatrixOutput_Mute:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Mute(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Mute(channel);
         }
         break;
     case ROI_MatrixOutput_Gain:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Gain(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Gain(channel);
         }
         break;
     case ROI_MatrixOutput_Delay:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Delay(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Delay(channel);
         }
         break;
     case ROI_MatrixOutput_DelayEnable:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_DelayEnable(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_DelayEnable(channel);
         }
         break;
     case ROI_MatrixOutput_EqEnable:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_EqEnable(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_EqEnable(channel);
         }
         break;
     case ROI_MatrixOutput_Polarity:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Polarity(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Polarity(channel);
         }
         break;
     case ROI_MatrixOutput_ChannelName:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_ChannelName(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_ChannelName(channel);
         }
         break;
     case ROI_MatrixOutput_LevelMeterPreMute:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_LevelMeterPreMute(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_LevelMeterPreMute(channel);
         }
         break;
     case ROI_MatrixOutput_LevelMeterPostMute:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_LevelMeterPostMute(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_LevelMeterPostMute(channel);
         }
         break;
     case ROI_MatrixSettings_ReverbRoomId:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixSettings_ReverbRoomId();
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixSettings_ReverbRoomId();
         }
         break;
     case ROI_MatrixSettings_ReverbPredelayFactor:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixSettings_ReverbPredelayFactor();
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixSettings_ReverbPredelayFactor();
         }
         break;
     case ROI_MatrixSettings_ReverbRearLevel:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixSettings_ReverbRearLevel();
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixSettings_ReverbRearLevel();
         }
         break;
     case ROI_ReverbInput_Gain:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_ReverbInput_Gain(record, channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_ReverbInput_Gain(record, channel);
         }
         break;
     case ROI_ReverbInputProcessing_Mute:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_Mute(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_Mute(channel);
         }
         break;
     case ROI_ReverbInputProcessing_Gain:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_Gain(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_Gain(channel);
         }
         break;
     case ROI_ReverbInputProcessing_EqEnable:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_EqEnable(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_EqEnable(channel);
         }
         break;
     case ROI_ReverbInputProcessing_LevelMeter:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_LevelMeter(channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_LevelMeter(channel);
         }
         break;
     case ROI_Scene_SceneIndex:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_Scene_SceneIndex();
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Scene_SceneIndex();
         }
         break;
     case ROI_Scene_SceneName:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_Scene_SceneName();
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Scene_SceneName();
         }
         break;
     case ROI_Scene_SceneComment:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_Scene_SceneComment();
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Scene_SceneComment();
         }
         break;
     case ROI_SoundObjectRouting_Mute:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_SoundObjectRouting_Mute(record, channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_SoundObjectRouting_Mute(record, channel);
         }
         break;
     case ROI_SoundObjectRouting_Gain:
         {
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_SoundObjectRouting_Gain(record, channel);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_SoundObjectRouting_Gain(record, channel);
         }
         break;
     default:
         DBG(juce::String(__FUNCTION__) << " " << ProcessingEngineConfig::GetObjectDescription(roi) << " -> not implmented");
     }
 
-    // Sanity checks
-    jassert(objDef != nullptr); // Missing implementation!
-    if (objDef == nullptr)
-        return false;
-
-    return true;
+    jassert(*objDef != nullptr); // Missing implementation!
+    return (*objDef != nullptr);
 }
 
 /**
@@ -1331,7 +1334,7 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
         NanoOcp1::Ocp1CommandDefinition* objdef = nullptr;
 
         // Get the object definition
-        if (false == GetObjectDefinition(activeObj._Id, channel, record, objdef))
+        if (false == GetObjectDefinition(activeObj._Id, channel, record, &objdef))
             continue;
 
         // Ensure automatic cleanup.
@@ -1395,7 +1398,7 @@ bool OCP1ProtocolProcessor::QueryObjectValue(const RemoteObjectIdentifier roi, c
     auto handle = std::uint32_t(0);
 
     // Get the object definition
-    if (false == GetObjectDefinition(roi, channel, record, objdef))
+    if (false == GetObjectDefinition(roi, channel, record, &objdef))
         return false;
 
     // Ensure automatic cleanup.
