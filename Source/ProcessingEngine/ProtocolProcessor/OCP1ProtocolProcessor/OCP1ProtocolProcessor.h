@@ -126,7 +126,7 @@ private:
 	template <class T>
 	bool CheckMessagePayload(const uint8_t paramCount, const RemoteObjectMessageData& msgData)
 	{
-		return (msgData._valCount != paramCount && msgData._payloadSize != paramCount * sizeof(T));
+		return (msgData._valCount == paramCount && msgData._payloadSize == paramCount * sizeof(T));
 	}
 
 	/**
@@ -140,7 +140,7 @@ private:
 	template <class T>
 	bool CheckAndParseMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value)
 	{
-		if (CheckMessagePayload<T>(1, msgData))
+		if (!CheckMessagePayload<T>(1, msgData))
 			return false;
 		value = juce::var(*static_cast<T*>(msgData._payload));
 		return true;
@@ -148,6 +148,7 @@ private:
 
 	bool CheckAndParseStringMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value);
 	bool CheckAndParseMuteMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value);
+	bool CheckAndParsePolarityMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value);
 	bool ParsePositionMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value, NanoOcp1::Ocp1CommandDefinition* objDef);
 	bool ParsePositionAndRotationMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value, NanoOcp1::Ocp1CommandDefinition* objDef);
 };

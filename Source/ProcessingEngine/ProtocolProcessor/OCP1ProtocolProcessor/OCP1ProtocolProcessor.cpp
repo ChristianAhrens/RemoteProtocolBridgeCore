@@ -213,7 +213,7 @@ bool OCP1ProtocolProcessor::PreparePositionMessageData(const RemoteObject& targe
 
     // get the xyz data from cache to insert the new x data and send the xyz out
     msgDataToSet = GetValueCache().GetValue(targetObj);
-    return (msgDataToSet._valCount != 3 || msgDataToSet._payloadSize != 3 * sizeof(float));
+    return (msgDataToSet._valCount == 3 && msgDataToSet._payloadSize == 3 * sizeof(float));
 }
 
 /**
@@ -250,6 +250,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
     NanoOcp1::Ocp1CommandDefinition* objDef = nullptr;
 
     auto targetObj = RemoteObject(roi, RemoteObjectAddressing(channel, record));
+    RemoteObjectMessageData msgDataToSet; // helper for coordinate data conversion
 
     switch (roi)
     {
@@ -354,7 +355,6 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
 
             // override the targetObject
             targetObj = RemoteObject(ROI_CoordinateMapping_SourcePosition, RemoteObjectAddressing(channel, record));
-            RemoteObjectMessageData msgDataToSet;
             if(!PreparePositionMessageData(targetObj, msgDataToSet))
                 break;
 
@@ -373,7 +373,6 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
 
             // override the targetObject
             targetObj = RemoteObject(ROI_CoordinateMapping_SourcePosition, RemoteObjectAddressing(channel, record));
-            RemoteObjectMessageData msgDataToSet;
             if(!PreparePositionMessageData(targetObj, msgDataToSet))
                 break;
 
@@ -391,7 +390,6 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
 
             // override the targetObject
             targetObj = RemoteObject(ROI_CoordinateMapping_SourcePosition, RemoteObjectAddressing(channel, record));
-            RemoteObjectMessageData msgDataToSet;
             if(!PreparePositionMessageData(targetObj, msgDataToSet))
                 break;
 
@@ -417,7 +415,6 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
 
             // override the targetObject
             targetObj = RemoteObject(ROI_Positioning_SourcePosition, RemoteObjectAddressing(channel, record));
-            RemoteObjectMessageData msgDataToSet;
             if(!PreparePositionMessageData(targetObj, msgDataToSet))
                 break;
 
@@ -425,7 +422,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
             reinterpret_cast<float*>(msgDataToSet._payload)[0] = reinterpret_cast<float*>(msgData._payload)[0];
             reinterpret_cast<float*>(msgDataToSet._payload)[1] = reinterpret_cast<float*>(msgData._payload)[1];
 
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
+            objDef = new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
             ParsePositionMessagePayload(msgDataToSet, objValue, objDef);
         }
         break;
@@ -436,14 +433,13 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
 
             // override the targetObject
             targetObj = RemoteObject(ROI_Positioning_SourcePosition, RemoteObjectAddressing(channel, record));
-            RemoteObjectMessageData msgDataToSet;
             if(!PreparePositionMessageData(targetObj, msgDataToSet))
                 break;
 
             // insert the new x data
             reinterpret_cast<float*>(msgDataToSet._payload)[0] = reinterpret_cast<float*>(msgData._payload)[0];
 
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
+            objDef = new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
             ParsePositionMessagePayload(msgDataToSet, objValue, objDef);
         }
         break;
@@ -454,14 +450,13 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
 
             // override the targetObject
             targetObj = RemoteObject(ROI_Positioning_SourcePosition, RemoteObjectAddressing(channel, record));
-            RemoteObjectMessageData msgDataToSet;
             if(!PreparePositionMessageData(targetObj, msgDataToSet))
                 break;
 
             // insert the new y data
-            reinterpret_cast<float*>(msgDataToSet._payload)[1] = reinterpret_cast<float*>(msgData._payload)[1];
+            reinterpret_cast<float*>(msgDataToSet._payload)[1] = reinterpret_cast<float*>(msgData._payload)[0];
 
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(record, channel);
+            objDef = new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
             ParsePositionMessagePayload(msgDataToSet, objValue, objDef);
         }
         break;
@@ -553,7 +548,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
         break;
     case ROI_MatrixInput_Polarity:
         {
-            if(!CheckAndParseMessagePayload<int>(msgData, objValue))
+            if(!CheckAndParsePolarityMessagePayload(msgData, objValue))
                 break;
             objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Polarity(channel);
         }
@@ -637,7 +632,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
         break;
     case ROI_MatrixOutput_Polarity:
         {
-            if(!CheckAndParseMessagePayload<int>(msgData, objValue))
+            if(!CheckAndParsePolarityMessagePayload(msgData, objValue))
                 break;
             objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Polarity(channel);
         }
@@ -765,8 +760,8 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
     // Ensure automatic cleanup
     auto objDefPtr = std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(objDef);
 
-    // Set the value to the cache
-    GetValueCache().SetValue(targetObj, msgData);
+    // Set the value to the cache (use the msgDataToSet if it contains data)
+    GetValueCache().SetValue(targetObj, msgDataToSet.isDataEmpty() ? msgData : msgDataToSet);
 
     // Send SetValue command
     bool success = m_nanoOcp->sendData( NanoOcp1::Ocp1CommandResponseRequired( (*objDefPtr.get()).SetValueCommand(objValue), handle).GetMemoryBlock());
@@ -1643,11 +1638,23 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
         break;
     // OcaBoolean
     case ROI_Error_GnrlErr:
+        {
+            *newIntValue = NanoOcp1::DataToUint8(msgObj->GetParameterData());
+
+            remObjMsgData._payloadSize = sizeof(int);
+            remObjMsgData._valCount = 1;
+            remObjMsgData._valType = ROVT_INT;
+            remObjMsgData._payload = &newIntValue;
+
+            objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
+        }
+        break;
     // OcaPolarity
     case ROI_MatrixInput_Polarity:
     case ROI_MatrixOutput_Polarity:
         {
-            *newIntValue = NanoOcp1::DataToUint8(msgObj->GetParameterData());
+            // internal value 0=normal, 1=inverted; OcaPolarity uses 1=normal, 2=inverted
+            *newIntValue = 1 + NanoOcp1::DataToUint8(msgObj->GetParameterData());
 
             remObjMsgData._payloadSize = sizeof(int);
             remObjMsgData._valCount = 1;
@@ -1903,7 +1910,7 @@ const std::vector<RemoteObject> OCP1ProtocolProcessor::GetOcp1SupportedActiveRem
  */
 bool OCP1ProtocolProcessor::CheckAndParseStringMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value)
 {
-    if (!CheckMessagePayload<char>(1, msgData))
+    if (msgData._valCount < 1 || msgData._payloadSize != msgData._valCount * sizeof(char))
         return false;
 
     value = juce::var(juce::String(static_cast<const char*>(msgData._payload), msgData._payloadSize));
@@ -1924,6 +1931,23 @@ bool OCP1ProtocolProcessor::CheckAndParseMuteMessagePayload(const RemoteObjectMe
 
     // internal value 0=unmute, 1=mute; OcaMute uses 2=unmute, 1=mute
     value = juce::var((*static_cast<int*>(msgData._payload) == 1) ? 1 : 2);
+    return true;
+}
+
+/**
+ *  @brief  Helper to check message payload size and parse msgData as polarity state into value
+ *  @note internal value 0=normal, 1=inverted; OcaPolarity uses 1=normal, 2=inverted
+ *  @param[in]  msgData The input message data to check and parse
+ *  @param[out] value   The output int polarity state as juce::var
+ *  @returns            True if the msgData check succeded
+ */
+bool OCP1ProtocolProcessor::CheckAndParsePolarityMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value)
+{
+    if (!CheckMessagePayload<int>(1, msgData))
+        return false;
+
+    // internal value 0=normal, 1=inverted; OcaPolarity uses 1=normal, 2=inverted
+    value = juce::var((*static_cast<int*>(msgData._payload) == 1) ? 2 : 1);
     return true;
 }
 
