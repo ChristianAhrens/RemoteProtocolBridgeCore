@@ -521,6 +521,12 @@ String OSCProtocolProcessor::GetRemoteObjectString(const RemoteObjectIdentifier 
 		return "/dbaudio1/matrixsettings/reverbpredelayfactor";
 	case ROI_MatrixSettings_ReverbRearLevel:
 		return "/dbaudio1/matrixsettings/reverbrearlevel";
+	case ROI_FunctionGroup_Name:
+		return "/dbaudio1/functiongroup/name";
+	case ROI_FunctionGroup_Delay:
+		return "/dbaudio1/functiongroup/delay";
+	case ROI_FunctionGroup_SpreadFactor:
+		return "/dbaudio1/functiongroup/spreadfactor";
 	case ROI_MatrixInput_ReverbSendGain:
 		return "/dbaudio1/matrixinput/reverbsendgain";
 	case ROI_ReverbInput_Gain:
@@ -696,6 +702,8 @@ bool OSCProtocolProcessor::createMessageData(const OSCMessage& messageInput, con
 		case ROI_CoordinateMappingSettings_P1virtual:
 		case ROI_CoordinateMappingSettings_P3virtual:
 		case ROI_Positioning_SpeakerPosition:
+		case ROI_FunctionGroup_SpreadFactor:
+		case ROI_FunctionGroup_Delay:
 		case ROI_SoundObjectRouting_Gain:
 			return createFloatMessageData(messageInput, newMessageData);
 		case ROI_Scene_SceneIndex:
@@ -707,6 +715,7 @@ bool OSCProtocolProcessor::createMessageData(const OSCMessage& messageInput, con
 		case ROI_Scene_SceneName:
 		case ROI_Scene_SceneComment:
 		case ROI_CoordinateMappingSettings_Name:
+		case ROI_FunctionGroup_Name:
 			return createStringMessageData(messageInput, newMessageData);
 		case ROI_Device_Clear:
 		case ROI_Scene_Previous:
