@@ -695,21 +695,29 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
         break;
     case ROI_Scene_Recall:
         {
-            if(!CheckMessagePayload<int>(2, msgData))
-                break;
+            // support either one parameter (major) or two parameters (major minor) for scene index
+            std::uint16_t sceneIndex[2] = { 0, 0 };
+            if (!CheckMessagePayload<int>(1, msgData))
+            {
+                if(!CheckMessagePayload<int>(2, msgData))
+                    break;
+                else
+                {
+                    // index 2 because we read uint16 instead of int(32) within the payload
+                    sceneIndex[1] = static_cast<std::uint16_t*>(msgData._payload)[2];
+                }
+            }
+            sceneIndex[0] = static_cast<std::uint16_t*>(msgData._payload)[0];
 
             // override the targetObject to redirect to SceneIndex
-            GetValueCache().SetValue(RemoteObject(ROI_Scene_SceneIndex, RemoteObjectAddressing(channel, record)), msgData);
-
-            // Get values
-            auto sceneIndexMajor = static_cast<std::uint16_t*>(msgData._payload)[0];
-            auto sceneIndexMinor = static_cast<std::uint16_t*>(msgData._payload)[1];
+            targetObj = RemoteObject(ROI_Scene_SceneIndex, RemoteObjectAddressing(channel, record));
+            GetValueCache().SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_INT, 2, &sceneIndex, 2 * sizeof(int)));
 
             // Set object definition
             auto sceneAgent = NanoOcp1::DS100::dbOcaObjectDef_SceneAgent();
 
             // Very special handling in contrast to the other ROIs: use "ApplyCommand" on SceneAgent instead of "SetValueCommand"
-            bool success = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(sceneAgent.ApplyCommand(sceneIndexMajor, sceneIndexMinor), handle).GetMemoryBlock());
+            bool success = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(sceneAgent.ApplyCommand(sceneIndex[0], sceneIndex[1]), handle).GetMemoryBlock());
             AddPendingSetValueHandle(handle, sceneAgent.m_targetOno, externalId);
             return success;
         }
@@ -719,7 +727,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
             auto sceneAgent = NanoOcp1::DS100::dbOcaObjectDef_SceneAgent();
             // Very special handling in contrast to the other ROIs: use "NextCommand" on SceneAgent instead of "SetValueCommand"
             bool success = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(sceneAgent.NextCommand(), handle).GetMemoryBlock());
-            AddPendingSetValueHandle(handle, sceneAgent.m_targetOno, externalId); 
+            AddPendingSetValueHandle(handle, sceneAgent.m_targetOno, externalId);
             return success;
         }
         break;
@@ -1286,6 +1294,9 @@ bool OCP1ProtocolProcessor::GetObjectDefinition(const RemoteObjectIdentifier& ro
             *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Scene_SceneName();
         }
         break;
+    case ROI_Scene_Next:
+    case ROI_Scene_Previous:
+        return false;
     case ROI_Scene_SceneComment:
         {
             *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Scene_SceneComment();

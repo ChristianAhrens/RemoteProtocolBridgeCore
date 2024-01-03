@@ -837,6 +837,7 @@ bool OSCProtocolProcessor::createMessageData(const OSCMessage& messageInput, con
 		case ROI_Device_Clear:
 		case ROI_Scene_Previous:
 		case ROI_Scene_Next:
+			return true;
 		case ROI_RemoteProtocolBridge_GetAllKnownValues:
 			break;
 		default:
