@@ -275,7 +275,6 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
     case ROI_FunctionGroup_Name:
     case ROI_Positioning_SpeakerPosition:
     case ROI_CoordinateMappingSettings_Name:
-    case ROI_CoordinateMappingSettings_Type:
     case ROI_CoordinateMappingSettings_Flip:
     case ROI_CoordinateMappingSettings_P1real:
     case ROI_CoordinateMappingSettings_P2real:
@@ -734,8 +733,7 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
     // definitions with channel
     for (channel = ChannelId(1); channel <= NanoOcp1::DS100::MaxChannelCount; channel++)
     {
-        record = static_cast<RecordId>(0);
-        m_ROIsToDefsMap[ROI_Positioning_SpeakerPosition][std::make_pair(static_cast<RecordId>(INVALID_ADDRESS_VALUE), channel)] = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Speaker_Position(channel);
+        m_ROIsToDefsMap[ROI_Positioning_SpeakerPosition][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Speaker_Position(channel);
         m_ROIsToDefsMap[ROI_Positioning_SourcePosition][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(channel);
         m_ROIsToDefsMap[ROI_Positioning_SourceSpread][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Spread(channel);
         m_ROIsToDefsMap[ROI_Positioning_SourceDelayMode][std::make_pair(record, channel)] = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(channel);
@@ -790,7 +788,6 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
         m_ROIsToDefsMap[ROI_CoordinateMappingSettings_P3virtual][std::make_pair(record, INVALID_ADDRESS_VALUE)] = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P3_virtual(record);
         m_ROIsToDefsMap[ROI_CoordinateMappingSettings_Flip][std::make_pair(record, INVALID_ADDRESS_VALUE)] = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Flip(record);
         m_ROIsToDefsMap[ROI_CoordinateMappingSettings_Name][std::make_pair(record, INVALID_ADDRESS_VALUE)] = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Name(record);
-        m_ROIsToDefsMap[ROI_CoordinateMappingSettings_Type][std::make_pair(record, INVALID_ADDRESS_VALUE)] = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Type(record);
     }
 }
 
@@ -960,47 +957,42 @@ bool OCP1ProtocolProcessor::GetObjectDefinition(const RemoteObjectIdentifier& ro
         break;
     case ROI_CoordinateMappingSettings_Name:
         {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Name(record);
-        }
-        break;
-    case ROI_CoordinateMappingSettings_Type:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Type(record);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Name(channel);
         }
         break;
     case ROI_CoordinateMappingSettings_Flip:
         {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Flip(record);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Flip(channel);
         }
         break;
     case ROI_CoordinateMappingSettings_P1real:
         {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P1_real(record);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P1_real(channel);
         }
         break;
     case ROI_CoordinateMappingSettings_P2real:
         {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P2_real(record);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P2_real(channel);
         }
         break;
     case ROI_CoordinateMappingSettings_P3real:
         {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P3_real(record);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P3_real(channel);
         }
         break;
     case ROI_CoordinateMappingSettings_P4real:
         {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P4_real(record);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P4_real(channel);
         }
         break;
     case ROI_CoordinateMappingSettings_P1virtual:
         {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P1_virtual(record);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P1_virtual(channel);
         }
         break;
     case ROI_CoordinateMappingSettings_P3virtual:
         {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P3_virtual(record);
+            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P3_virtual(channel);
         }
         break;
     case ROI_Positioning_SourcePosition:
@@ -1606,7 +1598,6 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
         }
         break;
     // OcaSwitch
-    case ROI_CoordinateMappingSettings_Type:
     case ROI_CoordinateMappingSettings_Flip:
         {
             // CoordinateMappingSettings address mappingarea, RPBC expect this value as channel - OCP1 holds it as record

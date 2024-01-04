@@ -191,7 +191,6 @@ enum RemoteObjectIdentifier
 	ROI_CoordinateMappingSettings_P3virtual,
 	ROI_CoordinateMappingSettings_Flip,
 	ROI_CoordinateMappingSettings_Name,
-	ROI_CoordinateMappingSettings_Type,
 	ROI_Positioning_SpeakerPosition,			// 6-float loudspeaker position (x, y, z, hor, vert, rot)
 	ROI_SoundObjectRouting_Mute,
 	ROI_SoundObjectRouting_Gain,

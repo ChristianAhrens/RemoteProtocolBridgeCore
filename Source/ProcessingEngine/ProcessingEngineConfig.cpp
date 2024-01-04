@@ -963,8 +963,6 @@ String ProcessingEngineConfig::GetObjectDescription(const RemoteObjectIdentifier
 		return "Mapping Area P1 virt";
 	case ROI_CoordinateMappingSettings_P3virtual:
 		return "Mapping Area P3 virt";
-	case ROI_CoordinateMappingSettings_Type:
-		return "Mapping Area type";
 	case ROI_CoordinateMappingSettings_Flip:
 		return "Mapping Area flip";
 	case ROI_CoordinateMappingSettings_Name:
@@ -1219,7 +1217,6 @@ bool ProcessingEngineConfig::IsChannelAddressingObject(RemoteObjectIdentifier ob
 	case ROI_CoordinateMappingSettings_P3virtual:
 	case ROI_CoordinateMappingSettings_Flip:
 	case ROI_CoordinateMappingSettings_Name:
-	case ROI_CoordinateMappingSettings_Type:
 	case ROI_SoundObjectRouting_Mute:
 	case ROI_SoundObjectRouting_Gain:
 		return true;
