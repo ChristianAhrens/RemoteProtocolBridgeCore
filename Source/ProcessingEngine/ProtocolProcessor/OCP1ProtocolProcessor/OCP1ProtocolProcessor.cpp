@@ -1586,8 +1586,10 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
     case ROI_MatrixInput_Polarity:
     case ROI_MatrixOutput_Polarity:
         {
+            remObjMsgData._addrVal._second = static_cast<RecordId>(INVALID_ADDRESS_VALUE);
+
             // internal value 0=normal, 1=inverted; OcaPolarity uses 1=normal, 2=inverted
-            *newIntValue = 1 + NanoOcp1::DataToUint8(msgObj->GetParameterData());
+            *newIntValue = NanoOcp1::DataToUint8(msgObj->GetParameterData()) - 1;
 
             remObjMsgData._payloadSize = sizeof(int);
             remObjMsgData._valCount = 1;
