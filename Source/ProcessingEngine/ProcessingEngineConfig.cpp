@@ -342,7 +342,7 @@ bool ProcessingEngineConfig::ReadObjects(XmlElement* objectsElement, std::vector
 		for (int i = ROI_Invalid + 1; i < ROI_BridgingMAX; ++i)
 		{
 			auto roi = static_cast<RemoteObjectIdentifier>(i);
-			if (element->getTagName() == GetObjectDescription(roi).removeCharacters(" "))
+			if (element->getTagName() == GetObjectTagName(roi))
 			{
 				// the child element of the element is expected to be of type text and contain the object addressings in format ch1,rec1;ch2,rec2;...
 				auto objectListTextElement = element->getFirstChildElement();
@@ -439,7 +439,7 @@ bool ProcessingEngineConfig::WriteObjects(XmlElement* objectsElement, const std:
 	{
 		auto roi = static_cast<RemoteObjectIdentifier>(i);
 
-			auto childElementName = GetObjectDescription(roi).removeCharacters(" ");
+			auto childElementName = GetObjectTagName(roi);
 			auto objectElement = objectsElement->getChildByName(childElementName);
 			if (!objectElement)
 			{
@@ -658,14 +658,14 @@ String ProcessingEngineConfig::GetObjectTagName(RemoteObjectIdentifier Id)
 		return "PONG";
 	case ROI_Settings_DeviceName:
 		return "DeviceName";
-	case ROI_Status_StatusText:
-		return "StatusText";
-	case ROI_Status_AudioNetworkSampleStatus:
-		return "AudioNetworkSampleStatus";
 	case ROI_Error_GnrlErr:
 		return "GeneralError";
 	case ROI_Error_ErrorText:
 		return "ErrorText";
+	case ROI_Status_StatusText:
+		return "StatusText";
+	case ROI_Status_AudioNetworkSampleStatus:
+		return "AudioNetworkSampleStatus";
 	case ROI_MatrixInput_Select:
 		return "MatrixInputSelect";
 	case ROI_MatrixInput_Mute:
@@ -782,6 +782,24 @@ String ProcessingEngineConfig::GetObjectTagName(RemoteObjectIdentifier Id)
 		return "RPBMISelectionSelect";
 	case ROI_RemoteProtocolBridge_MatrixOutputGroupSelect:
 		return "RPBMOSelectionSelect";
+	case ROI_CoordinateMappingSettings_P1real:
+		return "MappingAreaP1real";
+	case ROI_CoordinateMappingSettings_P2real:
+		return "MappingAreaP2real";
+	case ROI_CoordinateMappingSettings_P3real:
+		return "MappingAreaP3real";
+	case ROI_CoordinateMappingSettings_P4real:
+		return "MappingAreaP4real";
+	case ROI_CoordinateMappingSettings_P1virtual:
+		return "MappingAreaP1virt";
+	case ROI_CoordinateMappingSettings_P3virtual:
+		return "MappingAreaP3virt";
+	case ROI_CoordinateMappingSettings_Flip:
+		return "MappingAreaFlip";
+	case ROI_CoordinateMappingSettings_Name:
+		return "MappingAreaName";
+	case ROI_Positioning_SpeakerPosition:
+		return "SpeakerPosition";
 	case ROI_SoundObjectRouting_Mute:
 		return "SoundObjectRoutingMute";
 	case ROI_SoundObjectRouting_Gain:
