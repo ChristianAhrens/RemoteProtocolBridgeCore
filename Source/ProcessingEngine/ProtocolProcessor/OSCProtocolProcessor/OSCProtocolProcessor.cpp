@@ -449,6 +449,8 @@ String OSCProtocolProcessor::GetRemoteObjectString(const RemoteObjectIdentifier 
 		return "/dbaudio1/error/errortext";
 	case ROI_Status_StatusText:
 		return "/dbaudio1/status/statustext";
+	case ROI_Status_AudioNetworkSampleStatus:
+		return "/dbaudio1/status/audionetworksamplestatus";
 	case ROI_MatrixInput_Select:
 		return "/dbaudio1/matrixinput/select";
 	case ROI_MatrixInput_Mute:
@@ -645,6 +647,7 @@ bool OSCProtocolProcessor::createMessageData(const OSCMessage& messageInput, con
 {
 	switch (roi)
 	{
+		case ROI_Status_AudioNetworkSampleStatus:
 		case ROI_Error_GnrlErr:
 		case ROI_MatrixInput_Select:
 		case ROI_MatrixInput_Mute:
