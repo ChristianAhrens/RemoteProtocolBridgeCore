@@ -271,81 +271,27 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
             DBG(juce::String(__FUNCTION__) << " " << ProcessingEngineConfig::GetObjectDescription(roi) << " -> is a sensor and cannot be set!");
             return false;
         }
-        break;
+    // Objects that are writable, but writing is not allowed via bridging
+    case ROI_FunctionGroup_Name:
+    case ROI_Positioning_SpeakerPosition:
+    case ROI_CoordinateMappingSettings_Name:
+    case ROI_CoordinateMappingSettings_Type:
+    case ROI_CoordinateMappingSettings_Flip:
+    case ROI_CoordinateMappingSettings_P1real:
+    case ROI_CoordinateMappingSettings_P2real:
+    case ROI_CoordinateMappingSettings_P3real:
+    case ROI_CoordinateMappingSettings_P4real:
+    case ROI_CoordinateMappingSettings_P1virtual:
+    case ROI_CoordinateMappingSettings_P3virtual:
+        {
+            DBG(juce::String(__FUNCTION__) << " " << ProcessingEngineConfig::GetObjectDescription(roi) << " -> is read-only for bridging!");
+            return false;
+        }
     case ROI_Settings_DeviceName:
         {
             if(!CheckAndParseStringMessagePayload(msgData, objValue))
                 break;
             objDef = new NanoOcp1::DS100::dbOcaObjectDef_Settings_DeviceName();
-        }
-        break;
-    case ROI_CoordinateMappingSettings_Name:
-        {
-            if(!CheckAndParseStringMessagePayload(msgData, objValue))
-                break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Name(record);
-        }
-        break;
-    case ROI_CoordinateMappingSettings_Type:
-        {
-            if(!CheckAndParseMessagePayload<int>(msgData, objValue))
-                break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Type(record);
-        }
-        break;
-    case ROI_CoordinateMappingSettings_Flip:
-        {
-            if(!CheckAndParseMessagePayload<int>(msgData, objValue))
-                break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Flip(record);
-        }
-        break;
-    case ROI_CoordinateMappingSettings_P1real:
-        {
-            if(!CheckMessagePayload<float>(3, msgData))
-                break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P1_real(record);
-            ParsePositionMessagePayload(msgData, objValue, objDef);
-        }
-        break;
-    case ROI_CoordinateMappingSettings_P2real:
-        {
-            if(!CheckMessagePayload<float>(3, msgData))
-                break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P2_real(record);
-            ParsePositionMessagePayload(msgData, objValue, objDef);
-        }
-        break;
-    case ROI_CoordinateMappingSettings_P3real:
-        {
-            if(!CheckMessagePayload<float>(3, msgData))
-                break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P3_real(record);
-            ParsePositionMessagePayload(msgData, objValue, objDef);
-        }
-        break;
-    case ROI_CoordinateMappingSettings_P4real:
-        {
-            if(!CheckMessagePayload<float>(3, msgData))
-                break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P4_real(record);
-            ParsePositionMessagePayload(msgData, objValue, objDef);
-        }
-        break;
-    case ROI_CoordinateMappingSettings_P1virtual:
-        {
-            if(!CheckMessagePayload<float>(3, msgData))
-                break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P1_virtual(record);
-            ParsePositionMessagePayload(msgData, objValue, objDef);
-        }
-        break;
-    case ROI_CoordinateMappingSettings_P3virtual:
-        {
-            if(!CheckMessagePayload<float>(3, msgData))
-                break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P3_virtual(record);
-            ParsePositionMessagePayload(msgData, objValue, objDef);
         }
         break;
     case ROI_CoordinateMapping_SourcePosition_XY:
@@ -480,21 +426,6 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
             if(!CheckAndParseMessagePayload<int>(msgData, objValue))
                 break;
             objDef = new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(channel);
-        }
-        break;
-    case ROI_Positioning_SpeakerPosition:
-        {
-            if(!CheckMessagePayload<float>(6, msgData))
-                break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Speaker_Position(channel);
-            ParsePositionAndRotationMessagePayload(msgData, objValue, objDef);
-        }
-        break;
-    case ROI_FunctionGroup_Name:
-        {
-            if(!CheckAndParseStringMessagePayload(msgData, objValue))
-                break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_Name(channel);
         }
         break;
     case ROI_FunctionGroup_Delay:
@@ -756,7 +687,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
         }
         break;
     default:
-        DBG(juce::String(__FUNCTION__) << " " << ProcessingEngineConfig::GetObjectDescription(roi) << " -> not implmented");
+        DBG(juce::String(__FUNCTION__) << " " << ProcessingEngineConfig::GetObjectDescription(roi) << " -> not implemented");
         break;
     }
 
@@ -860,7 +791,6 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
         m_ROIsToDefsMap[ROI_CoordinateMappingSettings_Flip][std::make_pair(record, INVALID_ADDRESS_VALUE)] = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Flip(record);
         m_ROIsToDefsMap[ROI_CoordinateMappingSettings_Name][std::make_pair(record, INVALID_ADDRESS_VALUE)] = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Name(record);
         m_ROIsToDefsMap[ROI_CoordinateMappingSettings_Type][std::make_pair(record, INVALID_ADDRESS_VALUE)] = NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Type(record);
-
     }
 }
 
