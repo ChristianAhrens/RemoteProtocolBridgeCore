@@ -1660,6 +1660,7 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
     case ROI_MatrixInput_Gain:
     case ROI_MatrixInput_Delay:
     case ROI_MatrixInput_LevelMeterPreMute:
+    case ROI_MatrixInput_LevelMeterPostMute:
     case ROI_MatrixNode_Gain:
     case ROI_MatrixNode_Delay:
     case ROI_MatrixOutput_Gain:
