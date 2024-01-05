@@ -47,7 +47,7 @@ static int s_uniqueIdCounter = 0;
 typedef std::uint32_t	NodeId;
 typedef std::uint64_t	ProtocolId;
 typedef std::int32_t	ChannelId;
-typedef std::int8_t		RecordId;
+typedef std::int32_t	RecordId;
 
 /**
 * Generic defines
@@ -221,8 +221,8 @@ enum RemoteObjectValueType
  */
 struct RemoteObjectAddressing
 {
-	ChannelId	_first;	/**< First address definition value. Equivalent to channels in d&b OCA world or SourceId for OSC positioning messages. */
-	RecordId	_second;	/**< Second address definition value. Equivalent to records in d&b OCA world or MappingId for OSC positioning messages. */
+	std::int32_t	_first;		/**< First address definition value. Refers to the last address parameter (if available) of d&b OSC message specification. */
+	std::int32_t	_second;	/**< Second address definition value. Refers to the second to last address parameter (if available) of d&b OSC message specification. */
 
 	/**
 	 * Constructor to initialize with invalid values
@@ -242,10 +242,10 @@ struct RemoteObjectAddressing
 	/**
 	 * Constructor to initialize with parameter values
 	 *
-	 * @param a	The value to set for internal 'first' - SourceId (Channel)
-	 * @param b	The value to set for internal 'second' - MappingId (Record)
+	 * @param a	The value to set for internal 'first' - e.g. SourceId
+	 * @param b	The value to set for internal 'second' - e.g. MappingId
 	 */
-	RemoteObjectAddressing(ChannelId a, RecordId b)
+	RemoteObjectAddressing(std::int32_t a, std::int32_t b)
 	{
 		_first = a;
 		_second = b;
@@ -285,8 +285,8 @@ struct RemoteObjectAddressing
 		if (tokens != 2 || sa.size() != 2)
 			return false;
 
-		_first = ChannelId(sa[0].getIntValue());
-		_second = RecordId(sa[1].getIntValue());
+		_first = std::int32_t(sa[0].getIntValue());
+		_second = std::int32_t(sa[1].getIntValue());
 
 		return true;
 	}
@@ -303,7 +303,7 @@ struct RemoteObjectAddressing
 		if (sa.size() != 2)
 			return RemoteObjectAddressing();
 
-		return RemoteObjectAddressing(ChannelId(sa[0].getIntValue()), RecordId(sa[1].getIntValue()));
+		return RemoteObjectAddressing(std::int32_t(sa[0].getIntValue()), std::int32_t(sa[1].getIntValue()));
 	}
 	/**
 	 * Static helper method to create an list of object instances
@@ -382,7 +382,7 @@ struct RemoteObject
 	 */
 	RemoteObject()
 		: _Id(ROI_Invalid),
-		  _Addr(RemoteObjectAddressing(static_cast<ChannelId>(INVALID_ADDRESS_VALUE), static_cast<RecordId>(INVALID_ADDRESS_VALUE)))
+		  _Addr(RemoteObjectAddressing(static_cast<std::int32_t>(INVALID_ADDRESS_VALUE), static_cast<std::int32_t>(INVALID_ADDRESS_VALUE)))
 	{
 	};
 	/**

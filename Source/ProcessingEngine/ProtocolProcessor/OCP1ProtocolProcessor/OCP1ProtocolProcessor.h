@@ -70,11 +70,11 @@ private:
 
 	//==============================================================================
 	bool ocp1MessageReceived(const juce::MemoryBlock& data);
-	bool GetObjectDefinition(const RemoteObjectIdentifier& roi, const ChannelId& channel, const RecordId& record, NanoOcp1::Ocp1CommandDefinition** objDef);
+	bool GetObjectDefinition(const RemoteObjectIdentifier& roi, const RemoteObjectAddressing& addr, NanoOcp1::Ocp1CommandDefinition** objDef);
 	bool CreateObjectSubscriptions();
 	bool DeleteObjectSubscriptions();
 	bool QueryObjectValues();
-	bool QueryObjectValue(const RemoteObjectIdentifier roi, const ChannelId& channel, const RecordId& record);
+	bool QueryObjectValue(const RemoteObjectIdentifier roi, const RemoteObjectAddressing& addr);
 
 	//==============================================================================
 	const std::vector<RemoteObject> GetOcp1SupportedActiveRemoteObjects();
