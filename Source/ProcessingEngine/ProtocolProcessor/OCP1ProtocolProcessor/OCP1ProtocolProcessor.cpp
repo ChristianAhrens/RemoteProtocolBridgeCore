@@ -247,7 +247,16 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
 
     auto handle = std::uint32_t(0x00);
     juce::var objValue;
-    NanoOcp1::Ocp1CommandDefinition* objDef = nullptr;
+
+    auto objDefOpt = GetObjectDefinition(roi, msgData._addrVal, true);
+
+    // Sanity checks
+    jassert(objDefOpt); // Missing implementation!
+    if (!objDefOpt)
+        return false;
+    auto& objDef = objDefOpt.value();
+    if (!objDef)
+        return false;
 
     auto targetObj = RemoteObject(roi, RemoteObjectAddressing(first, second));
     RemoteObjectMessageData msgDataToSet; // helper for coordinate data conversion
@@ -290,7 +299,6 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
         {
             if(!CheckAndParseStringMessagePayload(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_Settings_DeviceName();
         }
         break;
     case ROI_CoordinateMapping_SourcePosition_XY:
@@ -307,8 +315,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
             reinterpret_cast<float*>(msgDataToSet._payload)[0] = reinterpret_cast<float*>(msgData._payload)[0];
             reinterpret_cast<float*>(msgDataToSet._payload)[1] = reinterpret_cast<float*>(msgData._payload)[1];
 
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(second, first);
-            ParsePositionMessagePayload(msgDataToSet, objValue, objDef);
+            ParsePositionMessagePayload(msgDataToSet, objValue, objDef.get());
         }
         break;
     case ROI_CoordinateMapping_SourcePosition_X:
@@ -324,8 +331,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
             // insert the new x data
             reinterpret_cast<float*>(msgDataToSet._payload)[0] = reinterpret_cast<float*>(msgData._payload)[0];
 
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(second, first);
-            ParsePositionMessagePayload(msgDataToSet, objValue, objDef);
+            ParsePositionMessagePayload(msgDataToSet, objValue, objDef.get());
         }
         break;
     case ROI_CoordinateMapping_SourcePosition_Y:
@@ -341,16 +347,14 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
             // insert the new x data
             reinterpret_cast<float*>(msgDataToSet._payload)[1] = reinterpret_cast<float*>(msgData._payload)[0];
 
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(second, first);
-            ParsePositionMessagePayload(msgDataToSet, objValue, objDef);
+            ParsePositionMessagePayload(msgDataToSet, objValue, objDef.get());
         }
         break;
     case ROI_CoordinateMapping_SourcePosition:
         {
             if(!CheckMessagePayload<float>(3, msgData))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(second, first);
-            ParsePositionMessagePayload(msgData, objValue, objDef);
+            ParsePositionMessagePayload(msgData, objValue, objDef.get());
         }
         break;
     case ROI_Positioning_SourcePosition_XY:
@@ -367,8 +371,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
             reinterpret_cast<float*>(msgDataToSet._payload)[0] = reinterpret_cast<float*>(msgData._payload)[0];
             reinterpret_cast<float*>(msgDataToSet._payload)[1] = reinterpret_cast<float*>(msgData._payload)[1];
 
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(first);
-            ParsePositionMessagePayload(msgDataToSet, objValue, objDef);
+            ParsePositionMessagePayload(msgDataToSet, objValue, objDef.get());
         }
         break;
     case ROI_Positioning_SourcePosition_X:
@@ -384,8 +387,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
             // insert the new x data
             reinterpret_cast<float*>(msgDataToSet._payload)[0] = reinterpret_cast<float*>(msgData._payload)[0];
 
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(first);
-            ParsePositionMessagePayload(msgDataToSet, objValue, objDef);
+            ParsePositionMessagePayload(msgDataToSet, objValue, objDef.get());
         }
         break;
     case ROI_Positioning_SourcePosition_Y:
@@ -401,226 +403,194 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
             // insert the new y data
             reinterpret_cast<float*>(msgDataToSet._payload)[1] = reinterpret_cast<float*>(msgData._payload)[0];
 
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(first);
-            ParsePositionMessagePayload(msgDataToSet, objValue, objDef);
+            ParsePositionMessagePayload(msgDataToSet, objValue, objDef.get());
         }
         break;
     case ROI_Positioning_SourcePosition:
         {
             if(!CheckMessagePayload<float>(3, msgData))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(first);
-            ParsePositionMessagePayload(msgData, objValue, objDef);
+            ParsePositionMessagePayload(msgData, objValue, objDef.get());
         }
         break;
     case ROI_Positioning_SourceSpread:
         {
             if(!CheckAndParseMessagePayload<float>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Spread(first);
         }
         break;
     case ROI_Positioning_SourceDelayMode:
         {
             if(!CheckAndParseMessagePayload<int>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(first);
         }
         break;
     case ROI_FunctionGroup_Delay:
         {
             if(!CheckAndParseMessagePayload<float>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_Delay(first);
         }
         break;
     case ROI_FunctionGroup_SpreadFactor:
         {
             if(!CheckAndParseMessagePayload<float>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_SpreadFactor(first);
         }
         break;
     case ROI_MatrixInput_Mute:
         {
             if(!CheckAndParseMuteMessagePayload(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Mute(first);
         }
         break;
     case ROI_MatrixInput_Gain:
         {
             if(!CheckAndParseMessagePayload<float>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Gain(first);
         }
         break;
     case ROI_MatrixInput_Delay:
         {
             if(!CheckAndParseMessagePayload<float>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Delay(first);
         }
         break;
     case ROI_MatrixInput_DelayEnable:
         {
             if(!CheckAndParseMessagePayload<int>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_DelayEnable(first);
         }
         break;
     case ROI_MatrixInput_EqEnable:
         {
             if(!CheckAndParseMessagePayload<int>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_EqEnable(first);
         }
         break;
     case ROI_MatrixInput_Polarity:
         {
             if(!CheckAndParsePolarityMessagePayload(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Polarity(first);
         }
         break;
     case ROI_MatrixInput_ChannelName:
         {
             if(!CheckAndParseStringMessagePayload(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ChannelName(first);
         }
         break;
     case ROI_MatrixInput_ReverbSendGain:
         {
             if(!CheckAndParseMessagePayload<float>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ReverbSendGain(first);
         }
         break;
     case ROI_MatrixNode_Enable:
         {
             if(!CheckAndParseMessagePayload<int>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Enable(first, second);
         }
         break;
     case ROI_MatrixNode_Gain:
         {
             if(!CheckAndParseMessagePayload<float>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Gain(first, second);
         }
         break;
     case ROI_MatrixNode_Delay:
         {
             if(!CheckAndParseMessagePayload<float>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Delay(first, second);
         }
         break;
     case ROI_MatrixNode_DelayEnable:
         {
             if(!CheckAndParseMessagePayload<int>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_DelayEnable(first, second);
         }
         break;
     case ROI_MatrixOutput_Mute:
         {
             if(!CheckAndParseMuteMessagePayload(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Mute(first);
         }
         break;
     case ROI_MatrixOutput_Gain:
         {
             if(!CheckAndParseMessagePayload<float>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Gain(first);
         }
         break;
     case ROI_MatrixOutput_Delay:
         {
             if(!CheckAndParseMessagePayload<float>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Delay(first);
         }
         break;
     case ROI_MatrixOutput_DelayEnable:
         {
             if(!CheckAndParseMessagePayload<int>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_DelayEnable(first);
         }
         break;
     case ROI_MatrixOutput_EqEnable:
         {
             if(!CheckAndParseMessagePayload<int>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_EqEnable(first);
         }
         break;
     case ROI_MatrixOutput_Polarity:
         {
             if(!CheckAndParsePolarityMessagePayload(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Polarity(first);
         }
         break;
     case ROI_MatrixOutput_ChannelName:
         {
             if(!CheckAndParseStringMessagePayload(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_ChannelName(first);
         }
         break;
     case ROI_MatrixSettings_ReverbRoomId:
         {
             if(!CheckAndParseMessagePayload<int>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixSettings_ReverbRoomId();
         }
         break;
     case ROI_MatrixSettings_ReverbPredelayFactor:
         {
             if(!CheckAndParseMessagePayload<float>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixSettings_ReverbPredelayFactor();
         }
         break;
     case ROI_MatrixSettings_ReverbRearLevel:
         {
             if(!CheckAndParseMessagePayload<float>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixSettings_ReverbRearLevel();
         }
         break;
     case ROI_ReverbInput_Gain:
         {
             if(!CheckAndParseMessagePayload<float>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_ReverbInput_Gain(second, first);
         }
         break;
     case ROI_ReverbInputProcessing_Mute:
         {
             if(!CheckAndParseMuteMessagePayload(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_Mute(first);
         }
         break;
     case ROI_ReverbInputProcessing_Gain:
         {
             if(!CheckAndParseMessagePayload<float>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_Gain(first);
         }
         break;
     case ROI_ReverbInputProcessing_EqEnable:
         {
             if(!CheckAndParseMessagePayload<int>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_EqEnable(first);
         }
         break;
     case ROI_Scene_Recall:
@@ -643,31 +613,41 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
             targetObj = RemoteObject(ROI_Scene_SceneIndex, RemoteObjectAddressing(first, second));
             GetValueCache().SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_INT, 2, &sceneIndex, 2 * sizeof(int)));
 
-            // Set object definition
-            auto sceneAgent = NanoOcp1::DS100::dbOcaObjectDef_SceneAgent();
+            // To access SceneAgent specific implementation, we need to downcast the generic def
+            auto sceneAgentObjDef = dynamic_cast<NanoOcp1::DS100::dbOcaObjectDef_SceneAgent*>(objDef.get());
+            if (nullptr == sceneAgentObjDef)
+                return false;
 
             // Very special handling in contrast to the other ROIs: use "ApplyCommand" on SceneAgent instead of "SetValueCommand"
-            bool success = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(sceneAgent.ApplyCommand(sceneIndex[0], sceneIndex[1]), handle).GetMemoryBlock());
-            AddPendingSetValueHandle(handle, sceneAgent.m_targetOno, externalId);
+            bool success = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(sceneAgentObjDef->ApplyCommand(sceneIndex[0], sceneIndex[1]), handle).GetMemoryBlock());
+            AddPendingSetValueHandle(handle, sceneAgentObjDef->m_targetOno, externalId);
             return success;
         }
     case ROI_Scene_Next:
         {
-            // Set object definition
-            auto sceneAgent = NanoOcp1::DS100::dbOcaObjectDef_SceneAgent();
+            // To access SceneAgent specific implementation, we need to downcast the generic def
+            auto sceneAgentObjDef = dynamic_cast<NanoOcp1::DS100::dbOcaObjectDef_SceneAgent*>(objDef.get());
+            if (nullptr == sceneAgentObjDef)
+                return false;
+
             // Very special handling in contrast to the other ROIs: use "NextCommand" on SceneAgent instead of "SetValueCommand"
-            bool success = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(sceneAgent.NextCommand(), handle).GetMemoryBlock());
-            AddPendingSetValueHandle(handle, sceneAgent.m_targetOno, externalId);
+            bool success = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(sceneAgentObjDef->NextCommand(), handle).GetMemoryBlock());
+            AddPendingSetValueHandle(handle, objDef->m_targetOno, externalId);
             return success;
         }
         break;
     case ROI_Scene_Previous:
         {
+            // To access SceneAgent specific implementation, we need to downcast the generic def
+            auto sceneAgentObjDef = dynamic_cast<NanoOcp1::DS100::dbOcaObjectDef_SceneAgent*>(objDef.get());
+            if (nullptr == sceneAgentObjDef)
+                return false;
+
             // Set object definition
             auto sceneAgent = NanoOcp1::DS100::dbOcaObjectDef_SceneAgent();
             // Very special handling in contrast to the other ROIs: use "PreviousCommand" on SceneAgent instead of "SetValueCommand"
-            bool success = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(sceneAgent.PreviousCommand(), handle).GetMemoryBlock());
-            AddPendingSetValueHandle(handle, sceneAgent.m_targetOno, externalId);
+            bool success = m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(sceneAgentObjDef->PreviousCommand(), handle).GetMemoryBlock());
+            AddPendingSetValueHandle(handle, objDef->m_targetOno, externalId);
             return success;
         }
         break;
@@ -675,14 +655,12 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
         {
             if(!CheckAndParseMuteMessagePayload(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_SoundObjectRouting_Mute(second, first);
         }
         break;
     case ROI_SoundObjectRouting_Gain:
         {
             if(!CheckAndParseMessagePayload<float>(msgData, objValue))
                 break;
-            objDef = new NanoOcp1::DS100::dbOcaObjectDef_SoundObjectRouting_Gain(second, first);
         }
         break;
     default:
@@ -690,20 +668,12 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
         break;
     }
 
-    // Sanity checks
-    jassert(objDef != nullptr); // Missing implementation!
-    if (objDef == nullptr)
-        return false;
-
-    // Ensure automatic cleanup
-    auto objDefPtr = std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(objDef);
-
     // Set the value to the cache (use the msgDataToSet if it contains data)
     GetValueCache().SetValue(targetObj, msgDataToSet.isDataEmpty() ? msgData : msgDataToSet);
 
     // Send SetValue command
-    bool success = m_nanoOcp->sendData( NanoOcp1::Ocp1CommandResponseRequired( (*objDefPtr.get()).SetValueCommand(objValue), handle).GetMemoryBlock());
-    AddPendingSetValueHandle(handle, (*objDefPtr.get()).m_targetOno, externalId);
+    bool success = m_nanoOcp->sendData( NanoOcp1::Ocp1CommandResponseRequired(objDef->SetValueCommand(objValue), handle).GetMemoryBlock());
+    AddPendingSetValueHandle(handle, objDef->m_targetOno, externalId);
     //DBG(juce::String(__FUNCTION__) + " " + ProcessingEngineConfig::GetObjectTagName(roi) + "(handle: " + NanoOcp1::HandleToString(handle) + ")");
     return success;
 }
@@ -949,335 +919,166 @@ bool OCP1ProtocolProcessor::ocp1MessageReceived(const juce::MemoryBlock& data)
 /**
  * @brief  Helper to get the Pointer to Ocp1CommandDefinition for a specific RemoteObjectIdentifier and RemoteObjectAddressing
  * @warning This method does not take care of the returned pointer. You need to delete it on your own!
- * @param[in]	roi		The RemoteObjectIdentifier to resolve into object definition
- * @param[in]	addr	The RemoteObjectAddressing for the object definition
- * @param[out]	objDef	Pointer to the object definition to be retured or nullptr
- * @returns				True if the RemoteObjectIdentifier was resolved to a Ocp1CommandDefinition
+ * @param[in]	roi		                The RemoteObjectIdentifier to resolve into object definition
+ * @param[in]	addr	                The RemoteObjectAddressing for the object definition
+ * @param[in]	useDefinitionRemapping	If enabled, return proxy ocp definitions for all objects (e.g. separate x,y,xy are mapped to combined xyz)
+ * @returns				                True if the RemoteObjectIdentifier was resolved to a Ocp1CommandDefinition
  */
-bool OCP1ProtocolProcessor::GetObjectDefinition(const RemoteObjectIdentifier& roi, const RemoteObjectAddressing& addr, NanoOcp1::Ocp1CommandDefinition** objDef)
+std::optional<std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>> OCP1ProtocolProcessor::GetObjectDefinition(const RemoteObjectIdentifier& roi, const RemoteObjectAddressing& addr, bool useDefinitionRemapping)
 {
-    // reset the objDef
-    if (nullptr != *objDef)
-    {
-        delete *objDef;
-        *objDef = nullptr;
-    }
-
     std::int32_t first = addr._first;
     std::int32_t second = addr._second;
 
     switch (roi)
     {
     case ROI_Settings_DeviceName:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Settings_DeviceName();
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_Settings_DeviceName());
     case ROI_Status_StatusText:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Status_StatusText();
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_Status_StatusText());
     case ROI_Status_AudioNetworkSampleStatus:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Status_AudioNetworkSampleStatus();
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_Status_AudioNetworkSampleStatus());
     case ROI_Error_GnrlErr:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Error_GnrlErr();
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_Error_GnrlErr());
     case ROI_Error_ErrorText:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Error_ErrorText();
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_Error_ErrorText());
     case ROI_CoordinateMappingSettings_Name:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Name(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Name(first));
     case ROI_CoordinateMappingSettings_Flip:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Flip(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_Flip(first));
     case ROI_CoordinateMappingSettings_P1real:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P1_real(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P1_real(first));
     case ROI_CoordinateMappingSettings_P2real:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P2_real(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P2_real(first));
     case ROI_CoordinateMappingSettings_P3real:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P3_real(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P3_real(first));
     case ROI_CoordinateMappingSettings_P4real:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P4_real(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P4_real(first));
     case ROI_CoordinateMappingSettings_P1virtual:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P1_virtual(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P1_virtual(first));
     case ROI_CoordinateMappingSettings_P3virtual:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P3_virtual(first);
-        }
-        break;
-    case ROI_Positioning_SourcePosition:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMappingSettings_P3_virtual(first));
     case ROI_Positioning_SourcePosition_XY:
     case ROI_Positioning_SourcePosition_X:
     case ROI_Positioning_SourcePosition_Y:
         {
-            DBG(juce::String(__FUNCTION__) + " skipping ROI_Positioning_SourcePosition X Y XY");
-            return false;
+            if (!useDefinitionRemapping)   
+            {
+                DBG(juce::String(__FUNCTION__) + " skipping ROI_Positioning_SourcePosition X Y XY");
+                return {};
+            }
         }
-        break;
-    case ROI_CoordinateMapping_SourcePosition:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(second, first);
-        }
-        break;
+        [[fallthrough]];
+    case ROI_Positioning_SourcePosition:
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(first));
     case ROI_CoordinateMapping_SourcePosition_XY:
     case ROI_CoordinateMapping_SourcePosition_X:
     case ROI_CoordinateMapping_SourcePosition_Y:
         {
-            DBG(juce::String(__FUNCTION__) + " skipping ROI_CoordinateMapping_SourcePosition X Y XY");
-            return false;
+            if (!useDefinitionRemapping)
+            {
+                DBG(juce::String(__FUNCTION__) + " skipping ROI_CoordinateMapping_SourcePosition X Y XY");
+                return {};
+            }
         }
-        break;
+        [[fallthrough]];
+    case ROI_CoordinateMapping_SourcePosition:return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_CoordinateMapping_Source_Position(second, first));
     case ROI_Positioning_SourceSpread:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Spread(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Spread(first));
     case ROI_Positioning_SourceDelayMode:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(first));
     case ROI_Positioning_SpeakerPosition:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Speaker_Position(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Speaker_Position(first));
     case ROI_FunctionGroup_Name:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_Name(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_Name(first));
     case ROI_FunctionGroup_Delay:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_Delay(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_Delay(first));
     case ROI_FunctionGroup_SpreadFactor:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_SpreadFactor(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_SpreadFactor(first));
     case ROI_MatrixInput_Mute:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Mute(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Mute(first));
     case ROI_MatrixInput_Gain:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Gain(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Gain(first));
     case ROI_MatrixInput_Delay:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Delay(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Delay(first));
     case ROI_MatrixInput_DelayEnable:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_DelayEnable(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_DelayEnable(first));
     case ROI_MatrixInput_EqEnable:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_EqEnable(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_EqEnable(first));
     case ROI_MatrixInput_Polarity:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Polarity(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_Polarity(first));
     case ROI_MatrixInput_ChannelName:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ChannelName(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ChannelName(first));
     case ROI_MatrixInput_LevelMeterPreMute:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_LevelMeterPreMute(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_LevelMeterPreMute(first));
     case ROI_MatrixInput_LevelMeterPostMute:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_LevelMeterPostMute(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_LevelMeterPostMute(first));
     case ROI_MatrixInput_ReverbSendGain:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ReverbSendGain(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixInput_ReverbSendGain(first));
     case ROI_MatrixNode_Enable:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Enable(first, second);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Enable(first, second));
     case ROI_MatrixNode_Gain:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Gain(first, second);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Gain(first, second));
     case ROI_MatrixNode_Delay:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Delay(first, second);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Delay(first, second));
     case ROI_MatrixNode_DelayEnable:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_DelayEnable(first, second);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_DelayEnable(first, second));
     case ROI_MatrixOutput_Mute:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Mute(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Mute(first));
     case ROI_MatrixOutput_Gain:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Gain(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Gain(first));
     case ROI_MatrixOutput_Delay:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Delay(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Delay(first));
     case ROI_MatrixOutput_DelayEnable:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_DelayEnable(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_DelayEnable(first));
     case ROI_MatrixOutput_EqEnable:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_EqEnable(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_EqEnable(first));
     case ROI_MatrixOutput_Polarity:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Polarity(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Polarity(first));
     case ROI_MatrixOutput_ChannelName:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_ChannelName(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_ChannelName(first));
     case ROI_MatrixOutput_LevelMeterPreMute:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_LevelMeterPreMute(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_LevelMeterPreMute(first));
     case ROI_MatrixOutput_LevelMeterPostMute:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_LevelMeterPostMute(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_LevelMeterPostMute(first));
     case ROI_MatrixSettings_ReverbRoomId:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixSettings_ReverbRoomId();
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixSettings_ReverbRoomId());
     case ROI_MatrixSettings_ReverbPredelayFactor:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixSettings_ReverbPredelayFactor();
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixSettings_ReverbPredelayFactor());
     case ROI_MatrixSettings_ReverbRearLevel:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_MatrixSettings_ReverbRearLevel();
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_MatrixSettings_ReverbRearLevel());
     case ROI_ReverbInput_Gain:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_ReverbInput_Gain(second, first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_ReverbInput_Gain(second, first));
     case ROI_ReverbInputProcessing_Mute:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_Mute(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_Mute(first));
     case ROI_ReverbInputProcessing_Gain:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_Gain(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_Gain(first));
     case ROI_ReverbInputProcessing_EqEnable:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_EqEnable(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_EqEnable(first));
     case ROI_ReverbInputProcessing_LevelMeter:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_LevelMeter(first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_LevelMeter(first));
     case ROI_Scene_SceneIndex:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Scene_SceneIndex();
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_Scene_SceneIndex());
     case ROI_Scene_SceneName:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Scene_SceneName();
-        }
-        break;
-    case ROI_Scene_Next:
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_Scene_SceneName());
     case ROI_Scene_Previous:
-        return false;
+    case ROI_Scene_Next:
+    case ROI_Scene_Recall:
+        {
+            if (!useDefinitionRemapping)
+                return {};
+            else
+                return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_SceneAgent());
+        }
     case ROI_Scene_SceneComment:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_Scene_SceneComment();
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_Scene_SceneComment());
     case ROI_SoundObjectRouting_Mute:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_SoundObjectRouting_Mute(second, first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_SoundObjectRouting_Mute(second, first));
     case ROI_SoundObjectRouting_Gain:
-        {
-            *objDef = new NanoOcp1::DS100::dbOcaObjectDef_SoundObjectRouting_Gain(second, first);
-        }
-        break;
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_SoundObjectRouting_Gain(second, first));
     default:
         DBG(juce::String(__FUNCTION__) << " " << ProcessingEngineConfig::GetObjectDescription(roi) << " -> not implmented");
+        return {};
     }
-
-    jassert(*objDef != nullptr); // Missing implementation!
-    return (*objDef != nullptr);
 }
 
 /**
@@ -1294,16 +1095,18 @@ bool OCP1ProtocolProcessor::CreateObjectSubscriptions()
 
     for (auto const& activeObj : GetOcp1SupportedActiveRemoteObjects())
     {
-        NanoOcp1::Ocp1CommandDefinition* objdef = nullptr;
-
         // Get the object definition
-        if (false == GetObjectDefinition(activeObj._Id, activeObj._Addr, &objdef))
-            continue;
+        auto objDefOpt = GetObjectDefinition(activeObj._Id, activeObj._Addr);
 
-        // Ensure automatic cleanup.
-        auto objDefPtr = std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(objdef);
+        // Sanity checks
+        jassert(objDefOpt); // Missing implementation!
+        if (!objDefOpt)
+            return false;
+        auto& objDef = objDefOpt.value();
+        if (!objDef)
+            return false;
 
-        success = success && m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired((*objDefPtr.get()).AddSubscriptionCommand(), handle).GetMemoryBlock());
+        success = success && m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef->AddSubscriptionCommand(), handle).GetMemoryBlock());
         //DBG(juce::String(__FUNCTION__) << " " << ProcessingEngineConfig::GetObjectTagName(activeObj._Id) << "("
         //    << (first >= 0 ? (" first:" + juce::String(first)) : "")
         //    << (second >= 0 ? (" second:" + juce::String(second)) : "")
@@ -1353,19 +1156,22 @@ bool OCP1ProtocolProcessor::QueryObjectValues()
  */
 bool OCP1ProtocolProcessor::QueryObjectValue(const RemoteObjectIdentifier roi, const RemoteObjectAddressing& addr)
 {
-    NanoOcp1::Ocp1CommandDefinition* objdef = nullptr;
     auto handle = std::uint32_t(0);
 
     // Get the object definition
-    if (false == GetObjectDefinition(roi, addr, &objdef))
+    auto objDefOpt = GetObjectDefinition(roi, addr);
+
+    // Sanity checks
+    jassert(objDefOpt); // Missing implementation!
+    if (!objDefOpt)
+        return false;
+    auto& objDef = objDefOpt.value();
+    if (!objDef)
         return false;
 
-    // Ensure automatic cleanup.
-    auto objDefPtr = std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(objdef); 
-
     // Send GetValue command
-    bool success = m_nanoOcp->sendData( NanoOcp1::Ocp1CommandResponseRequired( (*objDefPtr.get()).GetValueCommand(), handle).GetMemoryBlock());
-    AddPendingGetValueHandle(handle, (*objDefPtr.get()).m_targetOno);
+    bool success = m_nanoOcp->sendData( NanoOcp1::Ocp1CommandResponseRequired(objDef->GetValueCommand(), handle).GetMemoryBlock());
+    AddPendingGetValueHandle(handle, objDef->m_targetOno);
     //DBG(juce::String(__FUNCTION__) + " " + ProcessingEngineConfig::GetObjectTagName(roi) + "(handle: " + NanoOcp1::HandleToString(handle) + ")");
     return success;
 }

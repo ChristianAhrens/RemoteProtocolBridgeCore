@@ -70,7 +70,7 @@ private:
 
 	//==============================================================================
 	bool ocp1MessageReceived(const juce::MemoryBlock& data);
-	bool GetObjectDefinition(const RemoteObjectIdentifier& roi, const RemoteObjectAddressing& addr, NanoOcp1::Ocp1CommandDefinition** objDef);
+	std::optional<std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>> GetObjectDefinition(const RemoteObjectIdentifier& roi, const RemoteObjectAddressing& addr, bool useDefinitionRemapping = false);
 	bool CreateObjectSubscriptions();
 	bool DeleteObjectSubscriptions();
 	bool QueryObjectValues();
