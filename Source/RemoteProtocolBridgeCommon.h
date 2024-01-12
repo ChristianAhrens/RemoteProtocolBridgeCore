@@ -251,6 +251,23 @@ struct RemoteObjectAddressing
 		_second = b;
 	};
 	/**
+	 * Helper method to create a nice human understandable string representation
+	 * of the remote object (if valid, both first+second field with '/' separator
+	 * or only one of them if other is invalid).
+	 * @return	The string representation as created
+	 */
+	juce::String toNiceString() const
+	{
+		if (INVALID_ADDRESS_VALUE != _first && INVALID_ADDRESS_VALUE != _second)
+			return juce::String(_first) + "/" + juce::String(_second);
+		else if (INVALID_ADDRESS_VALUE != _first)
+			return juce::String(_first);
+		else if (INVALID_ADDRESS_VALUE != _second)
+			return juce::String(_second);
+		else
+			return juce::String();
+	}
+	/**
 	 * Helper method to create a string representation of the remote object
 	 * @return	The string representation as created
 	 */
