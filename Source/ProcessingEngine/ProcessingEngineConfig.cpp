@@ -342,7 +342,7 @@ bool ProcessingEngineConfig::ReadObjects(XmlElement* objectsElement, std::vector
 		for (int i = ROI_Invalid + 1; i < ROI_BridgingMAX; ++i)
 		{
 			auto roi = static_cast<RemoteObjectIdentifier>(i);
-			if (element->getTagName() == GetObjectTagName(roi))
+			if (element->getTagName().toLowerCase() == GetObjectTagName(roi).toLowerCase())
 			{
 				// the child element of the element is expected to be of type text and contain the object addressings in format ch1,rec1;ch2,rec2;...
 				auto objectListTextElement = element->getFirstChildElement();
