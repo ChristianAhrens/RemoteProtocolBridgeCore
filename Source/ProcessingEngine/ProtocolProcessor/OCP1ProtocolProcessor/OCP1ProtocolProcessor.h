@@ -58,9 +58,6 @@ public:
 	bool PreparePositionMessageData(const RemoteObject& targetObj, RemoteObjectMessageData& msgDataToSet);
 	bool SendRemoteObjectMessage(const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const int externalId = -1) override;
 
-	//==============================================================================
-	static juce::String GetRemoteObjectString(const RemoteObjectIdentifier roi);
-
 private:
 	//==============================================================================
 	void timerThreadCallback() override;

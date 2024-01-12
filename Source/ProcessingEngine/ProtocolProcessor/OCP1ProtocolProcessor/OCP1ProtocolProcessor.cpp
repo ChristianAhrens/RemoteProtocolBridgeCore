@@ -133,73 +133,6 @@ bool OCP1ProtocolProcessor::setStateXml(XmlElement* stateXml)
 }
 
 /**
- * Public method to get OCA object specific ObjectName string
- *
- * @param roi	The object id to get the OCA specific object name
- * @return		The OCA specific object name
- */
-juce::String OCP1ProtocolProcessor::GetRemoteObjectString(const RemoteObjectIdentifier roi)
-{
-    switch (roi)
-    {
-    case ROI_CoordinateMappingSettings_P1real:
-        return "CoordinateMappingSettings_P1real";
-    case ROI_CoordinateMappingSettings_P2real:
-        return "CoordinateMappingSettings_P2real";
-    case ROI_CoordinateMappingSettings_P3real:
-        return "CoordinateMappingSettings_P3real";
-    case ROI_CoordinateMappingSettings_P4real:
-        return "CoordinateMappingSettings_P4real";
-    case ROI_CoordinateMappingSettings_P1virtual:
-        return "CoordinateMappingSettings_P1virtual";
-    case ROI_CoordinateMappingSettings_P3virtual:
-        return "CoordinateMappingSettings_P3virtual";
-    case ROI_CoordinateMappingSettings_Flip:
-        return "CoordinateMappingSettings_Flip";
-    case ROI_CoordinateMappingSettings_Name:
-        return "CoordinateMappingSettings_Name";
-    case ROI_CoordinateMapping_SourcePosition:
-    case ROI_CoordinateMapping_SourcePosition_XY:
-    case ROI_CoordinateMapping_SourcePosition_X:
-    case ROI_CoordinateMapping_SourcePosition_Y:
-        return "CoordinateMapping_Source_Position";
-    case ROI_Positioning_SourcePosition:
-    case ROI_Positioning_SourcePosition_XY:
-    case ROI_Positioning_SourcePosition_X:
-    case ROI_Positioning_SourcePosition_Y:
-        return "Positioning_Source_Position";
-    case ROI_Positioning_SourceSpread:
-        return "Positioning_Source_Spread";
-    case ROI_Positioning_SourceDelayMode:
-        return "Positioning_Source_DelayMode";
-    case ROI_MatrixInput_Mute:
-        return "MatrixInput_Mute";
-    case ROI_MatrixInput_Gain:
-        return "MatrixInput_Gain";
-    case ROI_MatrixInput_ReverbSendGain:
-        return "MatrixInput_ReverbSendGain";
-    case ROI_MatrixInput_ChannelName:
-        return "MatrixInput_ChannelName";
-    case ROI_MatrixInput_LevelMeterPreMute:
-        return "MatrixInput_LevelMeterPreMute";
-    case ROI_MatrixOutput_Mute:
-        return "MatrixOutput_Mute";
-    case ROI_MatrixOutput_Gain:
-        return "MatrixOutput_Gain";
-    case ROI_MatrixOutput_ChannelName:
-        return "MatrixOutput_ChannelName";
-    case ROI_MatrixOutput_LevelMeterPreMute:
-        return "MatrixInput_LevelMeterPreMute";
-    case ROI_MatrixOutput_LevelMeterPostMute:
-        return "MatrixInput_LevelMeterPostMute";
-    case ROI_Positioning_SpeakerPosition:
-        return "Positioning_Speaker_Position";
-    default:
-        return "?";
-    }
-}
-
-/**
  *  @brief  Get and eventually initialize RemoteObject position data
  *  @param[in]  targetObj    Object to check and possibly initialize the cache
  *  @param[out] msgDataToSet Cached value of the object
@@ -1579,12 +1512,12 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
             auto msgMetaInfo = RemoteObjectMessageMetaInfo();
             if (SetValueReplyInfo)
             {
-                //DBG(juce::String(__FUNCTION__) << " forwarding " << GetRemoteObjectString(objData.first) << " flagged as SetMessageAcknowledgement");
+                //DBG(juce::String(__FUNCTION__) << " forwarding " << ProcessingEngineConfig::GetObjectDescription(objData.first) << " flagged as SetMessageAcknowledgement");
                 msgMetaInfo = RemoteObjectMessageMetaInfo(RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement, SetValueReplyInfo.value().second);
             }
             else
             {
-                //DBG(juce::String(__FUNCTION__) << " forwarding " << GetRemoteObjectString(objData.first) << " flagged as Unsolicited");
+                //DBG(juce::String(__FUNCTION__) << " forwarding " << ProcessingEngineConfig::GetObjectDescription(objData.first) << " flagged as Unsolicited");
                 msgMetaInfo = RemoteObjectMessageMetaInfo(RemoteObjectMessageMetaInfo::MC_UnsolicitedMessage, INVALID_EXTID);
             }
             m_messageListener->OnProtocolMessageReceived(this, objData.first, objData.second, msgMetaInfo);
