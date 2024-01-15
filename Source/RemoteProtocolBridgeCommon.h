@@ -259,7 +259,7 @@ struct RemoteObjectAddressing
 	juce::String toNiceString() const
 	{
 		if (INVALID_ADDRESS_VALUE != _first && INVALID_ADDRESS_VALUE != _second)
-			return juce::String(_first) + "/" + juce::String(_second);
+			return juce::String(_second) + "/" + juce::String(_first);
 		else if (INVALID_ADDRESS_VALUE != _first)
 			return juce::String(_first);
 		else if (INVALID_ADDRESS_VALUE != _second)
