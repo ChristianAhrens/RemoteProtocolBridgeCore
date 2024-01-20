@@ -88,7 +88,7 @@ bool Mux_nA_to_mB_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
 		return false;
 
 	// do some sanity checks on this instances configuration parameters and the given message data origin id
-	auto muxConfigValid = (m_protoChCntA > 0) && (m_protoChCntB > 0);
+	auto muxConfigValid = (m_protoChCntA > 0 || m_protoChCntA == INVALID_ADDRESS_VALUE) && (m_protoChCntB > 0 || m_protoChCntB == INVALID_ADDRESS_VALUE);
 	auto isProtocolTypeA = (std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId) != GetProtocolAIds().end());
 	auto isProtocolTypeB = (std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) != GetProtocolBIds().end());
 	auto protocolIdValid = isProtocolTypeA || isProtocolTypeB;
@@ -156,32 +156,54 @@ std::pair<std::vector<ProtocolId>, ChannelId> Mux_nA_to_mB_withValFilter::GetTar
 	auto PIdBIter = std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId);
 	if (PIdAIter != GetProtocolAIds().end())
 	{
-		jassert(msgData._addrVal._first <= m_protoChCntA);
 		auto protocolAIndex = PIdAIter - GetProtocolAIds().begin();
-		auto absChNr		= static_cast<int>(protocolAIndex * m_protoChCntA) + msgData._addrVal._first;
-		auto chForB	   = static_cast<std::int32_t>(absChNr % m_protoChCntB);
-		if(chForB == 0)
-			chForB = static_cast<std::int32_t>(m_protoChCntB);
+		auto absChNr = static_cast<int>(protocolAIndex * (m_protoChCntA != INVALID_ADDRESS_VALUE ? m_protoChCntA : 0)) + msgData._addrVal._first;
+		auto chForB = 0;
+		auto protocolBIndex = 0;
+		if (m_protoChCntB > 0)
+		{
+			chForB = static_cast<std::int32_t>(absChNr % m_protoChCntB);
+			protocolBIndex = absChNr / (m_protoChCntB + 1);
+		}
+		if (chForB == 0)
+			chForB = static_cast<std::int32_t>(absChNr);
 
-		// return all typeB protocols
-		return std::make_pair(GetProtocolBIds(), chForB);
+		if (m_protoChCntB == INVALID_ADDRESS_VALUE)
+			// return all typeB protocols
+			return std::make_pair(GetProtocolBIds(), chForB);
+		else if (GetProtocolBIds().size() >= protocolBIndex + 1)
+			// return the single typeB protocol the message from typeB can be demultiplexed to, combined with the determined channel for the typeB protocol
+			return std::make_pair(std::vector<ProtocolId>{ GetProtocolBIds()[protocolBIndex] }, chForB);
+		else
+			// default no protocol id and mapped channel
+			return std::make_pair(std::vector<ProtocolId>(), chForB);
 	}
 	else if (PIdBIter != GetProtocolBIds().end())
 	{
-		jassert(msgData._addrVal._first <= m_protoChCntB);
 		auto protocolBIndex = PIdBIter - GetProtocolBIds().begin();
-		auto absChNr		= static_cast<int>(protocolBIndex * m_protoChCntB) + msgData._addrVal._first;
-		auto protocolAIndex = absChNr / (m_protoChCntA + 1);
-		auto chForA	   = static_cast<std::int32_t>(absChNr % m_protoChCntA);
-		if(chForA == 0)
-			chForA = static_cast<std::int32_t>(m_protoChCntA);
+		auto absChNr = static_cast<int>(protocolBIndex * (m_protoChCntB != INVALID_ADDRESS_VALUE ? m_protoChCntB : 0)) + msgData._addrVal._first;
+		auto chForA = 0;
+		auto protocolAIndex = 0;
+		if (m_protoChCntA > 0)
+		{
+			chForA = static_cast<std::int32_t>(absChNr % m_protoChCntA);
+			protocolAIndex = absChNr / (m_protoChCntA + 1);
+		}
+		if (chForA == 0)
+			chForA = static_cast<std::int32_t>(absChNr);
 
-		// return the single typeA protocol the message from typeB can be demultiplexed to combined with the determined channel for the typeA protocol
-		if(GetProtocolAIds().size() >= protocolAIndex + 1)
+		if (m_protoChCntA == INVALID_ADDRESS_VALUE)
+			// return all typeA protocols
+			return std::make_pair(GetProtocolAIds(), chForA);
+		else if (GetProtocolAIds().size() >= protocolAIndex + 1)
+			// return the single typeA protocol the message from typeB can be demultiplexed to, combined with the determined channel for the typeA protocol
 			return std::make_pair(std::vector<ProtocolId>{ GetProtocolAIds()[protocolAIndex] }, chForA);
 		else
+			// default no protocol id and mapped channel
 			return std::make_pair(std::vector<ProtocolId>(), chForA);
 	}
+	else
+		jassertfalse; // unknown incoming protocol id may not happen!
 
 	return std::make_pair(std::vector<ProtocolId>(), static_cast<ChannelId>(INVALID_ADDRESS_VALUE));
 }
@@ -200,18 +222,16 @@ RemoteObjectAddressing Mux_nA_to_mB_withValFilter::GetMappedOriginAddressing(Pro
 	// if the protocol id is found to belong to a protocol of type A, handle it accordingly
 	if (PIdAIter != GetProtocolAIds().end())
 	{
-		jassert(msgData._addrVal._first <= m_protoChCntA);
 		auto protocolAIndex = PIdAIter - GetProtocolAIds().begin();
-		auto absChNr = static_cast<int>(protocolAIndex * m_protoChCntA) + msgData._addrVal._first;
+		auto absChNr = static_cast<int>(protocolAIndex * (m_protoChCntA != INVALID_ADDRESS_VALUE ? m_protoChCntA : 0)) + msgData._addrVal._first;
 
 		return RemoteObjectAddressing(absChNr, msgData._addrVal._second);
 	}
 	// otherwise if the protocol id is found to belong to a protocol of type B, handle it accordingly as well
 	else if (PIdBIter != GetProtocolBIds().end())
 	{
-		jassert(msgData._addrVal._first <= m_protoChCntB);
 		auto protocolBIndex = PIdBIter - GetProtocolBIds().begin();
-		auto absChNr = static_cast<int>(protocolBIndex * m_protoChCntB) + msgData._addrVal._first;
+		auto absChNr = static_cast<int>(protocolBIndex * (m_protoChCntB != INVALID_ADDRESS_VALUE ? m_protoChCntB : 0)) + msgData._addrVal._first;
 
 		return RemoteObjectAddressing(absChNr, msgData._addrVal._second);
 	}
