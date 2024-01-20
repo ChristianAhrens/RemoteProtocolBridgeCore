@@ -101,6 +101,10 @@ bool Mux_nA_to_mB_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
 	if (IsCachedValuesQuery(roi))
 		return SendValueCacheToProtocol(PId);
 
+	auto isGetValueQuery = IsGetValueQuery(roi, msgData);
+	if (isGetValueQuery)
+		SetCurrentValue(PId, roi, msgData._addrVal, RemoteObjectMessageData());
+
 	auto modMsgData = msgData;
 	// check for changed value based on mapped addressing and target protocol id before forwarding data
 	auto targetProtoSrc = GetTargetProtocolsAndSource(PId, modMsgData);
@@ -111,7 +115,7 @@ bool Mux_nA_to_mB_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
 	{
 		// finally before forwarding data, the target channel has to be adjusted according to what we determined beforehand to be the correct mapped channel for target protocol
         modMsgData._addrVal._first = targetProtoSrc.second;
-		auto sendSuccess = true;
+		auto overallSendSuccess = true;
 		for (auto const& targetPId : targetProtoSrc.first)
 		{
 			if (msgMeta._ExternalId != targetPId || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
@@ -122,17 +126,18 @@ bool Mux_nA_to_mB_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
 					auto isTargetProtocolTypeA = (std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), targetPId) != GetProtocolAIds().end());
 					auto isAcknowledgingProtocol = isTargetProtocolTypeA ? IsTypeAAcknowledging() : IsTypeBAcknowledging();
 
-					sendSuccess = parentNode->SendMessageTo(targetPId, roi, modMsgData) && sendSuccess;
+					auto sendSuccess = parentNode->SendMessageTo(targetPId, roi, modMsgData);
 					// If the value was sent successfully, save it to cache (to make it the 'last known' from this protocol).
 					// In case the protocol is expected to acknowledge the value, we make an exception, since acknowledge values are
 					// used to update bridged protocols that have not yet received that latest value. E.g. DS100 ack values that are a
 					// reaction on a GenericOSC SET have to be bridged back to connected DiGiCo.
-					if (sendSuccess && !isAcknowledgingProtocol)
+					if ((sendSuccess && !isAcknowledgingProtocol) || isGetValueQuery)
 						SetCurrentValue(targetPId, roi, modMsgData._addrVal, modMsgData); // set the updated value as current for the complementary cache as well
+					overallSendSuccess = sendSuccess && overallSendSuccess;
 				}
 			}
 		}
-		return sendSuccess;
+		return overallSendSuccess;
 	}
 	else
 		return false;

@@ -92,6 +92,10 @@ bool Forward_only_valueChanges::OnReceivedMessageFromProtocol(const ProtocolId P
 	if (IsCachedValuesQuery(roi))
 		return SendValueCacheToProtocol(PId);
 
+	auto isGetValueQuery = IsGetValueQuery(roi, msgData);
+	if (isGetValueQuery)
+		SetCurrentValue(PId, roi, msgData._addrVal, RemoteObjectMessageData());
+
 	// Check the incoming value against the currently cached value for the incoming protocol.
 	// The currently cached value is taken from one of the two caches, A or B, and if a change 
 	// is detected, the value in that cache is updated accordingly. 
@@ -115,7 +119,7 @@ bool Forward_only_valueChanges::OnReceivedMessageFromProtocol(const ProtocolId P
 					// In case the protocol is expected to acknowledge the value, we make an exception, since acknowledge values are
 					// used to update bridged protocols that have not yet received that latest value. E.g. DS100 ack values that are a
 					// reaction on a GenericOSC SET have to be bridged back to connected DiGiCo.
-					if (sendSuccess && !IsTypeBAcknowledging())
+					if ((sendSuccess && !IsTypeBAcknowledging()) || isGetValueQuery)
 						SetCurrentValue(protocolB, roi, msgData._addrVal, msgData); // set the updated value as current for the complementary cache as well
 					overallSendSuccess = sendSuccess && overallSendSuccess;
 				}
@@ -140,7 +144,7 @@ bool Forward_only_valueChanges::OnReceivedMessageFromProtocol(const ProtocolId P
 					// In case the protocol is expected to acknowledge the value, we make an exception, since acknowledge values are
 					// used to update bridged protocols that have not yet received that latest value. E.g. DS100 ack values that are a
 					// reaction on a GenericOSC SET have to be bridged back to connected DiGiCo.
-					if (sendSuccess && !IsTypeAAcknowledging())
+					if ((sendSuccess && !IsTypeAAcknowledging()) || isGetValueQuery)
 						SetCurrentValue(protocolA, roi, msgData._addrVal, msgData); // set the updated value as current for the complementary cache as well
 					overallSendSuccess = sendSuccess && overallSendSuccess;
 				}

@@ -122,6 +122,10 @@ bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
 	if (IsCachedValuesQuery(roi))
 		return SendValueCacheToProtocol(receiverProtocolId);
 
+	auto isGetValueQuery = IsGetValueQuery(roi, msgData);
+	if (isGetValueQuery)
+		SetCurrentValue(receiverProtocolId, roi, msgData._addrVal, RemoteObjectMessageData());
+
 	// check the incoming data regarding value change to then forward and if required mirror it to other protocols
 	if (IsChangedDataValue(receiverProtocolId, roi, msgData._addrVal, msgData))
 	{
@@ -134,7 +138,7 @@ bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
 			// now do the basic A to B forwarding - only from master A
 			if (receiverProtocolId == m_currentMaster)
 			{
-				auto sendSuccess = true;
+				auto overallSendSuccess = true;
 				for (auto const& protocolBId : GetProtocolBIds())
 				{
 					if (msgMeta._ExternalId != roi || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
@@ -142,17 +146,18 @@ bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
 						// sending is only done when the value about to be sent is differing from the last known value from the protocol in question
 						if (IsChangedDataValue(protocolBId, roi, msgData._addrVal, msgData, false))
 						{
-							sendSuccess = parentNode->SendMessageTo(protocolBId, roi, msgData) && sendSuccess;
+							auto sendSuccess = parentNode->SendMessageTo(protocolBId, roi, msgData);
 							// If the value was sent successfully, save it to cache (to make it the 'last known' from this protocol).
 							// In case the protocol is expected to acknowledge the value, we make an exception, since acknowledge values are
 							// used to update bridged protocols that have not yet received that latest value. E.g. DS100 ack values that are a
 							// reaction on a GenericOSC SET have to be bridged back to connected DiGiCo.
-							if (sendSuccess && !IsTypeBAcknowledging())
+							if ((sendSuccess && !IsTypeBAcknowledging()) || isGetValueQuery)
 								SetCurrentValue(protocolBId, roi, msgData._addrVal, msgData); // set the updated value as current for the complementary cache as well
+							overallSendSuccess = sendSuccess && overallSendSuccess;
 						}
 					}
 				}
-				return sendSuccess;
+				return overallSendSuccess;
 			}
 			else
 				return true;
@@ -168,7 +173,7 @@ bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
 				// In case the protocol is expected to acknowledge the value, we make an exception, since acknowledge values are
 				// used to update bridged protocols that have not yet received that latest value. E.g. DS100 ack values that are a
 				// reaction on a GenericOSC SET have to be bridged back to connected DiGiCo.
-				if (sendSuccess && !IsTypeAAcknowledging())
+				if ((sendSuccess && !IsTypeAAcknowledging()) || isGetValueQuery)
 					SetCurrentValue(m_currentMaster, roi, msgData._addrVal, msgData); // set the updated value as current for the complementary cache as well
 
 				return sendSuccess;
