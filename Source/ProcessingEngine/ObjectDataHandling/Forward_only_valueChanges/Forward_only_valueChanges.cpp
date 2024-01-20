@@ -166,9 +166,9 @@ bool Forward_only_valueChanges::OnReceivedMessageFromProtocol(const ProtocolId P
  */
 bool Forward_only_valueChanges::IsChangedDataValue(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectAddressing& roAddr, const RemoteObjectMessageData& msgData, bool setAsNewCurrentData)
 {
-    if (ProcessingEngineConfig::IsKeepaliveObject(roi))
-        return true;
-	if (msgData._valCount == 0) // a value count of 0 indicates that this is a value polling message that shall be forwarded anyways
+	if (IsGetValueQuery(roi, msgData))
+		return true;
+	if (IsKeepaliveObject(roi))
 		return true;
     
 	if (m_precision == 0)
@@ -270,6 +270,8 @@ bool Forward_only_valueChanges::IsChangedDataValue(const ProtocolId PId, const R
  */
 void Forward_only_valueChanges::SetCurrentValue(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectAddressing& roAddr, const RemoteObjectMessageData& msgData)
 {
+	if (IsKeepaliveObject(roi))
+		return;
 	// Depending on what protocol received the value, use the corresponding value cache for the protocol type
 	auto currentValues = &m_currentValues[PId];
     

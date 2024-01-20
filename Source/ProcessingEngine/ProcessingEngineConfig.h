@@ -261,7 +261,6 @@ public:
 	static String GetObjectShortDescription(RemoteObjectIdentifier Id);
 	static bool IsChannelAddressingObject(RemoteObjectIdentifier objectId);
 	static bool IsRecordAddressingObject(RemoteObjectIdentifier objectId);
-    static bool IsKeepaliveObject(RemoteObjectIdentifier objectId);
 
 	static juce::Range<float>& GetRemoteObjectRange(RemoteObjectIdentifier roi);
 

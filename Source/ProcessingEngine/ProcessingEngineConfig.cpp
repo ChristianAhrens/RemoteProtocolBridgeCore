@@ -1268,23 +1268,6 @@ bool ProcessingEngineConfig::IsRecordAddressingObject(RemoteObjectIdentifier obj
 }
 
 /**
- * Helper method to check if a given remote object is involved in keepalive transmission and must not be filtered out e.g. based on value change detection.
- * @param objectId    The remote object id to check.
- * @return True if the object is involved in keepalive transmission, false if not.
- */
-bool ProcessingEngineConfig::IsKeepaliveObject(RemoteObjectIdentifier objectId)
-{
-    switch (objectId)
-    {
-    case ROI_HeartbeatPing:
-    case ROI_HeartbeatPong:
-        return true;
-    default:
-        return false;
-    }
-}
-
-/**
  * Helper method to get an internal defined value range for a given remote object.
  * @param	roi		The remote object id to get the value range for
  * @return	The float value range as requested. Empty range for unknown object.

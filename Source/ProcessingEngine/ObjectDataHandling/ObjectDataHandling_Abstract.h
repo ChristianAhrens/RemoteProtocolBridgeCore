@@ -119,6 +119,10 @@ public:
 	//==============================================================================
 	void timerCallback() override;
 
+	//==============================================================================
+	static bool IsKeepaliveObject(const RemoteObjectIdentifier roi);
+	static bool IsGetValueQuery(const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData);
+
 protected:
 	const ProcessingEngineNode*			GetParentNode();
 	void								SetMode(ObjectHandlingMode mode);

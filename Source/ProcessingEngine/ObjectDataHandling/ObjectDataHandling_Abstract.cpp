@@ -362,3 +362,39 @@ const std::map<ProtocolId, double>& ObjectDataHandling_Abstract::GetLastProtocol
 	return m_protocolReactionTSMap;
 }
 
+/**
+ * Helper method to check if a given remote object is involved in keepalive transmission and must not be filtered out e.g. based on value change detection.
+ * @param roi    The remote object id to check.
+ * @return True if the object is a keepalive message, false if not.
+ */
+bool ObjectDataHandling_Abstract::IsKeepaliveObject(const RemoteObjectIdentifier roi)
+{
+	switch (roi)
+	{
+	case ROI_HeartbeatPing:
+	case ROI_HeartbeatPong:
+		return true;
+	default:
+		return false;
+	}
+}
+
+/**
+ * Helper method to check if a given remote object data set is a get value query
+ * (neither keepalive nor containing a payload).
+ * @param roi		The remote object id to check.
+ * @param msgData	The object data set to check.
+ * @return True if the object data set is a get value query, false if not.
+ */
+bool ObjectDataHandling_Abstract::IsGetValueQuery(const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData)
+{
+	if (IsKeepaliveObject(roi))
+		return false;
+
+	else if (msgData._valCount == 0)
+		return true;
+
+	else
+		return false;
+}
+
