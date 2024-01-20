@@ -170,6 +170,8 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
     // if we are dealing with the special ROI for heartbeat (Ocp1 Keepalive), send it right away
     if (roi == ROI_HeartbeatPing)
         return m_nanoOcp->sendData(NanoOcp1::Ocp1KeepAlive(static_cast<std::uint16_t>(GetActiveRemoteObjectsInterval() / 1000)).GetMemoryBlock());
+    if (roi == ROI_HeartbeatPong)
+        return false;
 
     // if the ROI data is empty, it is a value request message that must be handled as such
     if (msgData.isDataEmpty() && !(roi == ROI_Scene_Next || roi == ROI_Scene_Previous))
@@ -1092,7 +1094,7 @@ bool OCP1ProtocolProcessor::QueryObjectValue(const RemoteObjectIdentifier roi, c
     auto handle = std::uint32_t(0);
 
     // Get the object definition
-    auto objDefOpt = GetObjectDefinition(roi, addr);
+    auto objDefOpt = GetObjectDefinition(roi, addr, true);
 
     // Sanity checks
     jassert(objDefOpt); // Missing implementation!
