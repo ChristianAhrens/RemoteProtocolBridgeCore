@@ -185,16 +185,16 @@ bool Forward_only_valueChanges::IsChangedDataValue(const ProtocolId PId, const R
 		isChangedDataValue = true;
     
     // Depending on what protocol received the value, use the corresponding value cache for the protocol type
-	auto currentValues = &m_currentValues[PId];
+	auto& currentValues = m_currentValues[PId];
 
 	// if our hash does not yet contain our ROI, initialize it
-	if ((currentValues->count(roi) == 0) || (currentValues->at(roi).count(roAddr) == 0))
+	if ((currentValues.count(roi) == 0) || (currentValues.at(roi).count(roAddr) == 0))
 	{
 		isChangedDataValue = true;
 	}
 	else
 	{
-		const RemoteObjectMessageData& currentVal = currentValues->at(roi).at(roAddr);
+		const RemoteObjectMessageData& currentVal = currentValues.at(roi).at(roAddr);
 		if ((currentVal._valType != msgData._valType) || (currentVal._valCount != msgData._valCount) || (currentVal._payloadSize != msgData._payloadSize))
 		{
 			isChangedDataValue = true;
@@ -276,32 +276,25 @@ void Forward_only_valueChanges::SetCurrentValue(const ProtocolId PId, const Remo
 {
 	if (IsKeepaliveObject(roi))
 		return;
+
 	// Depending on what protocol received the value, use the corresponding value cache for the protocol type
-	auto currentValues = &m_currentValues[PId];
+	auto& currentValues = m_currentValues[PId];
     
 	// Check if the new data value addressing is currently not present in internal hash
 	// or if it differs in its value size and needs to be reinitialized
-	if ((currentValues->count(roi) == 0) || (currentValues->at(roi).count(roAddr) == 0) ||
-		(currentValues->at(roi).at(roAddr)._payloadSize != msgData._payloadSize))
+	if ((currentValues.count(roi) == 0) || (currentValues.at(roi).count(roAddr) == 0) ||
+		(currentValues.at(roi).at(roAddr)._payloadSize != msgData._payloadSize))
 	{
 		// If the data value exists, but has wrong size, reinitialize it
-		if((currentValues->count(roi) != 0) && (currentValues->at(roi).count(roAddr) != 0) &&
-			(currentValues->at(roi).at(roAddr)._payloadSize != msgData._payloadSize))
-		{
-            currentValues->at(roi).at(roAddr)._payload = nullptr;
-            currentValues->at(roi).at(roAddr)._payloadSize = 0;
-            currentValues->at(roi).at(roAddr)._valCount = 0;
-		}
-	
-        (*currentValues)[roi][roAddr].payloadCopy(msgData);
+        currentValues[roi][roAddr].payloadCopy(msgData);
 	}
 	else
 	{
 		// do not copy entire data struct, since we need to keep our payload ptr
-        currentValues->at(roi).at(roAddr)._addrVal = roAddr;
-        currentValues->at(roi).at(roAddr)._valCount = msgData._valCount;
-        currentValues->at(roi).at(roAddr)._valType = msgData._valType;
-		memcpy(currentValues->at(roi).at(roAddr)._payload, msgData._payload, msgData._payloadSize);
+        currentValues.at(roi).at(roAddr)._addrVal = roAddr;
+        currentValues.at(roi).at(roAddr)._valCount = msgData._valCount;
+        currentValues.at(roi).at(roAddr)._valType = msgData._valType;
+		memcpy(currentValues.at(roi).at(roAddr)._payload, msgData._payload, msgData._payloadSize);
 	}
 }
 
