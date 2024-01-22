@@ -163,7 +163,10 @@ std::pair<std::vector<ProtocolId>, ChannelId> Mux_nA_to_mB_withValFilter::GetTar
 		if (m_protoChCntB > 0)
 		{
 			chForB = static_cast<std::int32_t>(absChNr % m_protoChCntB);
-			protocolBIndex = absChNr / (m_protoChCntB + 1);
+			if (chForB == 0)
+				chForB = m_protoChCntB;
+			auto protocolBNr = static_cast<int>(((absChNr - 1) / m_protoChCntB) + 1.0f);
+			protocolBIndex = protocolBNr - 1;
 		}
 		if (chForB == 0)
 			chForB = static_cast<std::int32_t>(absChNr);
@@ -187,7 +190,10 @@ std::pair<std::vector<ProtocolId>, ChannelId> Mux_nA_to_mB_withValFilter::GetTar
 		if (m_protoChCntA > 0)
 		{
 			chForA = static_cast<std::int32_t>(absChNr % m_protoChCntA);
-			protocolAIndex = absChNr / (m_protoChCntA + 1);
+			if (chForA == 0)
+				chForA = m_protoChCntA;
+			auto protocolANr = static_cast<int>(((absChNr - 1) / m_protoChCntA) + 1.0f);
+			protocolAIndex = protocolANr - 1;
 		}
 		if (chForA == 0)
 			chForA = static_cast<std::int32_t>(absChNr);
