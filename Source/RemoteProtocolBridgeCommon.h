@@ -470,14 +470,14 @@ struct RemoteObject
  */
 struct RemoteObjectMessageData
 {
-	RemoteObjectAddressing	_addrVal;		/**< Address definition value. Equivalent to channels/records in d&b OCA world or SourceId/MappingId for OSC positioning messages. */
+	RemoteObjectAddressing	_addrVal;				/**< Address definition value. Equivalent to channels/records in d&b OCA world or SourceId/MappingId for OSC positioning messages. */
 
-	RemoteObjectValueType	_valType;		/**< Datatype used for data values of the remote object. */
-	std::uint16_t			_valCount;		/**< Value count used by the remote object. */
+	RemoteObjectValueType	_valType{ ROVT_NONE };	/**< Datatype used for data values of the remote object. */
+	std::uint16_t			_valCount{ 0 };			/**< Value count used by the remote object. */
 
-	void*					_payload;		/**< Pointer to the actual payload data. */
-	std::uint32_t			_payloadSize;	/**< Size of the payload data. */
-	bool					_payloadOwned;	/**< Indicator if the payload is owned by this object. */
+	void*					_payload{ nullptr };	/**< Pointer to the actual payload data. */
+	std::uint32_t			_payloadSize{ 0 };		/**< Size of the payload data. */
+	bool					_payloadOwned{ false };	/**< Indicator if the payload is owned by this object. */
 
 	/**
 	 * Constructor to initialize with invalid values
@@ -571,6 +571,26 @@ struct RemoteObjectMessageData
 	{
 		if (this != &rhs)
 		{
+			if (_payloadOwned)
+			{
+				switch (_valType)
+				{
+				case ROVT_INT:
+					delete[] static_cast<int*>(_payload);
+					break;
+				case ROVT_FLOAT:
+					delete[] static_cast<float*>(_payload);
+					break;
+				case ROVT_STRING:
+					delete[] static_cast<char*>(_payload);
+					break;
+				default:
+					break;
+				}
+				_payload = nullptr;
+				_payloadSize = 0;
+			}
+
 			_addrVal = rhs._addrVal;
 			_valType = rhs._valType;
 			_valCount = rhs._valCount;
