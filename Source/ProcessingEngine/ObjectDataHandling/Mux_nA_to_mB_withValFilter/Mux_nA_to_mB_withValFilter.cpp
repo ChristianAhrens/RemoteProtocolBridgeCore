@@ -107,8 +107,8 @@ bool Mux_nA_to_mB_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
 
 	auto modMsgData = msgData;
 	// check for changed value based on mapped addressing and target protocol id before forwarding data
-	auto targetProtoSrc = GetTargetProtocolsAndSource(PId, modMsgData);
-	auto mappedOrigAddr = GetMappedOriginAddressing(PId, modMsgData);
+	auto targetProtoSrc = GetTargetProtocolsAndSource(PId, roi, modMsgData);
+	auto mappedOrigAddr = GetMappedOriginAddressing(PId, roi, modMsgData);
 	auto targetProtoValid = !targetProtoSrc.first.empty();
 
 	if (targetProtoValid && IsChangedDataValue(PId, roi, mappedOrigAddr, modMsgData))
@@ -147,15 +147,20 @@ bool Mux_nA_to_mB_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
  * Method to derive the protocol and source id the incoming data has to be sent to, in respect to the given multiplexing configuration values.
  *
  * @param PId		The id of the protocol that received the data
+ * @param roi		The object id the msgData belongs to
  * @param msgData	The actual message value/content data
  * @return			The protocol indexes the mapped value shall be sent to and the mapped source id to use when sending the data to the protocols
  */
-std::pair<std::vector<ProtocolId>, ChannelId> Mux_nA_to_mB_withValFilter::GetTargetProtocolsAndSource(ProtocolId PId, const RemoteObjectMessageData &msgData)
+std::pair<std::vector<ProtocolId>, ChannelId> Mux_nA_to_mB_withValFilter::GetTargetProtocolsAndSource(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData &msgData)
 {
 	auto PIdAIter = std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId);
 	auto PIdBIter = std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId);
 	if (PIdAIter != GetProtocolAIds().end())
 	{
+		// if we deal with a keepalive, return all typeB protocols as target
+		if (IsKeepaliveObject(roi))
+			return std::make_pair(GetProtocolBIds(), msgData._addrVal._first);
+
 		auto protocolAIndex = PIdAIter - GetProtocolAIds().begin();
 		auto absChNr = static_cast<int>(protocolAIndex * (m_protoChCntA != INVALID_ADDRESS_VALUE ? m_protoChCntA : 0)) + msgData._addrVal._first;
 		auto chForB = 0;
@@ -183,6 +188,10 @@ std::pair<std::vector<ProtocolId>, ChannelId> Mux_nA_to_mB_withValFilter::GetTar
 	}
 	else if (PIdBIter != GetProtocolBIds().end())
 	{
+		// if we deal with a keepalive, return all typeA protocols as target
+		if (IsKeepaliveObject(roi))
+			return std::make_pair(GetProtocolAIds(), msgData._addrVal._first);
+
 		auto protocolBIndex = PIdBIter - GetProtocolBIds().begin();
 		auto absChNr = static_cast<int>(protocolBIndex * (m_protoChCntB != INVALID_ADDRESS_VALUE ? m_protoChCntB : 0)) + msgData._addrVal._first;
 		auto chForA = 0;
@@ -218,11 +227,14 @@ std::pair<std::vector<ProtocolId>, ChannelId> Mux_nA_to_mB_withValFilter::GetTar
  * Method to get a mapped object addressing that represents the actual absolute object addressing without (de-)multiplexing offsets.
  *
  * @param PId		The id of the protocol that received the data
+ * @param roi		The object id the msgData belongs to
  * @param msgData	The actual message value/content data
  * @return	The protocol index the mapped value shall be sent to
  */
-RemoteObjectAddressing Mux_nA_to_mB_withValFilter::GetMappedOriginAddressing(ProtocolId PId, const RemoteObjectMessageData& msgData)
+RemoteObjectAddressing Mux_nA_to_mB_withValFilter::GetMappedOriginAddressing(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData)
 {
+	ignoreUnused(roi);
+
 	auto PIdAIter = std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), PId);
 	auto PIdBIter = std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId);
 	// if the protocol id is found to belong to a protocol of type A, handle it accordingly

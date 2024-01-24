@@ -46,8 +46,8 @@ protected:
 	int GetProtoChCntB();
 
 private:
-	std::pair<std::vector<ProtocolId>, ChannelId> GetTargetProtocolsAndSource(ProtocolId PId, const RemoteObjectMessageData &msgData);
-	RemoteObjectAddressing GetMappedOriginAddressing(ProtocolId PId, const RemoteObjectMessageData& msgData);
+	std::pair<std::vector<ProtocolId>, ChannelId> GetTargetProtocolsAndSource(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData &msgData);
+	RemoteObjectAddressing GetMappedOriginAddressing(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData);
 
 	int m_protoChCntA; /**< Channel count configuration value that is to be expected per protocol type A. */
 	int m_protoChCntB; /**< Channel count configuration value that is to be expected per protocol type B. */
