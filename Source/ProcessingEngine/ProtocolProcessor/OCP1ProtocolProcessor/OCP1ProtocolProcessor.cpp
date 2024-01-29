@@ -30,9 +30,9 @@
  * Derived OCP1 remote protocol processing class
  */
 OCP1ProtocolProcessor::OCP1ProtocolProcessor(const NodeId& parentNodeId)
-	: NetworkProtocolProcessorBase(parentNodeId)
+    : NetworkProtocolProcessorBase(parentNodeId)
 {
-	m_type = ProtocolType::PT_OCP1Protocol;
+    m_type = ProtocolType::PT_OCP1Protocol;
 
     SetActiveRemoteObjectsInterval(500); // used as 0.5s KeepAlive interval when NanoOcp connection is established
     CreateKnownONosMap();
@@ -43,7 +43,7 @@ OCP1ProtocolProcessor::OCP1ProtocolProcessor(const NodeId& parentNodeId)
  */
 OCP1ProtocolProcessor::~OCP1ProtocolProcessor()
 {
-	Stop();
+    Stop();
 }
 
 /**
@@ -91,15 +91,15 @@ bool OCP1ProtocolProcessor::Stop()
         m_nanoOcp->onConnectionLost = std::function<void()>();
     }
 
-	m_IsRunning = false;
+    m_IsRunning = false;
 
-	// stop the send timer thread
-	stopTimerThread();
+    // stop the send timer thread
+    stopTimerThread();
 
-	if (m_nanoOcp)
-		return m_nanoOcp->stop();
-	else
-		return false;
+    if (m_nanoOcp)
+        return m_nanoOcp->stop();
+    else
+        return false;
 }
 
 /**
@@ -110,26 +110,26 @@ bool OCP1ProtocolProcessor::Stop()
  */
 bool OCP1ProtocolProcessor::setStateXml(XmlElement* stateXml)
 {
-	if (!NetworkProtocolProcessorBase::setStateXml(stateXml))
-		return false;
-	else
-	{
-		auto ocp1ConnectionModeXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::OCP1CONNECTIONMODE));
-		if (ocp1ConnectionModeXmlElement)
-		{
-			auto modeString = ocp1ConnectionModeXmlElement->getAllSubText();
-			if (modeString == "server")
-				m_nanoOcp = std::make_unique<NanoOcp1::NanoOcp1Server>(GetIpAddress(), GetClientPort());
-			else if (modeString == "client")
-				m_nanoOcp = std::make_unique<NanoOcp1::NanoOcp1Client>(GetIpAddress(), GetClientPort());
-			else
-				return false;
+    if (!NetworkProtocolProcessorBase::setStateXml(stateXml))
+        return false;
+    else
+    {
+        auto ocp1ConnectionModeXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::OCP1CONNECTIONMODE));
+        if (ocp1ConnectionModeXmlElement)
+        {
+            auto modeString = ocp1ConnectionModeXmlElement->getAllSubText();
+            if (modeString == "server")
+                m_nanoOcp = std::make_unique<NanoOcp1::NanoOcp1Server>(GetIpAddress(), GetClientPort());
+            else if (modeString == "client")
+                m_nanoOcp = std::make_unique<NanoOcp1::NanoOcp1Client>(GetIpAddress(), GetClientPort());
+            else
+                return false;
 
-			return true;
-		}
-		else
-			return false;
-	}
+            return true;
+        }
+        else
+            return false;
+    }
 }
 
 /**
@@ -853,7 +853,6 @@ bool OCP1ProtocolProcessor::ocp1MessageReceived(const juce::MemoryBlock& data)
 
 /**
  * @brief  Helper to get the Pointer to Ocp1CommandDefinition for a specific RemoteObjectIdentifier and RemoteObjectAddressing
- * @warning This method does not take care of the returned pointer. You need to delete it on your own!
  * @param[in]	roi		                The RemoteObjectIdentifier to resolve into object definition
  * @param[in]	addr	                The RemoteObjectAddressing for the object definition
  * @param[in]	useDefinitionRemapping	If enabled, return proxy ocp definitions for all objects (e.g. separate x,y,xy are mapped to combined xyz)
