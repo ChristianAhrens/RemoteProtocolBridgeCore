@@ -364,6 +364,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
         {
             if(!CheckAndParseMessagePayload<float>(msgData, objValue))
                 break;
+            objValue = float(objValue) * 0.001f; // convert ms to s
         }
         break;
     case ROI_FunctionGroup_SpreadFactor:
@@ -388,6 +389,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
         {
             if(!CheckAndParseMessagePayload<float>(msgData, objValue))
                 break;
+            objValue = float(objValue) * 0.001f; // convert ms to s
         }
         break;
     case ROI_MatrixInput_DelayEnable:
@@ -436,6 +438,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
         {
             if(!CheckAndParseMessagePayload<float>(msgData, objValue))
                 break;
+            objValue = float(objValue) * 0.001f; // convert ms to s
         }
         break;
     case ROI_MatrixNode_DelayEnable:
@@ -460,6 +463,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
         {
             if(!CheckAndParseMessagePayload<float>(msgData, objValue))
                 break;
+            objValue = float(objValue) * 0.001f; // convert ms to s
         }
         break;
     case ROI_MatrixOutput_DelayEnable:
@@ -1419,21 +1423,32 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
         }
         break;
     // OcaFloat32Sensor / OcaFloat32Actuator
-    case ROI_MatrixNode_Gain:
     case ROI_MatrixNode_Delay:
+    case ROI_MatrixInput_Delay:
+    case ROI_MatrixOutput_Delay:
+    case ROI_FunctionGroup_Delay:
+        {
+            *newFloatValue = NanoOcp1::DataToFloat(msgObj->GetParameterData()) * 1000.0f; // convert s to ms
+
+            remObjMsgData._payloadSize = sizeof(float);
+            remObjMsgData._valCount = 1;
+            remObjMsgData._valType = ROVT_FLOAT;
+            remObjMsgData._payload = &newFloatValue;
+
+            objectsDataToForward.insert(std::make_pair(roi, remObjMsgData));
+        }
+        break;
+    case ROI_MatrixNode_Gain:
     case ROI_Positioning_SourceSpread:
     case ROI_MatrixInput_ReverbSendGain:
     case ROI_MatrixInput_Gain:
-    case ROI_MatrixInput_Delay:
     case ROI_MatrixInput_LevelMeterPreMute:
     case ROI_MatrixInput_LevelMeterPostMute:
     case ROI_MatrixOutput_Gain:
-    case ROI_MatrixOutput_Delay:
     case ROI_MatrixOutput_LevelMeterPreMute:
     case ROI_MatrixOutput_LevelMeterPostMute:
     case ROI_MatrixSettings_ReverbPredelayFactor:
     case ROI_MatrixSettings_ReverbRearLevel:
-    case ROI_FunctionGroup_Delay:
     case ROI_FunctionGroup_SpreadFactor:
     case ROI_ReverbInput_Gain:
     case ROI_ReverbInputProcessing_Gain:
