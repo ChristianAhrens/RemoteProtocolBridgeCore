@@ -169,7 +169,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
 
     // if we are dealing with the special ROI for heartbeat (Ocp1 Keepalive), send it right away
     if (roi == ROI_HeartbeatPing)
-        return m_nanoOcp->sendData(NanoOcp1::Ocp1KeepAlive(static_cast<std::uint16_t>(1)).GetMemoryBlock()); // Ocp1KeepAlive only supports a 16bit integer value in seconds, so 1s is the best we can get
+        return m_nanoOcp->sendData(NanoOcp1::Ocp1KeepAlive(static_cast<std::uint32_t>(500)).GetMemoryBlock()); // Ocp1KeepAlive 32bit integer value refers to milliseconds
     if (roi == ROI_HeartbeatPong)
         return false;
 
