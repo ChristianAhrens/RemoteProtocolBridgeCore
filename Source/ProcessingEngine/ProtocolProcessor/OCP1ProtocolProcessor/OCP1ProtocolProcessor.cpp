@@ -34,7 +34,7 @@ OCP1ProtocolProcessor::OCP1ProtocolProcessor(const NodeId& parentNodeId)
 {
     m_type = ProtocolType::PT_OCP1Protocol;
 
-    SetActiveRemoteObjectsInterval(500); // used as 0.5s KeepAlive interval when NanoOcp connection is established
+    SetActiveRemoteObjectsInterval(1000); // used as 0.5s KeepAlive interval when NanoOcp connection is established
     CreateKnownONosMap();
 }
 
@@ -169,7 +169,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
 
     // if we are dealing with the special ROI for heartbeat (Ocp1 Keepalive), send it right away
     if (roi == ROI_HeartbeatPing)
-        return m_nanoOcp->sendData(NanoOcp1::Ocp1KeepAlive(static_cast<std::uint32_t>(500)).GetMemoryBlock()); // Ocp1KeepAlive 32bit integer value refers to milliseconds
+        return m_nanoOcp->sendData(NanoOcp1::Ocp1KeepAlive(static_cast<std::uint16_t>(1)).GetMemoryBlock()); // Ocp1KeepAlive 32bit integer value refers to milliseconds, 16bit to seconds
     if (roi == ROI_HeartbeatPong)
         return false;
 
