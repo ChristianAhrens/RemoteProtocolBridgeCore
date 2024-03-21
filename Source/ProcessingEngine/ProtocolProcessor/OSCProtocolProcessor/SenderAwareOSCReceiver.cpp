@@ -357,7 +357,7 @@ namespace SenderAwareOSC
 			if (!disconnect())
 				return false;
 
-            socket.setOwned(new DatagramSocket(false, SocketOptions{}.withReceiveBufferSize(700'000)));
+            socket.setOwned(new juce::DatagramSocket(false, juce::SocketOptions{}.withReceiveBufferSize(700'000)));
 
 			if (!socket->bindToPort(portNumber))
 				return false;
@@ -372,7 +372,7 @@ namespace SenderAwareOSC
 		 * @param newSocket		The udp socket object to use to connect.
 		 * @return	True on success, false on failure.
 		 */
-		bool connectToSocket(DatagramSocket& newSocket)
+		bool connectToSocket(juce::DatagramSocket& newSocket)
 		{
 			if (!disconnect())
 				return false;
@@ -692,7 +692,7 @@ namespace SenderAwareOSC
 		ListenerList<SenderAwareOSCReceiver::SAOListener<OSCReceiver::MessageLoopCallback>> listeners;
 		ListenerList<SenderAwareOSCReceiver::SAOListener<OSCReceiver::RealtimeCallback>>    realtimeListeners;
 
-		OptionalScopedPointer<DatagramSocket> socket;
+		OptionalScopedPointer<juce::DatagramSocket> socket;
 		OSCReceiver::FormatErrorHandler formatErrorHandler{ nullptr };
 
 		friend class SenderAwareOSCReceiver;
@@ -724,7 +724,7 @@ namespace SenderAwareOSC
 		return m_pimpl->connectToPort(m_portNumber);
 	}
 
-	bool SenderAwareOSCReceiver::connectToSocket(DatagramSocket& socket)
+	bool SenderAwareOSCReceiver::connectToSocket(juce::DatagramSocket& socket)
 	{
 		return m_pimpl->connectToSocket(socket);
 	}

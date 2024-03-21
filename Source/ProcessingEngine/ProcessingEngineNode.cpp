@@ -384,14 +384,14 @@ bool ProcessingEngineNode::setStateXml(XmlElement* stateXml)
 	for (auto const& pA : m_typeAProtocols)
 		if (std::find(protocolIdsInNewConfig.begin(), protocolIdsInNewConfig.end(), pA.first) == protocolIdsInNewConfig.end())
 			protocolAIdsToRemove.push_back(pA.first);
-	for (auto id : protocolAIdsToRemove)
+	for (const auto& id : protocolAIdsToRemove)
 		m_typeAProtocols.erase(id);
 
 	std::vector<ProtocolId> protocolBIdsToRemove;
 	for (auto const& pB : m_typeBProtocols)
 		if (std::find(protocolIdsInNewConfig.begin(), protocolIdsInNewConfig.end(), pB.first) == protocolIdsInNewConfig.end())
 			protocolBIdsToRemove.push_back(pB.first);
-	for (auto id : protocolBIdsToRemove)
+	for (const auto& id : protocolBIdsToRemove)
 		m_typeBProtocols.erase(id);
 
 	// restore running state after config has been applied
@@ -525,7 +525,7 @@ void ProcessingEngineNode::handleMessage(const Message& msg)
 	if (auto* callbackMessage = dynamic_cast<const NodeCallbackMessage*> (&msg))
 	{
 		// broadcast received data to all listeners
-		for (auto listener : m_listeners)
+		for (const auto& listener : m_listeners)
 			listener->HandleNodeData(callbackMessage);
 	}
 }

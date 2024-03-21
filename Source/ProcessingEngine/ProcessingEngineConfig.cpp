@@ -91,7 +91,6 @@ std::map<RemoteObjectIdentifier, juce::Range<float>>	ProcessingEngineConfig::s_o
 ProcessingEngineConfig::ProcessingEngineConfig(const File& file)
 	: JUCEAppBasics::AppConfigurationBase(file)
 {
-
 }
 
 /**
@@ -646,11 +645,11 @@ bool ProcessingEngineConfig::RemoveNodeOrProtocol(int Id)
 /**
 * Helper to resolve ROI to tag name.
 *
-* @param Id	The remote objectid to be resolved to a string.
+* @param roi	The remote objectid to be resolved to a string.
 */
-String ProcessingEngineConfig::GetObjectTagName(RemoteObjectIdentifier Id)
+String ProcessingEngineConfig::GetObjectTagName(RemoteObjectIdentifier roi)
 {
-	switch (Id)
+	switch (roi)
 	{
 	case ROI_HeartbeatPing:
 		return "PING";
@@ -1152,12 +1151,12 @@ String ProcessingEngineConfig::GetObjectShortDescription(const RemoteObjectIdent
 
 /**
  * Helper method to check if a given remote object relates to channel/soundsourcid info.
- * @param objectId	The remote object id to check.
+ * @param roi	The remote object id to check.
  * @return True if the object relates to channels, false if not.
  */
-bool ProcessingEngineConfig::IsChannelAddressingObject(RemoteObjectIdentifier objectId)
+bool ProcessingEngineConfig::IsChannelAddressingObject(const RemoteObjectIdentifier roi)
 {
-	switch (objectId)
+	switch (roi)
 	{
 	case ROI_MatrixInput_Select:
 	case ROI_MatrixInput_Mute:
@@ -1243,12 +1242,12 @@ bool ProcessingEngineConfig::IsChannelAddressingObject(RemoteObjectIdentifier ob
 
 /**
  * Helper method to check if a given remote object relates to record/mappingid info.
- * @param objectId	The remote object id to check.
+ * @param roi	The remote object id to check.
  * @return True if the object relates to records, false if not.
  */
-bool ProcessingEngineConfig::IsRecordAddressingObject(RemoteObjectIdentifier objectId)
+bool ProcessingEngineConfig::IsRecordAddressingObject(const RemoteObjectIdentifier roi)
 {
-	switch (objectId)
+	switch (roi)
 	{
 	case ROI_MatrixNode_Enable:
 	case ROI_MatrixNode_Gain:

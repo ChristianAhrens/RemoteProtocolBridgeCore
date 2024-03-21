@@ -156,13 +156,17 @@ bool ADMOSCProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifi
 			admConvertedMsgData._valCount = 3;
 			admConvertedMsgData._payload = floatValueSendBuffer;
 			admConvertedMsgData._payloadSize = 3 * sizeof(float);
-
-			break;
 		}
 		else
 		{
-			// do nothing to fallback to single float sending below
+			floatValueSendBuffer[0] = ReadFromObjectCache(msgData._addrVal._first, targetObjType);
+
+			admConvertedMsgData._valType = ROVT_FLOAT;
+			admConvertedMsgData._valCount = 1;
+			admConvertedMsgData._payload = floatValueSendBuffer;
+			admConvertedMsgData._payloadSize = sizeof(float);
 		}
+		break;
 	case ADMObjectType::AOT_Gain:
 	case ADMObjectType::AOT_Width:
 		{
@@ -432,7 +436,7 @@ String ADMOSCProtocolProcessor::GetADMObjectTypeString(const ADMObjectType& objT
 	case AOT_CartesianCoords:
 		return "/cartesian";
 	case AOT_Gain:
-		return "/gain";			
+		return "/gain";
 	case AOT_Invalid:
 	default:
 		jassertfalse;
@@ -551,6 +555,7 @@ const juce::Range<float> ADMOSCProtocolProcessor::GetADMObjectRange(const ADMObj
 	case AOT_XPos:
 	case AOT_YPos:
 	case AOT_ZPos:
+	case AOT_XYZPos:
 		return juce::Range<float>(-1.0f, 1.0f);
 	case AOT_Width:
 		return juce::Range<float>(0.0f, 1.0f);
@@ -558,9 +563,8 @@ const juce::Range<float> ADMOSCProtocolProcessor::GetADMObjectRange(const ADMObj
 		return juce::Range<float>(0.0f, 180.0f);
 	case AOT_Gain:
 		return juce::Range<float>(0.0f, 1.0f);
-	case AOT_AzimElevDist:
-	case AOT_XYZPos:
 	case AOT_CartesianCoords:
+	case AOT_AzimElevDist:
 	case AOT_Invalid:
 	default:
 		jassertfalse;
@@ -694,12 +698,16 @@ bool ADMOSCProtocolProcessor::SyncCachedPolarToCartesianValues(const ChannelId& 
 	/********************* Conversion *********************/
 	auto admPos = juce::Vector3D<float>(0.0f, 0.0f, 0.0f);
 
-	auto admAzimuthRad = (admAzimuth / 180) * juce::MathConstants<float>::pi;
-	auto admElevationRad = (admElevation / 180)* juce::MathConstants<float>::pi;
-	admPos.z = std::cos(admElevationRad) * admDistance;
-	auto admXYAbs = std::sqrt((admDistance * admDistance) - (admPos.z * admPos.z));
-	admPos.x = std::sin(admAzimuthRad) * admXYAbs;
-	admPos.y = std::cos(admAzimuthRad) * admXYAbs;
+	auto admAzimuthRad = juce::degreesToRadians(admAzimuth);
+	auto admElevationRad = juce::degreesToRadians(admElevation);
+	
+
+	//classical coordinate transformation respecting ADM-convention (xy-swap and x inverted)
+	auto theta = juce::MathConstants<float>::halfPi - admElevationRad;
+	admPos.z = std::cos(theta) * admDistance;
+	auto sinTheta = std::sin(theta);
+	admPos.y = admDistance * sinTheta * cos(admAzimuthRad);
+	admPos.x = admDistance * sinTheta * sin(admAzimuthRad) * -1.0f; 
 
 	/******************** Write values ********************/
 	WriteToObjectCache(channel, AOT_XPos, admPos.x);
@@ -727,15 +735,18 @@ bool ADMOSCProtocolProcessor::SyncCachedCartesianToPolarValues(const ChannelId& 
 	auto admDistance = 0.0f;
 
 	auto admPosAbs = admPos.length();
-	if (admPos.y != 0.0f && admPosAbs != 0.0f)
+
+	if (admPosAbs != 0.0f)
 	{
-		auto admAzimuthRad = std::atan(admPos.x / admPos.y);
-		auto admElevationRad = std::acos(admPos.z / admPosAbs);
-		admAzimuth = admAzimuthRad * (180 / juce::MathConstants<float>::pi);
-		admElevation = admElevationRad * (180 / juce::MathConstants<float>::pi);
+		//ADM-spec V0.4 states that -90deg is on the right e.g. (x=1, y=0)
+		//Therefore since we swap axis to achieve 0deg being in the front we need to invert the resulting angle 
+		auto admAzimuthRad = std::atan2(admPos.x, admPos.y) * -1.0f;
+		auto admElevationRad = std::asin(admPos.z / admPosAbs);
+		admAzimuth = juce::radiansToDegrees(admAzimuthRad);
+		admElevation = juce::radiansToDegrees(admElevationRad);
 		admDistance = admPosAbs;
 	}
-
+	
 	/******************** Write values ********************/
 	WriteToObjectCache(channel, AOT_Azimuth, admAzimuth);
 	WriteToObjectCache(channel, AOT_Elevation, admElevation);
@@ -762,8 +773,8 @@ bool ADMOSCProtocolProcessor::CreateMessageDataFromObjectCache(const RemoteObjec
 		{
 			auto admRange = GetADMObjectRange(AOT_XPos);
 
-			auto admXValue = ReadFromObjectCache(channel, AOT_YPos);
-			auto admYValue = ReadFromObjectCache(channel, AOT_XPos);
+			auto admXValue = ReadFromObjectCache(channel, AOT_XPos);
+			auto admYValue = ReadFromObjectCache(channel, AOT_YPos);
 			auto admZValue = ReadFromObjectCache(channel, AOT_ZPos);
 
 			auto admNormXValue = NormalizeValueByRange(admXValue, admRange);
@@ -787,8 +798,8 @@ bool ADMOSCProtocolProcessor::CreateMessageDataFromObjectCache(const RemoteObjec
 		{
 			auto admRange = GetADMObjectRange(AOT_XPos);
 
-			auto admXValue = ReadFromObjectCache(channel, AOT_YPos);
-			auto admYValue = ReadFromObjectCache(channel, AOT_XPos);
+			auto admXValue = ReadFromObjectCache(channel, AOT_XPos);
+			auto admYValue = ReadFromObjectCache(channel, AOT_YPos);
 
 			auto admNormXValue = NormalizeValueByRange(admXValue, admRange);
 			auto admNormYValue = NormalizeValueByRange(admYValue, admRange);
@@ -807,8 +818,8 @@ bool ADMOSCProtocolProcessor::CreateMessageDataFromObjectCache(const RemoteObjec
 		{
 			auto admRange = GetADMObjectRange(AOT_XPos);
 
-			auto admXValue = ReadFromObjectCache(channel, AOT_YPos);
-			auto admYValue = ReadFromObjectCache(channel, AOT_XPos);
+			auto admXValue = ReadFromObjectCache(channel, AOT_XPos);
+			auto admYValue = ReadFromObjectCache(channel, AOT_YPos);
 
 			auto admNormXValue = NormalizeValueByRange(admXValue, admRange);
 			auto admNormYValue = NormalizeValueByRange(admYValue, admRange);
@@ -827,8 +838,8 @@ bool ADMOSCProtocolProcessor::CreateMessageDataFromObjectCache(const RemoteObjec
 		{
 			auto admRange = GetADMObjectRange(AOT_XPos);
 
-			auto admXValue = ReadFromObjectCache(channel, AOT_YPos);
-			auto admYValue = ReadFromObjectCache(channel, AOT_XPos);
+			auto admXValue = ReadFromObjectCache(channel, AOT_XPos);
+			auto admYValue = ReadFromObjectCache(channel, AOT_YPos);
 
 			auto admNormXValue = NormalizeValueByRange(admXValue, admRange);
 			auto admNormYValue = NormalizeValueByRange(admYValue, admRange);
@@ -947,41 +958,71 @@ ADMOSCProtocolProcessor::ADMObjectType ADMOSCProtocolProcessor::WriteMessageData
 	const ChannelId& channel = messageData._addrVal._first;
 	if (channel == static_cast<ChannelId>(INVALID_ADDRESS_VALUE))
 		return resultingTargetObjType;
-	if (messageData._valCount != 1)
-		return resultingTargetObjType;
-	if (messageData._valType != ROVT_FLOAT)
-		return resultingTargetObjType;
-	if (messageData._payloadSize != sizeof(float))
-		return resultingTargetObjType;
 
 	auto remoteObjectRange = ProcessingEngineConfig::GetRemoteObjectRange(id);
-	auto remoteObjectValue = *static_cast<float*>(messageData._payload);
-	auto normalizedRemoteObjectValue = NormalizeValueByRange(remoteObjectValue, remoteObjectRange);
+
 
 	switch (id)
 	{
 	case ROI_CoordinateMapping_SourcePosition_X:
 		{
-			resultingTargetObjType = m_xyAxisSwapped ? ADMObjectType::AOT_XPos : ADMObjectType::AOT_YPos;
+			auto remoteObjectValue = *static_cast<float*>(messageData._payload);
+			auto normalizedRemoteObjectValue = NormalizeValueByRange(remoteObjectValue, remoteObjectRange);
+
+			// should be 1 value of type float
+			if (messageData._valCount != 1)
+				return resultingTargetObjType;
+			if (messageData._valType != ROVT_FLOAT)
+				return resultingTargetObjType;
+			if (messageData._payloadSize != sizeof(float))
+				return resultingTargetObjType;
+
+			resultingTargetObjType = m_xyAxisSwapped ? ADMObjectType::AOT_YPos : ADMObjectType::AOT_XPos;
 
 			auto admRange = GetADMObjectRange(resultingTargetObjType);
 			auto admValue = MapNormalizedValueToRange(normalizedRemoteObjectValue, admRange, m_xyAxisSwapped ? m_yAxisInverted : m_xAxisInverted);
 
 			WriteToObjectCache(channel, resultingTargetObjType, admValue, true);
+
+			if (m_xyMessageCombined) resultingTargetObjType = ADMObjectType::AOT_Invalid;
 		}
 		break;
 	case ROI_CoordinateMapping_SourcePosition_Y:
 		{
-			resultingTargetObjType = m_xyAxisSwapped ? ADMObjectType::AOT_YPos : ADMObjectType::AOT_XPos;
+			auto remoteObjectValue = *static_cast<float*>(messageData._payload);
+			auto normalizedRemoteObjectValue = NormalizeValueByRange(remoteObjectValue, remoteObjectRange);
+
+			// should be 1 value of type float
+			if (messageData._valCount != 1)
+				return resultingTargetObjType;
+			if (messageData._valType != ROVT_FLOAT)
+				return resultingTargetObjType;
+			if (messageData._payloadSize != sizeof(float))
+				return resultingTargetObjType;
+
+			resultingTargetObjType = m_xyAxisSwapped ? ADMObjectType::AOT_XPos : ADMObjectType::AOT_YPos;
 
 			auto admRange = GetADMObjectRange(resultingTargetObjType);
 			auto admValue = MapNormalizedValueToRange(normalizedRemoteObjectValue, admRange, m_xyAxisSwapped ? m_xAxisInverted : m_yAxisInverted);
 
 			WriteToObjectCache(channel, resultingTargetObjType, admValue, true);
+			
+			if (m_xyMessageCombined) resultingTargetObjType = ADMObjectType::AOT_Invalid;
 		}
 		break;
 	case ROI_MatrixInput_Gain:
 		{
+            auto remoteObjectValue = *static_cast<float*>(messageData._payload);
+            auto normalizedRemoteObjectValue = NormalizeValueByRange(remoteObjectValue, remoteObjectRange);
+
+            // should be 1 value of type float
+            if (messageData._valCount != 1)
+                return resultingTargetObjType;
+            if (messageData._valType != ROVT_FLOAT)
+                return resultingTargetObjType;
+            if (messageData._payloadSize != sizeof(float))
+                return resultingTargetObjType;
+            
 			resultingTargetObjType = ADMObjectType::AOT_Gain;
 
 			auto admRange = GetADMObjectRange(resultingTargetObjType);
@@ -992,6 +1033,17 @@ ADMOSCProtocolProcessor::ADMObjectType ADMOSCProtocolProcessor::WriteMessageData
 		break;
 	case ROI_Positioning_SourceSpread:
 		{
+            auto remoteObjectValue = *static_cast<float*>(messageData._payload);
+            auto normalizedRemoteObjectValue = NormalizeValueByRange(remoteObjectValue, remoteObjectRange);
+
+            // should be 1 value of type float
+            if (messageData._valCount != 1)
+                return resultingTargetObjType;
+            if (messageData._valType != ROVT_FLOAT)
+                return resultingTargetObjType;
+            if (messageData._payloadSize != sizeof(float))
+                return resultingTargetObjType;
+            
 			resultingTargetObjType = ADMObjectType::AOT_Width;
 
 			auto admRange = GetADMObjectRange(resultingTargetObjType);
@@ -1002,6 +1054,36 @@ ADMOSCProtocolProcessor::ADMObjectType ADMOSCProtocolProcessor::WriteMessageData
 		break;
 	case ROI_CoordinateMapping_SourcePosition:
 	case ROI_CoordinateMapping_SourcePosition_XY:
+		{
+			auto remoteObjectValueX = static_cast<float*>(messageData._payload)[0]; // X
+			auto remoteObjectValueY = static_cast<float*>(messageData._payload)[1]; // Y
+
+			auto normalizedRemoteObjectValueX = NormalizeValueByRange(remoteObjectValueX, remoteObjectRange);
+			auto normalizedRemoteObjectValueY = NormalizeValueByRange(remoteObjectValueY, remoteObjectRange);
+
+			// should be 2 values of type float
+			if (messageData._valCount != 2)
+				return resultingTargetObjType;
+			if (messageData._valType != ROVT_FLOAT)
+				return resultingTargetObjType;
+			if (messageData._payloadSize != sizeof(float) * 2)
+				return resultingTargetObjType;
+
+			resultingTargetObjType = ADMObjectType::AOT_XYZPos;
+
+			auto admRange = GetADMObjectRange(resultingTargetObjType);
+
+			// handle X
+			auto admValue = MapNormalizedValueToRange(m_xyAxisSwapped ? normalizedRemoteObjectValueY : normalizedRemoteObjectValueX, admRange, m_xyAxisSwapped ? m_yAxisInverted : m_xAxisInverted);
+			WriteToObjectCache(channel, ADMObjectType::AOT_XPos, admValue, true);
+
+			// handle Y
+			admValue = MapNormalizedValueToRange(m_xyAxisSwapped ? normalizedRemoteObjectValueX : normalizedRemoteObjectValueY, admRange, m_xyAxisSwapped ? m_xAxisInverted : m_yAxisInverted);
+			WriteToObjectCache(channel, ADMObjectType::AOT_YPos, admValue, true);
+
+			if (!m_xyMessageCombined) resultingTargetObjType = ADMObjectType::AOT_Invalid;
+		}
+		break;
 	case ROI_HeartbeatPong:
 	case ROI_HeartbeatPing:
 	case ROI_Settings_DeviceName:

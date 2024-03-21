@@ -40,6 +40,8 @@ public:
 
 	bool OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta) override;
 
+	const std::map<ProtocolId, std::map<RemoteObjectIdentifier, std::map<RemoteObjectAddressing, RemoteObjectMessageData>>>& GetCurrentValues() { return m_currentValues; };
+
 protected:
 	bool IsChangedDataValue(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectAddressing& roAddr, const RemoteObjectMessageData& msgData, bool setAsNewCurrentData = true);
     void SetCurrentValue(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectAddressing& roAddr, const RemoteObjectMessageData& msgData);
