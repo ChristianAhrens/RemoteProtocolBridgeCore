@@ -54,11 +54,7 @@ bool OCP1ProtocolProcessor::Start()
 {
     if (m_nanoOcp)
     {
-        m_nanoOcp->start();
-        // Assign the callback functions AFTER internal handling is set up to not already get called before that is done
-        m_nanoOcp->onDataReceived = [=](const juce::MemoryBlock& data) {
-            return ocp1MessageReceived(data);
-        };
+        // assign lambdas for connection status tracking first
         m_nanoOcp->onConnectionEstablished = [=]() {
             startTimerThread(GetActiveRemoteObjectsInterval(), 100);
             m_IsRunning = true;
@@ -71,6 +67,14 @@ bool OCP1ProtocolProcessor::Start()
             DeleteObjectSubscriptions();
             ClearPendingHandles();
             GetValueCache().Clear();
+        };
+        
+        // then fire up nanoocp
+        m_nanoOcp->start();
+        
+        // Assign the callback functions AFTER internal handling is set up to not already get called before that is done
+        m_nanoOcp->onDataReceived = [=](const juce::MemoryBlock& data) {
+            return ocp1MessageReceived(data);
         };
 
         return true;
@@ -119,9 +123,9 @@ bool OCP1ProtocolProcessor::setStateXml(XmlElement* stateXml)
         {
             auto modeString = ocp1ConnectionModeXmlElement->getAllSubText();
             if (modeString == "server")
-                m_nanoOcp = std::make_unique<NanoOcp1::NanoOcp1Server>(GetIpAddress(), GetClientPort());
+                m_nanoOcp = std::make_unique<NanoOcp1::NanoOcp1Server>(GetIpAddress(), GetClientPort(), false); // do not use async msg queue for ocp1 msg forwarding to not interlink RPBC processing with UI but keep it in separte bridging thread ecosystem
             else if (modeString == "client")
-                m_nanoOcp = std::make_unique<NanoOcp1::NanoOcp1Client>(GetIpAddress(), GetClientPort());
+                m_nanoOcp = std::make_unique<NanoOcp1::NanoOcp1Client>(GetIpAddress(), GetClientPort(), false); // do not use async msg queue for ocp1 msg forwarding to not interlink RPBC processing with UI but keep it in separte bridging thread ecosystem
             else
                 return false;
 
