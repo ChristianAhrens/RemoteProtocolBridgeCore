@@ -377,6 +377,11 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
             }
             break;
 		default:
+            {
+                GetValueCache().SetValue(RemoteObject(roi, msgData._addrVal), msgData);
+
+                msgsToReflect.push_back(std::make_pair(roi, msgData));
+            }
 			break;
 		}
 
