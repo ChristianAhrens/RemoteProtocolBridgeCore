@@ -326,7 +326,9 @@ bool ProcessingEngineNode::setStateXml(XmlElement* stateXml)
 			if (protocol)
 			{
 				protocol->AddListener(this);
-				protocol->setStateXml(protocolXmlElement);
+				auto xmlApplySuccess = protocol->setStateXml(protocolXmlElement);
+				jassert(xmlApplySuccess); // applying the xml config was not successful, this shall not happen -> something is corrupted
+				ignoreUnused(xmlApplySuccess); // avoid unused variable warning when building release
 				if (protocol->GetRole() == ProtocolRole::PR_A)
 				{
 					m_typeAProtocols.erase(protocolId);
