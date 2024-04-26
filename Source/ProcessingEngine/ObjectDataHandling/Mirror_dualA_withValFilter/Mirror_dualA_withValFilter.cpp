@@ -38,7 +38,7 @@ Mirror_dualA_withValFilter::Mirror_dualA_withValFilter(ProcessingEngineNode* par
 	m_currentMaster = static_cast<ProtocolId>(INVALID_ADDRESS_VALUE);
 	m_currentSlave = static_cast<ProtocolId>(INVALID_ADDRESS_VALUE);
 	
-	SetProtoFailoverTime(1000.0f);
+	SetProtoFailoverTime(2000.0f);
 }
 
 /**

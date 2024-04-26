@@ -1052,7 +1052,6 @@ ADMOSCProtocolProcessor::ADMObjectType ADMOSCProtocolProcessor::WriteMessageData
 			WriteToObjectCache(channel, resultingTargetObjType, admValue);
 		}
 		break;
-	case ROI_CoordinateMapping_SourcePosition:
 	case ROI_CoordinateMapping_SourcePosition_XY:
 		{
 			auto remoteObjectValueX = static_cast<float*>(messageData._payload)[0]; // X
@@ -1084,6 +1083,7 @@ ADMOSCProtocolProcessor::ADMObjectType ADMOSCProtocolProcessor::WriteMessageData
 			if (!m_xyMessageCombined) resultingTargetObjType = ADMObjectType::AOT_Invalid;
 		}
 		break;
+	case ROI_CoordinateMapping_SourcePosition: // should be used for handling of XYZ
 	case ROI_HeartbeatPong:
 	case ROI_HeartbeatPing:
 	case ROI_Settings_DeviceName:

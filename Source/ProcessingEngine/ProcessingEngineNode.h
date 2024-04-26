@@ -176,7 +176,8 @@ public:
 
 public:
 	ProcessingEngineNode();
-	ProcessingEngineNode(ProcessingEngineNode::NodeListener* listener);
+	ProcessingEngineNode(bool restartOnXmlChange);
+	ProcessingEngineNode(ProcessingEngineNode::NodeListener* listener, bool restartOnXmlChange = true);
 	~ProcessingEngineNode();
 
 	void AddListener(ProcessingEngineNode::NodeListener* listener);
@@ -324,6 +325,8 @@ private:
 	ObjectDataHandling_Abstract* CreateObjectDataHandling(ObjectHandlingMode mode);
 
 	//==============================================================================
+	bool															m_restartOnXmlChange{ true }; /**< Decide if the Node shall Stop and Start when setting the XML */
+
 	std::unique_ptr<ObjectDataHandling_Abstract>					m_dataHandling;		/**< The object data handling object (to be initialized with instance of derived class). */
 
 	NodeId															m_nodeId;			/**< The id of the bridging node object. */

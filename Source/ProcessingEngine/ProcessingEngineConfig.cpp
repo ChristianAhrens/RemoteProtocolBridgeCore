@@ -89,8 +89,9 @@ std::map<RemoteObjectIdentifier, juce::Range<float>>	ProcessingEngineConfig::s_o
  * and calls the InitConfiguration method
  */
 ProcessingEngineConfig::ProcessingEngineConfig(const File& file)
-	: JUCEAppBasics::AppConfigurationBase(file)
+	: JUCEAppBasics::AppConfigurationBase()
 {
+	InitializeBase(file);
 }
 
 /**

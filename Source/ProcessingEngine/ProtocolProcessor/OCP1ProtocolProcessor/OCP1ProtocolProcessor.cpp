@@ -68,11 +68,11 @@ bool OCP1ProtocolProcessor::Start()
             ClearPendingHandles();
             GetValueCache().Clear();
         };
-        
+
         // then fire up nanoocp
         m_nanoOcp->start();
-        
-        // Assign the callback functions AFTER internal handling is set up to not already get called before that is done
+
+        // assign the lambda for data processing callback AFTER internal handling is set up to not already get called before that is done
         m_nanoOcp->onDataReceived = [=](const juce::MemoryBlock& data) {
             return ocp1MessageReceived(data);
         };

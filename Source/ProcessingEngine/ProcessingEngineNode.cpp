@@ -66,20 +66,35 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 ProcessingEngineNode::ProcessingEngineNode()
 	: Thread("ProcessingEngingNode_Thread"),
-	  m_dataHandling(nullptr),
-      m_nodeId(0),
-	  m_nodeRunning(false)
+		m_dataHandling(nullptr),
+		m_nodeId(0),
+		m_nodeRunning(false),
+		m_restartOnXmlChange(true)
 {
+
+}
+
+/**
+* Constructor including initialization of bool flag for Stopping/Starting on xml update
+*
+* @param restartOnXmlChange	Decide if node shall Stop and Start on each XML update
+*/
+ProcessingEngineNode::ProcessingEngineNode(bool restartOnXmlChange)
+	: ProcessingEngineNode()
+{
+	m_restartOnXmlChange = restartOnXmlChange;
 }
 
 /**
  * Constructor including initialization of internal parent object
  *
- * @param parentEngine	The engine object to be used as internal parent
+ * @param parentEngine			The engine object to be used as internal parent
+ * @param restartOnXmlChange	Decide if node shall Stop and Start on each XML update
  */
-ProcessingEngineNode::ProcessingEngineNode(ProcessingEngineNode::NodeListener* listener)
+ProcessingEngineNode::ProcessingEngineNode(ProcessingEngineNode::NodeListener* listener, bool restartOnXmlChange)
 	: ProcessingEngineNode()
 {
+	m_restartOnXmlChange = restartOnXmlChange;
 	AddListener(listener);
 }
 
@@ -249,7 +264,8 @@ bool ProcessingEngineNode::setStateXml(XmlElement* stateXml)
 {
 	bool shouldBeRunning = m_nodeRunning;
 
-	Stop();
+	if(m_restartOnXmlChange && shouldBeRunning)
+		Stop();
 
 	if (!stateXml || stateXml->getTagName() != ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::NODE))
 		return false;
@@ -397,7 +413,7 @@ bool ProcessingEngineNode::setStateXml(XmlElement* stateXml)
 		m_typeBProtocols.erase(id);
 
 	// restore running state after config has been applied
-	if(shouldBeRunning)
+	if(m_restartOnXmlChange && shouldBeRunning)
 		Start();
 
 	return retVal;

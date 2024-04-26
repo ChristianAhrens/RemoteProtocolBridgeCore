@@ -175,8 +175,14 @@ int ProtocolProcessorBase::GetActiveRemoteObjectsInterval()
  */
 void ProtocolProcessorBase::SetRemoteObjectsActive(XmlElement* activeObjsXmlElement)
 {
-	ScopedLock l(m_activeRemoteObjectsLock);
-	ProcessingEngineConfig::ReadActiveObjects(activeObjsXmlElement, m_activeRemoteObjects);
+	{
+		// Intentional local scope to ensure the lock is freed for the rest of the method exec.
+		// This is important, since stopping the thread later on depends on that the timer thread 
+		// callback method can run freely to be able to gracefully terminate,
+		// which cannot happen when the lock is held here until the end of the method!
+		ScopedLock l(m_activeRemoteObjectsLock);
+		ProcessingEngineConfig::ReadActiveObjects(activeObjsXmlElement, m_activeRemoteObjects);
+	}
 
 	// Start timer callback if objects are to be polled
 	if (m_IsRunning)
