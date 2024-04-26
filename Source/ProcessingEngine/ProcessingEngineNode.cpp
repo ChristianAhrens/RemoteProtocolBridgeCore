@@ -57,6 +57,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ProtocolProcessor/OSCProtocolProcessor/ADMOSCProtocolProcessor.h"
 #include "ProtocolProcessor/OSCProtocolProcessor/RemapOSCProtocolProcessor.h"
 #include "ProtocolProcessor/NoProtocolProtocolProcessor.h"
+#include "ProtocolProcessor/AURAProtocolProtocolProcessor.h"
 
 // **************************************************************************************
 //    class ProcessingEngineNode
@@ -446,6 +447,8 @@ ProtocolProcessorBase *ProcessingEngineNode::CreateProtocolProcessor(ProtocolTyp
 			return new RemapOSCProtocolProcessor(m_nodeId, listenerPortNumber);
 		case PT_NoProtocol:
 			return new NoProtocolProtocolProcessor(m_nodeId);
+		case PT_AURAProtocol:
+			return new AURAProtocolProtocolProcessor(m_nodeId);
 		default:
 			return nullptr;
 	}

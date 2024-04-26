@@ -73,6 +73,7 @@ enum ProtocolType
 	PT_ADMOSCProtocol,		/**< ADM OSC protocol type value. */
 	PT_RemapOSCProtocol,	/**< Freely remapable OSC protocol type value. */
 	PT_NoProtocol,			/**< Protocol processor implementation that acts as dummy, replying to all msgs sent with a reply and has some fixed object values that can be dummy-'polled'. */
+	PT_AURAProtocol,		/**< Implementation derived from NoProtocol but specialized to interface with STD auralization tool. */
 	PT_UserMAX				/**< Value to mark enum max; For iteration purpose. */
 };
 

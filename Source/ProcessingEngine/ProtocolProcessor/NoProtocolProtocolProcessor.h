@@ -42,7 +42,7 @@ public:
 	};
 
 public:
-	NoProtocolProtocolProcessor(const NodeId& parentNodeId);
+	NoProtocolProtocolProcessor(const NodeId& parentNodeId, bool cacheInit = false);
 	virtual ~NoProtocolProtocolProcessor() override;
 
 	bool setStateXml(XmlElement* stateXml) override;
@@ -51,6 +51,20 @@ public:
 	bool Stop() override;
 
 	bool SendRemoteObjectMessage(const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const int externalId = -1) override;
+
+protected:
+	//==============================================================================
+	virtual void InitializeObjectValueCache();
+	void InitializeObjectValueCache(const ProjectData& projectData);
+	void TriggerSendingObjectValueCache();
+	void SetValueToCache(const RemoteObjectIdentifier& roi, const ChannelId& channel, const RecordId& record, const juce::Array<juce::var>& vals);
+	void SetInputValuesToCache(ChannelId channel, const juce::String& inputName);
+	void SetSceneIndexToCache(std::float_t sceneIndex);
+	void SetSpeakerPositionToCache(ChannelId channel, float x, float y, float z, float hor, float vrt, float rot);
+	void SetMappingSettingsToCache(ChannelId mapping, const juce::String& mappingName, float realp3[3], float realp2[3], float realp1[3], float realp4[3], float virtp1[3], float virtp3[3], int flip);
+
+	//==============================================================================
+	static constexpr int sc_chCnt{ 64 };
 
 private:
 	//==============================================================================
@@ -64,16 +78,6 @@ private:
 	int IsHeartBeatCallback() { return (0 == (GetCallbackCount() % 40)); };
 
 	//==============================================================================
-	void InitializeObjectValueCache();
-	void InitializeObjectValueCache(const ProjectData& projectData);
-	void TriggerSendingObjectValueCache();
-	void SetValueToCache(const RemoteObjectIdentifier& roi, const ChannelId& channel, const RecordId& record, const juce::Array<juce::var>& vals);
-	void SetInputValuesToCache(ChannelId channel, const juce::String& inputName);
-	void SetSceneIndexToCache(std::float_t sceneIndex);
-	void SetSpeakerPositionToCache(ChannelId channel, float x, float y, float z, float hor, float vrt, float rot);
-	void SetMappingSettingsToCache(ChannelId mapping, const juce::String& mappingName, float realp3[3], float realp2[3], float realp1[3], float realp4[3], float virtp1[3], float virtp3[3], int flip);
-
-	//==============================================================================
 	void StepAnimation();
 	bool IsAnimationActive() { return AM_Off != m_animationMode; };
 	AnimationMode GetAnimationMode() { return m_animationMode; };
@@ -85,8 +89,6 @@ private:
 	std::map<ChannelId, float>	m_channelRandomizedScaleFactors;
 	std::map<int, float>	m_valueIdRandomizedFactors;
 
-	//==============================================================================
-	static constexpr int sc_chCnt{ 64 };
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NoProtocolProtocolProcessor)
 };

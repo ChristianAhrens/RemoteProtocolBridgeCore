@@ -27,14 +27,15 @@
 /**
  * Derived OSC remote protocol processing class
  */
-NoProtocolProtocolProcessor::NoProtocolProtocolProcessor(const NodeId& parentNodeId)
+NoProtocolProtocolProcessor::NoProtocolProtocolProcessor(const NodeId& parentNodeId, bool cacheInit)
 	: ProtocolProcessorBase(parentNodeId)
 {
 	m_type = ProtocolType::PT_NoProtocol;
 
 	SetActiveRemoteObjectsInterval(-1); // default value in ProtocolProcessorBase is 100 which we do not want to use, so invalidate it to overcome potential misunderstandings when reading code
 
-	InitializeObjectValueCache();
+    if (cacheInit)
+    	InitializeObjectValueCache();
 }
 
 /**

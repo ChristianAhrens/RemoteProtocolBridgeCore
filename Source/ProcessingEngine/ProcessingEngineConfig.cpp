@@ -1302,6 +1302,8 @@ String  ProcessingEngineConfig::ProtocolTypeToString(ProtocolType pt)
 		return "Invalid";
 	case PT_NoProtocol:
 		return "NoProtocol";
+	case PT_AURAProtocol:
+		return "AURAProtocol";
 	default:
 		return "";
 	}
@@ -1328,6 +1330,8 @@ ProtocolType  ProcessingEngineConfig::ProtocolTypeFromString(String type)
 		return PT_RemapOSCProtocol;
 	if (type == ProtocolTypeToString(PT_NoProtocol))
 		return PT_NoProtocol;
+	if (type == ProtocolTypeToString(PT_AURAProtocol))
+		return PT_AURAProtocol;
 
 	return PT_Invalid;
 }
