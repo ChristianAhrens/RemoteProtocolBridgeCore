@@ -20,7 +20,7 @@
 
 #include "../../ProcessingEngineConfig.h"
 
-#include "Ocp1DS100ObjectDefinitions.h"
+#include <Ocp1DS100ObjectDefinitions.h>
 
 
 // **************************************************************************************
@@ -185,7 +185,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
     auto& second = msgData._addrVal._second;
 
     auto handle = std::uint32_t(0x00);
-    juce::var objValue;
+    NanoOcp1::Variant objValue;
 
     auto objDefOpt = GetObjectDefinition(roi, msgData._addrVal, true);
 
@@ -368,7 +368,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
         {
             if(!CheckAndParseMessagePayload<float>(msgData, objValue))
                 break;
-            objValue = float(objValue) * 0.001f; // convert ms to s
+            objValue = objValue.ToFloat() * 0.001f; // convert ms to s
         }
         break;
     case ROI_FunctionGroup_SpreadFactor:
@@ -393,7 +393,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
         {
             if(!CheckAndParseMessagePayload<float>(msgData, objValue))
                 break;
-            objValue = float(objValue) * 0.001f; // convert ms to s
+            objValue = objValue.ToFloat() * 0.001f; // convert ms to s
         }
         break;
     case ROI_MatrixInput_DelayEnable:
@@ -442,7 +442,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
         {
             if(!CheckAndParseMessagePayload<float>(msgData, objValue))
                 break;
-            objValue = float(objValue) * 0.001f; // convert ms to s
+            objValue = objValue.ToFloat() * 0.001f; // convert ms to s
         }
         break;
     case ROI_MatrixNode_DelayEnable:
@@ -467,7 +467,7 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
         {
             if(!CheckAndParseMessagePayload<float>(msgData, objValue))
                 break;
-            objValue = float(objValue) * 0.001f; // convert ms to s
+            objValue = objValue.ToFloat() * 0.001f; // convert ms to s
         }
         break;
     case ROI_MatrixOutput_DelayEnable:
@@ -1276,8 +1276,14 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
     {
     case ROI_CoordinateMapping_SourcePosition:
         {
-            if (!NanoOcp1::VariantToPosition(cmdDef.ToVariant(3, msgObj->GetParameterData()), newFloatValue[0], newFloatValue[1], newFloatValue[2]))
+            bool ok = false;
+            auto pos = NanoOcp1::Variant(msgObj->GetParameterData()).ToPosition(&ok);
+            if (!ok)
                 return false;
+            newFloatValue[0] = pos.at(0);
+            newFloatValue[1] = pos.at(1);
+            newFloatValue[2] = pos.at(2);
+
             remObjMsgData._payloadSize = 3 * sizeof(float);
             remObjMsgData._valCount = 3;
             remObjMsgData._valType = ROVT_FLOAT;
@@ -1296,12 +1302,17 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
         break;
     case ROI_Positioning_SpeakerPosition:
         {
-            if (!NanoOcp1::VariantToPositionAndRotation(cmdDef.ToVariant(6, msgObj->GetParameterData()), 
-                newFloatValue[3], newFloatValue[4], newFloatValue[5],   // RPBC expects position values first
-                newFloatValue[0], newFloatValue[1], newFloatValue[2]))  // and rotation values second - OCP1 provides them the other way around, so switching is done here
-            {
+            bool ok = false;
+            auto pos = NanoOcp1::Variant(msgObj->GetParameterData()).ToPositionAndRotation(&ok);
+            if (!ok)
                 return false;
-            }
+            newFloatValue[0] = pos.at(3); // RPBC expects position values first
+            newFloatValue[1] = pos.at(4);
+            newFloatValue[2] = pos.at(5);
+            newFloatValue[3] = pos.at(0); // and rotation values second - OCP1 provides them the other way around, so switching is done here
+            newFloatValue[4] = pos.at(1);
+            newFloatValue[5] = pos.at(2);
+
             remObjMsgData._payloadSize = 6 * sizeof(float);
             remObjMsgData._valCount = 6;
             remObjMsgData._valType = ROVT_FLOAT;
@@ -1317,8 +1328,14 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
         break;
     case ROI_Positioning_SourcePosition:
         {
-            if (!NanoOcp1::VariantToPosition(cmdDef.ToVariant(3, msgObj->GetParameterData()), newFloatValue[0], newFloatValue[1], newFloatValue[2]))
+            bool ok = false;
+            auto pos = NanoOcp1::Variant(msgObj->GetParameterData()).ToPosition(&ok);
+            if (!ok)
                 return false;
+            newFloatValue[0] = pos.at(0);
+            newFloatValue[1] = pos.at(1);
+            newFloatValue[2] = pos.at(2);
+
             remObjMsgData._payloadSize = 3 * sizeof(float);
             remObjMsgData._valCount = 3;
             remObjMsgData._valType = ROVT_FLOAT;
@@ -1499,8 +1516,13 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
     case ROI_CoordinateMappingSettings_P1virtual:
     case ROI_CoordinateMappingSettings_P3virtual:
         {
-            if (!NanoOcp1::VariantToPosition(cmdDef.ToVariant(3, msgObj->GetParameterData()), newFloatValue[0], newFloatValue[1], newFloatValue[2]))
+            bool ok = false;
+            auto pos = NanoOcp1::Variant(msgObj->GetParameterData()).ToPosition(&ok);
+            if (!ok)
                 return false;
+            newFloatValue[0] = pos.at(0);
+            newFloatValue[1] = pos.at(1);
+            newFloatValue[2] = pos.at(2);
             remObjMsgData._payloadSize = 3 * sizeof(float);
             remObjMsgData._valCount = 3;
             remObjMsgData._valType = ROVT_FLOAT;
@@ -1611,15 +1633,15 @@ const std::vector<RemoteObject> OCP1ProtocolProcessor::GetOcp1SupportedActiveRem
 /**
  *  @brief  Helper to check message payload size and parse msgData as string into value
  *  @param[in]  msgData The input message data to check and parse
- *  @param[out] value   The output juce String as juce::var
+ *  @param[out] value   The output juce String as NanoOcp1::Variant
  *  @returns            True if the msgData check succeded
  */
-bool OCP1ProtocolProcessor::CheckAndParseStringMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value)
+bool OCP1ProtocolProcessor::CheckAndParseStringMessagePayload(const RemoteObjectMessageData& msgData, NanoOcp1::Variant& value)
 {
     if (msgData._valCount < 1 || msgData._payloadSize != msgData._valCount * sizeof(char))
         return false;
 
-    value = juce::var(juce::String(static_cast<const char*>(msgData._payload), msgData._payloadSize));
+    value = NanoOcp1::Variant(juce::String(static_cast<const char*>(msgData._payload), msgData._payloadSize).toStdString());
     return true;
 }
 
@@ -1627,16 +1649,16 @@ bool OCP1ProtocolProcessor::CheckAndParseStringMessagePayload(const RemoteObject
  *  @brief  Helper to check message payload size and parse msgData as mute state into value
  *  @note internal value 0=unmute, 1=mute; OcaMute uses 2=unmute, 1=mute
  *  @param[in]  msgData The input message data to check and parse
- *  @param[out] value   The output int mute state as juce::var
+ *  @param[out] value   The output int mute state as NanoOcp1::Variant
  *  @returns            True if the msgData check succeded
  */
-bool OCP1ProtocolProcessor::CheckAndParseMuteMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value)
+bool OCP1ProtocolProcessor::CheckAndParseMuteMessagePayload(const RemoteObjectMessageData& msgData, NanoOcp1::Variant& value)
 {
     if (!CheckMessagePayload<int>(1, msgData))
         return false;
 
     // internal value 0=unmute, 1=mute; OcaMute uses 2=unmute, 1=mute
-    value = juce::var((*static_cast<int*>(msgData._payload) == 1) ? 1 : 2);
+    value = NanoOcp1::Variant((*static_cast<int*>(msgData._payload) == 1) ? 1 : 2);
     return true;
 }
 
@@ -1644,27 +1666,27 @@ bool OCP1ProtocolProcessor::CheckAndParseMuteMessagePayload(const RemoteObjectMe
  *  @brief  Helper to check message payload size and parse msgData as polarity state into value
  *  @note internal value 0=normal, 1=inverted; OcaPolarity uses 1=normal, 2=inverted
  *  @param[in]  msgData The input message data to check and parse
- *  @param[out] value   The output int polarity state as juce::var
+ *  @param[out] value   The output int polarity state as NanoOcp1::Variant
  *  @returns            True if the msgData check succeded
  */
-bool OCP1ProtocolProcessor::CheckAndParsePolarityMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value)
+bool OCP1ProtocolProcessor::CheckAndParsePolarityMessagePayload(const RemoteObjectMessageData& msgData, NanoOcp1::Variant& value)
 {
     if (!CheckMessagePayload<int>(1, msgData))
         return false;
 
     // internal value 0=normal, 1=inverted; OcaPolarity uses 1=normal, 2=inverted
-    value = juce::var((*static_cast<int*>(msgData._payload) == 1) ? 2 : 1);
+    value = NanoOcp1::Variant((*static_cast<int*>(msgData._payload) == 1) ? 2 : 1);
     return true;
 }
 
 /**
  *  @brief  Helper to check message payload size and parse msgData as positional message into value
  *  @param[in]  msgData The input message data to check and parse
- *  @param[out] value   The output 3 position coordinates packed as juce::var
+ *  @param[out] value   The output 3 position coordinates packed as NanoOcp1::Variant
  *  @param[in]  objDef  The object def required to use its ToVariant method
  *  @returns            True if the msgData check succeded
  */
-bool OCP1ProtocolProcessor::ParsePositionMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value, NanoOcp1::Ocp1CommandDefinition* objDef)
+bool OCP1ProtocolProcessor::ParsePositionMessagePayload(const RemoteObjectMessageData& msgData, NanoOcp1::Variant& value, NanoOcp1::Ocp1CommandDefinition* objDef)
 {
     if (!CheckMessagePayload<float>(3, msgData))
         return false;
@@ -1676,18 +1698,18 @@ bool OCP1ProtocolProcessor::ParsePositionMessagePayload(const RemoteObjectMessag
         reinterpret_cast<float*>(msgData._payload)[0],
         reinterpret_cast<float*>(msgData._payload)[1],
         reinterpret_cast<float*>(msgData._payload)[2]);
-    value = objDef->ToVariant(3, parameterData);
+    value = NanoOcp1::Variant(parameterData);
     return true;
 }
 
 /**
  *  @brief  Helper to check message payload size and parse msgData as position and rotation message into value
  *  @param[in]  msgData The input message data to check and parse
- *  @param[out] value   The output 3 position coordinates and 3 rotation values packed as juce::var
+ *  @param[out] value   The output 3 position coordinates and 3 rotation values packed as NanoOcp1::Variant
  *  @param[in]  objDef  The object def required to use its ToVariant method
  *  @returns            True if the msgData check succeded
  */
-bool OCP1ProtocolProcessor::ParsePositionAndRotationMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value, NanoOcp1::Ocp1CommandDefinition* objDef)
+bool OCP1ProtocolProcessor::ParsePositionAndRotationMessagePayload(const RemoteObjectMessageData& msgData, NanoOcp1::Variant& value, NanoOcp1::Ocp1CommandDefinition* objDef)
 {
     if (!CheckMessagePayload<float>(6, msgData))
         return false;
@@ -1702,7 +1724,7 @@ bool OCP1ProtocolProcessor::ParsePositionAndRotationMessagePayload(const RemoteO
         reinterpret_cast<float*>(msgData._payload)[3],
         reinterpret_cast<float*>(msgData._payload)[4],
         reinterpret_cast<float*>(msgData._payload)[5]);
-    value = objDef->ToVariant(6, parameterData);
+    value = NanoOcp1::Variant(parameterData);
     return true;
 }
 

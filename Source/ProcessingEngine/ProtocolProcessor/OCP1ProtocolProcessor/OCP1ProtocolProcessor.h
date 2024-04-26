@@ -21,6 +21,8 @@
 #include "../../../RemoteProtocolBridgeCommon.h"
 #include "../NetworkProtocolProcessorBase.h"
 
+#include <Variant.h>
+
 #include <JuceHeader.h>
 
 
@@ -34,6 +36,7 @@ namespace NanoOcp1
 	class Ocp1Notification;
 	class Ocp1Response;
 	struct Ocp1CommandDefinition;
+	class Variant;
 };
 
 /**
@@ -131,21 +134,21 @@ private:
 	 *  @note Use this only for simple types
 	 *  @tparam		T		Template class (int | float | char)
 	 *  @param[in]	msgData	The message data to check
-	 *  @param[out]	value	The parsed msgData as juce::var
+	 *  @param[out]	value	The parsed msgData as NanoOcp1::Variant
 	 *  @returns			True if the message data exactly 1 parameter matching the template class size
 	 */
 	template <class T>
-	bool CheckAndParseMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value)
+	bool CheckAndParseMessagePayload(const RemoteObjectMessageData& msgData, NanoOcp1::Variant& value)
 	{
 		if (!CheckMessagePayload<T>(1, msgData))
 			return false;
-		value = juce::var(*static_cast<T*>(msgData._payload));
+		value = NanoOcp1::Variant(*static_cast<T*>(msgData._payload));
 		return true;
 	}
 
-	bool CheckAndParseStringMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value);
-	bool CheckAndParseMuteMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value);
-	bool CheckAndParsePolarityMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value);
-	bool ParsePositionMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value, NanoOcp1::Ocp1CommandDefinition* objDef);
-	bool ParsePositionAndRotationMessagePayload(const RemoteObjectMessageData& msgData, juce::var& value, NanoOcp1::Ocp1CommandDefinition* objDef);
+	bool CheckAndParseStringMessagePayload(const RemoteObjectMessageData& msgData, NanoOcp1::Variant& value);
+	bool CheckAndParseMuteMessagePayload(const RemoteObjectMessageData& msgData, NanoOcp1::Variant& value);
+	bool CheckAndParsePolarityMessagePayload(const RemoteObjectMessageData& msgData, NanoOcp1::Variant& value);
+	bool ParsePositionMessagePayload(const RemoteObjectMessageData& msgData, NanoOcp1::Variant& value, NanoOcp1::Ocp1CommandDefinition* objDef);
+	bool ParsePositionAndRotationMessagePayload(const RemoteObjectMessageData& msgData, NanoOcp1::Variant& value, NanoOcp1::Ocp1CommandDefinition* objDef);
 };
