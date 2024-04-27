@@ -34,12 +34,16 @@ public:
 	bool Start() override;
 	bool Stop() override;
 
+	void SetListenerPosition(const juce::Vector3D<float>& pos);
+	void SetAURAArea(const juce::Rectangle<float>& area);
+
 protected:
 	//==============================================================================
 	void InitializeObjectValueCache() override;
 
 private:
 	//==============================================================================
-
+	juce::Vector3D<float>	m_listenerPosition{ 5.0f, 5.0f, 0.0f };
+	juce::Rectangle<float>	m_auraArea{ 10.0f, 10.0f };
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AURAProtocolProtocolProcessor)
 };

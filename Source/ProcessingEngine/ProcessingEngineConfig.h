@@ -88,6 +88,8 @@ public:
 		OCP1CONNECTIONMODE,
 		VALUEACK,
 		DBPRDATA,
+		POSITION,
+		AREA
 	};
 	static String getTagName(TagID Id)
 	{
@@ -167,6 +169,10 @@ public:
 			return "ValueAcknowledge";
 		case DBPRDATA:
 			return "dbprDataString";
+		case POSITION:
+			return "Position";
+		case AREA:
+			return "Area";
 		default:
 			return "INVALID";
 		}
