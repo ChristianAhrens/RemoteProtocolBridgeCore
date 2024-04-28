@@ -175,7 +175,7 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
                 if (msgData._valCount != 3 || msgData._payloadSize != 3 * sizeof(float))
                     return false;
 
-                GetValueCache().SetValue(RemoteObject(roi, msgData._addrVal), msgData);
+                SetValue(RemoteObject(roi, msgData._addrVal), msgData);
 
                 msgsToReflect.push_back(std::make_pair(roi, msgData));
             }
@@ -187,7 +187,7 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
 
                 auto targetObj = RemoteObject(ROI_CoordinateMapping_SourcePosition, msgData._addrVal);
                 if (!GetValueCache().Contains(targetObj))
-                    GetValueCache().SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
+                    SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
 
                 // get the xyz data from cache to insert the new xy data and send the xyz out
                 auto& refMsgData = GetValueCache().GetValue(targetObj);
@@ -201,7 +201,7 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
                 //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
                 //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
 
-                GetValueCache().SetValue(targetObj, refMsgData);
+                SetValue(targetObj, refMsgData);
 
                 msgsToReflect.push_back(std::make_pair(roi, msgData));
                 msgsToReflect.push_back(std::make_pair(targetObj._Id, refMsgData));
@@ -216,7 +216,7 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
 
                 auto targetObj = RemoteObject(ROI_CoordinateMapping_SourcePosition, msgData._addrVal);
                 if (!GetValueCache().Contains(targetObj))
-                    GetValueCache().SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
+                    SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
 
                 // get the xyz data from cache to insert the new xy data and send the xyz out
                 auto& refMsgData = GetValueCache().GetValue(targetObj);
@@ -229,7 +229,7 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
                 //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
                 //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
 
-                GetValueCache().SetValue(targetObj, refMsgData);
+                SetValue(targetObj, refMsgData);
 
                 msgsToReflect.push_back(std::make_pair(roi, msgData));
                 msgsToReflect.push_back(std::make_pair(targetObj._Id, refMsgData));
@@ -243,7 +243,7 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
 
                 auto targetObj = RemoteObject(ROI_CoordinateMapping_SourcePosition, msgData._addrVal);
                 if (!GetValueCache().Contains(targetObj))
-                    GetValueCache().SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
+                    SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
 
                 // get the xyz data from cache to insert the new xy data and send the xyz out
                 auto& refMsgData = GetValueCache().GetValue(targetObj);
@@ -256,7 +256,7 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
                 //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
                 //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
 
-                GetValueCache().SetValue(targetObj, refMsgData);
+                SetValue(targetObj, refMsgData);
 
                 msgsToReflect.push_back(std::make_pair(roi, msgData));
                 msgsToReflect.push_back(std::make_pair(targetObj._Id, refMsgData));
@@ -268,7 +268,7 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
                 if (msgData._valCount != 3 || msgData._payloadSize != 3 * sizeof(float))
                     return false;
 
-                GetValueCache().SetValue(RemoteObject(roi, msgData._addrVal), msgData);
+                SetValue(RemoteObject(roi, msgData._addrVal), msgData);
 
                 msgsToReflect.push_back(std::make_pair(roi, msgData));
             }
@@ -280,7 +280,7 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
 
                 auto targetObj = RemoteObject(ROI_Positioning_SourcePosition, msgData._addrVal);
                 if (!GetValueCache().Contains(targetObj))
-                    GetValueCache().SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
+                    SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
 
                 // get the xyz data from cache to insert the new xy data and send the xyz out
                 auto& refMsgData = GetValueCache().GetValue(targetObj);
@@ -294,7 +294,7 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
                 //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
                 //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
 
-                GetValueCache().SetValue(targetObj, refMsgData);
+                SetValue(targetObj, refMsgData);
 
                 msgsToReflect.push_back(std::make_pair(roi, msgData));
                 msgsToReflect.push_back(std::make_pair(targetObj._Id, refMsgData));
@@ -309,7 +309,7 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
 
                 auto targetObj = RemoteObject(ROI_Positioning_SourcePosition, msgData._addrVal);
                 if (!GetValueCache().Contains(targetObj))
-                    GetValueCache().SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
+                    SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
 
                 // get the xyz data from cache to insert the new xy data and send the xyz out
                 auto& refMsgData = GetValueCache().GetValue(targetObj);
@@ -322,7 +322,7 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
                 //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
                 //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
 
-                GetValueCache().SetValue(targetObj, refMsgData);
+                SetValue(targetObj, refMsgData);
 
                 msgsToReflect.push_back(std::make_pair(roi, msgData));
                 msgsToReflect.push_back(std::make_pair(targetObj._Id, refMsgData));
@@ -336,7 +336,7 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
 
                 auto targetObj = RemoteObject(ROI_Positioning_SourcePosition, msgData._addrVal);
                 if (!GetValueCache().Contains(targetObj))
-                    GetValueCache().SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
+                    SetValue(targetObj, RemoteObjectMessageData(targetObj._Addr, ROVT_FLOAT, 3, &zeroPayload, 3 * sizeof(float)));
 
                 // get the xyz data from cache to insert the new xy data and send the xyz out
                 auto& refMsgData = GetValueCache().GetValue(targetObj);
@@ -349,7 +349,7 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
                 //auto z = reinterpret_cast<float*>(refMsgData._payload)[2];
                 //DBG(juce::String(__FUNCTION__) << " ROI:" << id << " data from cache combined with incoming -> x:" << x << " y:" << y << " z:" << z);
 
-                GetValueCache().SetValue(targetObj, refMsgData);
+                SetValue(targetObj, refMsgData);
 
                 msgsToReflect.push_back(std::make_pair(roi, msgData));
                 msgsToReflect.push_back(std::make_pair(targetObj._Id, refMsgData));
@@ -379,7 +379,7 @@ bool NoProtocolProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIden
             break;
 		default:
             {
-                GetValueCache().SetValue(RemoteObject(roi, msgData._addrVal), msgData);
+                SetValue(RemoteObject(roi, msgData._addrVal), msgData);
 
                 msgsToReflect.push_back(std::make_pair(roi, msgData));
             }
@@ -417,7 +417,7 @@ void NoProtocolProtocolProcessor::timerThreadCallback()
 void NoProtocolProtocolProcessor::InitializeObjectValueCache()
 {
     auto deviceName = juce::String("InternalSim");
-    GetValueCache().SetValue(
+    SetValue(
         RemoteObject(ROI_Settings_DeviceName, RemoteObjectAddressing(INVALID_ADDRESS_VALUE, INVALID_ADDRESS_VALUE)),
         RemoteObjectMessageData(RemoteObjectAddressing(INVALID_ADDRESS_VALUE, INVALID_ADDRESS_VALUE), ROVT_STRING, static_cast<std::uint16_t>(deviceName.length()), deviceName.getCharPointer().getAddress(), static_cast<std::uint32_t>(deviceName.length())));
 
@@ -437,13 +437,13 @@ void NoProtocolProtocolProcessor::InitializeObjectValueCache()
     // all en-space relevant values
     auto oneFloat = 1.0f;
     auto oneInt = 1;
-    GetValueCache().SetValue(
+    SetValue(
         RemoteObject(ROI_MatrixSettings_ReverbRoomId, RemoteObjectAddressing(INVALID_ADDRESS_VALUE, INVALID_ADDRESS_VALUE)),
         RemoteObjectMessageData(RemoteObjectAddressing(INVALID_ADDRESS_VALUE, INVALID_ADDRESS_VALUE), ROVT_INT, 1, &oneInt, sizeof(int)));
-    GetValueCache().SetValue(
+    SetValue(
         RemoteObject(ROI_MatrixSettings_ReverbPredelayFactor, RemoteObjectAddressing(INVALID_ADDRESS_VALUE, INVALID_ADDRESS_VALUE)),
         RemoteObjectMessageData(RemoteObjectAddressing(INVALID_ADDRESS_VALUE, INVALID_ADDRESS_VALUE), ROVT_FLOAT, 1, &oneFloat, sizeof(float)));
-    GetValueCache().SetValue(
+    SetValue(
         RemoteObject(ROI_MatrixSettings_ReverbRearLevel, RemoteObjectAddressing(INVALID_ADDRESS_VALUE, INVALID_ADDRESS_VALUE)),
         RemoteObjectMessageData(RemoteObjectAddressing(INVALID_ADDRESS_VALUE, INVALID_ADDRESS_VALUE), ROVT_FLOAT, 1, &oneFloat, sizeof(float)));
 
@@ -779,7 +779,7 @@ void NoProtocolProtocolProcessor::SetValueToCache(const RemoteObjectIdentifier& 
         for (int i = 0; i < vals.size(); i++)
             fVals[i] = vals[i];
 
-        GetValueCache().SetValue(
+        SetValue(
             RemoteObject(roi, addr),
             RemoteObjectMessageData(addr, ROVT_FLOAT, valCount, fVals, valCount * sizeof(float)));
     }
@@ -788,7 +788,7 @@ void NoProtocolProtocolProcessor::SetValueToCache(const RemoteObjectIdentifier& 
         for (int i = 0; i < vals.size(); i++)
             iVals[i] = vals[i];
 
-        GetValueCache().SetValue(
+        SetValue(
             RemoteObject(roi, addr),
             RemoteObjectMessageData(addr, ROVT_INT, valCount, iVals, valCount * sizeof(float)));
     }
@@ -809,31 +809,31 @@ void NoProtocolProtocolProcessor::SetInputValuesToCache(ChannelId channel, const
     auto oneInt = 1;
 
     auto addr = RemoteObjectAddressing(channel, INVALID_ADDRESS_VALUE);
-    GetValueCache().SetValue(
+    SetValue(
         RemoteObject(ROI_MatrixInput_ChannelName, addr),
         RemoteObjectMessageData(addr, ROVT_STRING, static_cast<std::uint16_t>(inputName.length()), inputName.getCharPointer().getAddress(), static_cast<std::uint32_t>(inputName.length())));
 
-    GetValueCache().SetValue(
+    SetValue(
         RemoteObject(ROI_Positioning_SourcePosition, addr),
         RemoteObjectMessageData(addr, ROVT_FLOAT, 3, pos, 3 * sizeof(float)));
 
     for (int mp = 1; mp <= 4; mp++)
     {
         addr._second = RecordId(mp);
-        GetValueCache().SetValue(
+        SetValue(
             RemoteObject(ROI_CoordinateMapping_SourcePosition, addr),
             RemoteObjectMessageData(addr, ROVT_FLOAT, 3, relpos, 3 * sizeof(float)));
     }
 
-    GetValueCache().SetValue(
+    SetValue(
         RemoteObject(ROI_Positioning_SourceSpread, addr),
         RemoteObjectMessageData(addr, ROVT_FLOAT, 1, &zeroFloat, sizeof(float)));
 
-    GetValueCache().SetValue(
+    SetValue(
         RemoteObject(ROI_MatrixInput_ReverbSendGain, addr),
         RemoteObjectMessageData(addr, ROVT_FLOAT, 1, &zeroFloat, sizeof(float)));
 
-    GetValueCache().SetValue(
+    SetValue(
         RemoteObject(ROI_Positioning_SourceDelayMode, addr),
         RemoteObjectMessageData(addr, ROVT_INT, 1, &oneInt, sizeof(int)));
 }
@@ -852,15 +852,15 @@ void NoProtocolProtocolProcessor::SetSceneIndexToCache(std::float_t sceneIndex)
     auto sceneIndexMinor = static_cast<int>(sceneIndex * 100.0f) % 100;
 
     auto sceneIndexString = juce::String(sceneIndexMajor) + "." + juce::String(sceneIndexMinor);
-    GetValueCache().SetValue(
+    SetValue(
         RemoteObject(ROI_Scene_SceneIndex, RemoteObjectAddressing(INVALID_ADDRESS_VALUE, INVALID_ADDRESS_VALUE)),
         RemoteObjectMessageData(RemoteObjectAddressing(INVALID_ADDRESS_VALUE, INVALID_ADDRESS_VALUE), ROVT_STRING, static_cast<std::uint16_t>(sceneIndexString.length()), sceneIndexString.getCharPointer().getAddress(), static_cast<std::uint32_t>(sceneIndexString.length())));
     auto sceneName = juce::String("Example Scene ") + sceneIndexString;
-    GetValueCache().SetValue(
+    SetValue(
         RemoteObject(ROI_Scene_SceneName, RemoteObjectAddressing(INVALID_ADDRESS_VALUE, INVALID_ADDRESS_VALUE)),
         RemoteObjectMessageData(RemoteObjectAddressing(INVALID_ADDRESS_VALUE, INVALID_ADDRESS_VALUE), ROVT_STRING, static_cast<std::uint16_t>(sceneName.length()), sceneName.getCharPointer().getAddress(), static_cast<std::uint32_t>(sceneName.length())));
     auto sceneComment = juce::String("Example Scene Comment ") + sceneIndexString;
-    GetValueCache().SetValue(
+    SetValue(
         RemoteObject(ROI_Scene_SceneComment, RemoteObjectAddressing(INVALID_ADDRESS_VALUE, INVALID_ADDRESS_VALUE)),
         RemoteObjectMessageData(RemoteObjectAddressing(INVALID_ADDRESS_VALUE, INVALID_ADDRESS_VALUE), ROVT_STRING, static_cast<std::uint16_t>(sceneComment.length()), sceneComment.getCharPointer().getAddress(), static_cast<std::uint32_t>(sceneComment.length())));
 }
@@ -875,7 +875,7 @@ void NoProtocolProtocolProcessor::SetSpeakerPositionToCache(ChannelId channel, f
     float spos[6] = { x, y, z, hor, vrt, rot };
 
     auto addr1 = RemoteObjectAddressing(channel, INVALID_ADDRESS_VALUE);
-    GetValueCache().SetValue(
+    SetValue(
         RemoteObject(ROI_Positioning_SpeakerPosition, addr1),
         RemoteObjectMessageData(addr1, ROVT_FLOAT, 6, spos, 6 * sizeof(float)));
 }
@@ -895,37 +895,47 @@ void NoProtocolProtocolProcessor::SetSpeakerPositionToCache(ChannelId channel, f
 void NoProtocolProtocolProcessor::SetMappingSettingsToCache(ChannelId mapping, const juce::String& mappingName, float realp1[3], float realp2[3], float realp3[3], float realp4[3], float virtp1[3], float virtp3[3], int flip)
 {
     auto addr = RemoteObjectAddressing(mapping, INVALID_ADDRESS_VALUE);
-    GetValueCache().SetValue(
+    SetValue(
         RemoteObject(ROI_CoordinateMappingSettings_Name, addr),
         RemoteObjectMessageData(addr, ROVT_STRING, static_cast<std::uint16_t>(mappingName.length()), mappingName.getCharPointer().getAddress(), static_cast<std::uint32_t>(mappingName.length())));
 
-    GetValueCache().SetValue(
+    SetValue(
         RemoteObject(ROI_CoordinateMappingSettings_P1real, addr),
         RemoteObjectMessageData(addr, ROVT_FLOAT, 3, realp1, 3 * sizeof(float)));
 
-    GetValueCache().SetValue(
+    SetValue(
         RemoteObject(ROI_CoordinateMappingSettings_P2real, addr),
         RemoteObjectMessageData(addr, ROVT_FLOAT, 3, realp2, 3 * sizeof(float)));
 
-    GetValueCache().SetValue(
+    SetValue(
         RemoteObject(ROI_CoordinateMappingSettings_P3real, addr),
         RemoteObjectMessageData(addr, ROVT_FLOAT, 3, realp3, 3 * sizeof(float)));
 
-    GetValueCache().SetValue(
+    SetValue(
         RemoteObject(ROI_CoordinateMappingSettings_P4real, addr),
         RemoteObjectMessageData(addr, ROVT_FLOAT, 3, realp4, 3 * sizeof(float)));
 
-    GetValueCache().SetValue(
+    SetValue(
         RemoteObject(ROI_CoordinateMappingSettings_P1virtual, addr),
         RemoteObjectMessageData(addr, ROVT_FLOAT, 3, virtp1, 3 * sizeof(float)));
 
-    GetValueCache().SetValue(
+    SetValue(
         RemoteObject(ROI_CoordinateMappingSettings_P3virtual, addr),
         RemoteObjectMessageData(addr, ROVT_FLOAT, 3, virtp3, 3 * sizeof(float)));
 
-    GetValueCache().SetValue(
+    SetValue(
         RemoteObject(ROI_CoordinateMappingSettings_Flip, addr),
         RemoteObjectMessageData(addr, ROVT_INT, 1, &flip, sizeof(int)));
+}
+
+/**
+ * Helper method to set a value to valuecache and allow derived classes to reimplement and add additional functionality
+ * @param	ro			The remote object to set the value for
+ * @param	valueData	The value to set
+ */
+void NoProtocolProtocolProcessor::SetValue(const RemoteObject& ro, const RemoteObjectMessageData& valueData)
+{
+    GetValueCache().SetValue(ro, valueData);
 }
 
 /**

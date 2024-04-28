@@ -59,6 +59,7 @@ bool AURAProtocolProtocolProcessor::setStateXml(XmlElement* stateXml)
     }
     else
     {
+        auto retVal = true;
         auto listenerPosXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::POSITION));
         if (listenerPosXmlElement)
         {
@@ -66,15 +67,38 @@ bool AURAProtocolProtocolProcessor::setStateXml(XmlElement* stateXml)
             if (3 == positionValues.addTokens(listenerPosXmlElement->getAllSubText(), ";", ""))
                 SetListenerPosition({ positionValues[0].getFloatValue(), positionValues[1].getFloatValue(), positionValues[2].getFloatValue() });
         }
-        auto auraAreaXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::AREA));
-        if (auraAreaXmlElement)
+        else
+            retVal = false;
+
+        auto areaXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::AREA));
+        if (areaXmlElement)
         {
             auto areaValues = StringArray();
-            if (2 == areaValues.addTokens(auraAreaXmlElement->getAllSubText(), ";", ""))
-                SetAURAArea({ areaValues[0].getFloatValue(), areaValues[1].getFloatValue() });
+            if (2 == areaValues.addTokens(areaXmlElement->getAllSubText(), ";", ""))
+                SetArea({ areaValues[0].getFloatValue(), areaValues[1].getFloatValue() });
         }
+        else
+            retVal = false;
 
-        return true;
+        //auto ipAdressXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::IPADDRESS));
+        //if (ipAdressXmlElement)
+        //    SetIpAddress(ipAdressXmlElement->getStringAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::ADRESS)).toStdString());
+        //else
+        //    retVal = false;
+        //
+        //auto clientPortXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::CLIENTPORT));
+        //if (clientPortXmlElement)
+        //    SetClientPort(clientPortXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::PORT)));
+        //else
+        //    retVal = false;
+        //
+        //auto hostPortXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::HOSTPORT));
+        //if (hostPortXmlElement)
+        //    SetHostPort(hostPortXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::PORT)));
+        //else
+        //    retVal = false;
+
+        return retVal;
     }
 }
 
@@ -84,6 +108,8 @@ bool AURAProtocolProtocolProcessor::setStateXml(XmlElement* stateXml)
  */
 bool AURAProtocolProtocolProcessor::Start()
 {
+    SendListenerPositionToAURA();
+
     return NoProtocolProtocolProcessor::Start();
 }
 
@@ -107,12 +133,12 @@ void AURAProtocolProtocolProcessor::SetListenerPosition(const juce::Vector3D<flo
 }
 
 /**
- * Setter for the AURA area member
+ * Setter for the area member
  * @param area  The area to copy to internal member
  */
-void AURAProtocolProtocolProcessor::SetAURAArea(const juce::Rectangle<float>& area)
+void AURAProtocolProtocolProcessor::SetArea(const juce::Rectangle<float>& area)
 {
-    m_auraArea = area;
+    m_area = area;
 
     InitializeObjectValueCache();
 }
@@ -136,17 +162,16 @@ void AURAProtocolProtocolProcessor::InitializeObjectValueCache()
     for (int in = 1; in <= sc_chCnt; in++)
         ind[in] = juce::String("Input ") + juce::String(in);
 
+    auto w = juce::String(m_area.getWidth());
+    auto h = juce::String(m_area.getHeight());
     auto px = juce::String(m_listenerPosition.x);
-    auto py = juce::String(m_listenerPosition.y);
+    auto py = juce::String(m_area.getHeight() - m_listenerPosition.y);
 
     // all output relevant values
     auto& spd = pd._speakerPositionData;
     spd[1] = SpeakerPositionData::FromString(py + "," + px + ",0.0,0.0,90.0,0.0");
     for (auto i = 2; i <= 64; i++)
         spd[i] = SpeakerPositionData::FromString("0.0,0.0,0.0,0.0,0.0,0.0");
-
-    auto w = juce::String(m_auraArea.getWidth());
-    auto h = juce::String(m_auraArea.getHeight());
 
     // all mapping settings relevant values
     auto& cmd = pd._coordinateMappingData;
@@ -186,4 +211,83 @@ void AURAProtocolProtocolProcessor::InitializeObjectValueCache()
     NoProtocolProtocolProcessor::InitializeObjectValueCache(pd);
 }
 
+/**
+ * Reimplemented helper method to set a value to valuecache 
+ * and process relative position values to be forwarded to AURA as absolute
+ * @param	ro			The remote object to set the value for
+ * @param	valueData	The value to set
+ */
+void AURAProtocolProtocolProcessor::SetValue(const RemoteObject& ro, const RemoteObjectMessageData& valueData)
+{
+    NoProtocolProtocolProcessor::SetValue(ro, valueData);
+
+    auto sourceId = ro._Addr._first;
+    auto position = juce::Vector3D<float>(0.0f, 0.0f, 0.0f);
+
+    switch (ro._Id)
+    {
+    case ROI_Positioning_SourcePosition:
+    case ROI_Positioning_SourcePosition_XY:
+    case ROI_Positioning_SourcePosition_X:
+    case ROI_Positioning_SourcePosition_Y:
+        // nix spezielles mit absoluten positionen
+        break;
+    case ROI_CoordinateMapping_SourcePosition:
+        {
+            auto xyzVal = GetValueCache().GetTripleFloatValues(RemoteObject(ROI_CoordinateMapping_SourcePosition, RemoteObjectAddressing(1, 1)));
+            position = juce::Vector3D<float>(std::get<0>(xyzVal), std::get<1>(xyzVal), std::get<2>(xyzVal));
+
+            SendSourcePositionToAURA(sourceId, RelativeToAbsolutePosition(position));
+        }
+        break;
+    case ROI_CoordinateMapping_SourcePosition_XY:
+        {
+            auto xyVal = GetValueCache().GetDualFloatValues(RemoteObject(ROI_CoordinateMapping_SourcePosition_XY, RemoteObjectAddressing(1, 1)));
+            position.x = std::get<0>(xyVal);
+            position.y = std::get<1>(xyVal);
+
+            SendSourcePositionToAURA(sourceId, RelativeToAbsolutePosition(position));
+        }
+        break;
+    case ROI_CoordinateMapping_SourcePosition_X:
+        {
+            auto xVal = GetValueCache().GetFloatValue(RemoteObject(ROI_CoordinateMapping_SourcePosition_X, RemoteObjectAddressing(1, 1)));
+            position.x = xVal;
+
+            SendSourcePositionToAURA(sourceId, RelativeToAbsolutePosition(position));
+        }
+        break;
+    case ROI_CoordinateMapping_SourcePosition_Y:
+        {
+            auto yVal = GetValueCache().GetFloatValue(RemoteObject(ROI_CoordinateMapping_SourcePosition_Y, RemoteObjectAddressing(1, 1)));
+            position.y = yVal;
+
+            SendSourcePositionToAURA(sourceId, RelativeToAbsolutePosition(position));
+        }
+        break;
+    default:
+        break;
+    }
+}
+
+juce::Vector3D<float> AURAProtocolProtocolProcessor::RelativeToAbsolutePosition(const juce::Vector3D<float>& relativePosition)
+{
+    return juce::Vector3D<float>(
+        m_area.getWidth() * relativePosition.x,
+        m_area.getHeight() * relativePosition.y,
+        0.0f
+    );
+}
+
+bool AURAProtocolProtocolProcessor::SendListenerPositionToAURA()
+{
+    DBG(juce::String(__FUNCTION__) << " " << m_listenerPosition.x << "," << m_listenerPosition.y << "," << m_listenerPosition.z);
+    return true;
+}
+
+bool AURAProtocolProtocolProcessor::SendSourcePositionToAURA(std::int32_t sourceId, const juce::Vector3D<float>& sourcePosition)
+{
+    DBG(juce::String(__FUNCTION__) << " " << sourceId << " " << sourcePosition.x << "," << sourcePosition.y << "," << sourcePosition.z);
+    return true;
+}
 
