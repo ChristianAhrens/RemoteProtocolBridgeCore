@@ -23,7 +23,7 @@
 /**
  * Class AURAProtocolProtocolProcessor is a derived class for dummy protocol interaction.
  */
-class AURAProtocolProtocolProcessor : public NoProtocolProtocolProcessor
+class AURAProtocolProtocolProcessor : public NoProtocolProtocolProcessor, juce::Timer
 {
 public:
 	enum AuraPacketType
@@ -36,6 +36,8 @@ public:
 public:
 	AURAProtocolProtocolProcessor(const NodeId& parentNodeId);
 	virtual ~AURAProtocolProtocolProcessor() override;
+
+	void timerCallback() override;
 
 	bool setStateXml(XmlElement* stateXml) override;
 
@@ -56,10 +58,10 @@ protected:
 		AURAConnection() : juce::InterprocessConnection(false) {};
 		virtual ~AURAConnection() override { disconnect(); };
 
-		bool connect(const juce::IPAddress& address, int port = s_auraPort) {
+		bool connect(const juce::IPAddress& address, int port = s_auraPort, int timeoutMs = 1000) {
 			if (isConnected())
 				disconnect(); 
-			return connectToSocket(address.toString(), port, 1000);
+			return connectToSocket(address.toString(), port, timeoutMs);
 		};
 
 		//==============================================================================

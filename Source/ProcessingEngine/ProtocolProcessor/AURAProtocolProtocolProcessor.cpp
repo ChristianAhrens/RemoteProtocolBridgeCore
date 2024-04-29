@@ -112,6 +112,8 @@ bool AURAProtocolProtocolProcessor::Start()
     {
         // assign lambdas for connection status tracking first
         m_networkConnection->onConnectionEstablished = [=]() {
+            stopTimer();
+
             auto info = "AURA connection established.";
             DBG(info);
             std::cout << info << std::endl;
@@ -123,13 +125,16 @@ bool AURAProtocolProtocolProcessor::Start()
             auto info = "AURA connection lost.";
             DBG(info);
             std::cout << info << std::endl;
+
+            startTimer(500); // start trying to reestablish connection
         };
 
         // then fire up connection
         auto info = (juce::String("Try to connect to AURA on ") + m_ipAddress.toString() + ":" + juce::String(m_port)).toStdString();
         DBG(info);
         std::cout << info << std::endl;
-        m_networkConnection->connect(m_ipAddress, m_port);
+        if (!m_networkConnection->connect(m_ipAddress, m_port))
+            startTimer(500); // start trying to establish connection
 
         // assign the lambda for data processing callback AFTER internal handling is set up to not already get called before that is done
         m_networkConnection->onDataReceived = [=](const juce::MemoryBlock& data) {
@@ -157,6 +162,12 @@ bool AURAProtocolProtocolProcessor::Stop()
     }
 
     return NoProtocolProtocolProcessor::Stop();
+}
+
+void AURAProtocolProtocolProcessor::timerCallback()
+{
+    if (m_networkConnection->connect(m_ipAddress, m_port, 50))
+        stopTimer(); // connection established, no need to retry
 }
 
 void AURAProtocolProtocolProcessor::SetIpAddress(const juce::IPAddress& ipAddress)
@@ -333,6 +344,10 @@ bool AURAProtocolProtocolProcessor::SendListenerPositionToAURA()
         return false;
     else
     {
+        auto info = (juce::String("listener pos > AURA: ") + juce::String(m_listenerPosition.x) + ";" + juce::String(m_listenerPosition.y) + ";" + juce::String(m_listenerPosition.z)).toStdString();
+        DBG(info);
+        std::cout << info << std::endl;
+
         assert(sizeof(std::uint32_t) == sizeof(std::float_t));
         std::uint32_t packetId = APT_ListenerPosition; // id 1
         std::uint32_t xInt = *(std::uint32_t*)&m_listenerPosition.x;
@@ -369,6 +384,10 @@ bool AURAProtocolProtocolProcessor::SendSourcePositionToAURA(std::int32_t source
         return false;
     else
     {
+        auto info = (juce::String("obj pos ") + juce::String(sourceId) + " > AURA: " + juce::String(sourcePosition.x) + "; " + juce::String(sourcePosition.y) + "; " + juce::String(sourcePosition.z)).toStdString();
+        DBG(info);
+        std::cout << info << std::endl;
+
         assert(sizeof(std::uint32_t) == sizeof(std::float_t));
         std::uint32_t packetId = APT_ObjectPosition; // id 2
         std::uint32_t xInt = *(std::uint32_t*)&sourcePosition.x;
