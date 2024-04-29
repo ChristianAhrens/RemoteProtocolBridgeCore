@@ -115,6 +115,9 @@ bool AURAProtocolProtocolProcessor::Start()
             auto info = "AURA connection established.";
             DBG(info);
             std::cout << info << std::endl;
+
+            SendListenerPositionToAURA();
+            SendKnownSourcePositionsToAURA();
         };
         m_networkConnection->onConnectionLost = [=]() {
             auto info = "AURA connection lost.";
@@ -400,3 +403,17 @@ bool AURAProtocolProtocolProcessor::SendSourcePositionToAURA(std::int32_t source
     }
 }
 
+bool AURAProtocolProtocolProcessor::SendKnownSourcePositionsToAURA()
+{
+    auto retVal = true;
+    for (int sourceId = 1; sourceId <= sc_chCnt; sourceId++)
+    {
+        auto ro = RemoteObject(ROI_CoordinateMapping_SourcePosition, RemoteObjectAddressing(sourceId, 1));
+        if (GetValueCache().Contains(ro))
+        {
+            auto xyzVal = GetValueCache().GetTripleFloatValues(ro);
+            retVal = retVal && SendSourcePositionToAURA(sourceId, juce::Vector3D<float>(std::get<0>(xyzVal), std::get<1>(xyzVal), std::get<2>(xyzVal)));
+        }
+    }
+    return retVal;
+}

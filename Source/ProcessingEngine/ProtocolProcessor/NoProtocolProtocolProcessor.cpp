@@ -466,7 +466,7 @@ void NoProtocolProtocolProcessor::InitializeObjectValueCache()
     spd[6] = SpeakerPositionData::FromString("-2.0,0.0,0.0,0.0,0.0,0.0");
     spd[7] = SpeakerPositionData::FromString("-2.0,-2.0,0.0,45.0,0.0,0.0");
     spd[8] = SpeakerPositionData::FromString("0.0,-2.0,0.0,90.0,0.0,0.0");
-    for (auto i = 9; i <= 64; i++)
+    for (auto i = 9; i <= sc_chCnt; i++)
         spd[i] = SpeakerPositionData::FromString("0.0,0.0,0.0,0.0,0.0,0.0");
 
     // all mapping settings relevant values

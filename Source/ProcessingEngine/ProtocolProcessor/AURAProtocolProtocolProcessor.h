@@ -92,6 +92,7 @@ protected:
 private:
 	//==============================================================================
 	bool SendListenerPositionToAURA();
+	bool SendKnownSourcePositionsToAURA();
 	bool SendSourcePositionToAURA(std::int32_t sourceId, const juce::Vector3D<float>& sourcePosition);
 
 	juce::Vector3D<float> RelativeToAbsolutePosition(const juce::Vector3D<float>& relativePosition);
