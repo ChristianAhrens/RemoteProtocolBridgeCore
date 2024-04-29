@@ -42,6 +42,9 @@ public:
 	bool Start() override;
 	bool Stop() override;
 
+	void SetIpAddress(const juce::IPAddress& ipAddress);
+	void SetPort(int port);
+
 	void SetListenerPosition(const juce::Vector3D<float>& pos);
 	void SetArea(const juce::Rectangle<float>& area);
 
@@ -53,16 +56,19 @@ protected:
 		AURAConnection() : juce::InterprocessConnection(false) {};
 		virtual ~AURAConnection() override { disconnect(); };
 
-		bool connect(const String& address) {
+		bool connect(const juce::IPAddress& address, int port = s_auraPort) {
 			if (isConnected())
 				disconnect(); 
-			return connectToSocket(address, s_auraPort, 1000);
+			return connectToSocket(address.toString(), port, 1000);
 		};
 
 		//==============================================================================
 		std::function<bool(const juce::MemoryBlock&)> onDataReceived;
 		std::function<void()> onConnectionEstablished;
 		std::function<void()> onConnectionLost;
+
+		//==============================================================================
+		static constexpr int s_auraPort = 60123;
 
 	protected:
 		void connectionMade() override {
@@ -77,9 +83,6 @@ protected:
 			if (onDataReceived)
 				onDataReceived(data);
 		};
-
-	private:
-		static constexpr int s_auraPort = 60123;
 	};
 	
 	//==============================================================================
@@ -95,6 +98,9 @@ private:
 	
 	//==============================================================================
 	std::unique_ptr<AURAConnection> m_networkConnection;
+
+	juce::IPAddress	m_ipAddress{ "127.0.0.1" };
+	int m_port{ AURAConnection::s_auraPort };
 
 	juce::Vector3D<float>	m_listenerPosition{ 5.0f, 5.0f, 0.0f };
 	juce::Rectangle<float>	m_area{ 10.0f, 10.0f };

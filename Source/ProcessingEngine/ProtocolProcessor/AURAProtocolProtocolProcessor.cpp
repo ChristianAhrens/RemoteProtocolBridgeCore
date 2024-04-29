@@ -82,23 +82,21 @@ bool AURAProtocolProtocolProcessor::setStateXml(XmlElement* stateXml)
         else
             retVal = false;
 
-        //auto ipAdressXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::IPADDRESS));
-        //if (ipAdressXmlElement)
-        //    SetIpAddress(ipAdressXmlElement->getStringAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::ADRESS)).toStdString());
-        //else
-        //    retVal = false;
-        //
-        //auto clientPortXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::CLIENTPORT));
-        //if (clientPortXmlElement)
-        //    SetClientPort(clientPortXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::PORT)));
-        //else
-        //    retVal = false;
-        //
-        //auto hostPortXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::HOSTPORT));
-        //if (hostPortXmlElement)
-        //    SetHostPort(hostPortXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::PORT)));
-        //else
-        //    retVal = false;
+        auto ipAdressXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::IPADDRESS));
+        if (ipAdressXmlElement)
+        {
+            SetIpAddress(juce::IPAddress(ipAdressXmlElement->getStringAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::ADRESS)).toStdString()));
+        }
+        else
+            retVal = false;
+        
+        auto clientPortXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::CLIENTPORT));
+        if (clientPortXmlElement)
+        {
+            SetPort(clientPortXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::PORT)));
+        }
+        else
+            retVal = false;
 
         return retVal;
     }
@@ -113,11 +111,22 @@ bool AURAProtocolProtocolProcessor::Start()
     if (m_networkConnection)
     {
         // assign lambdas for connection status tracking first
-        m_networkConnection->onConnectionEstablished = [=]() {};
-        m_networkConnection->onConnectionLost = [=]() {};
+        m_networkConnection->onConnectionEstablished = [=]() {
+            auto info = "AURA connection established.";
+            DBG(info);
+            std::cout << info << std::endl;
+        };
+        m_networkConnection->onConnectionLost = [=]() {
+            auto info = "AURA connection lost.";
+            DBG(info);
+            std::cout << info << std::endl;
+        };
 
         // then fire up connection
-        m_networkConnection->connect("127.0.0.1");
+        auto info = (juce::String("Try to connect to AURA on ") + m_ipAddress.toString() + ":" + juce::String(m_port)).toStdString();
+        DBG(info);
+        std::cout << info << std::endl;
+        m_networkConnection->connect(m_ipAddress, m_port);
 
         // assign the lambda for data processing callback AFTER internal handling is set up to not already get called before that is done
         m_networkConnection->onDataReceived = [=](const juce::MemoryBlock& data) {
@@ -145,6 +154,16 @@ bool AURAProtocolProtocolProcessor::Stop()
     }
 
     return NoProtocolProtocolProcessor::Stop();
+}
+
+void AURAProtocolProtocolProcessor::SetIpAddress(const juce::IPAddress& ipAddress)
+{
+    m_ipAddress = ipAddress;
+}
+
+void AURAProtocolProtocolProcessor::SetPort(int port)
+{
+    m_port = port;
 }
 
 /**
@@ -307,8 +326,6 @@ juce::Vector3D<float> AURAProtocolProtocolProcessor::RelativeToAbsolutePosition(
 
 bool AURAProtocolProtocolProcessor::SendListenerPositionToAURA()
 {
-    DBG(juce::String(__FUNCTION__) << " " << m_listenerPosition.x << "," << m_listenerPosition.y << "," << m_listenerPosition.z);
-
     if (!m_networkConnection || !m_networkConnection->isConnected())
         return false;
     else
@@ -345,8 +362,6 @@ bool AURAProtocolProtocolProcessor::SendListenerPositionToAURA()
 
 bool AURAProtocolProtocolProcessor::SendSourcePositionToAURA(std::int32_t sourceId, const juce::Vector3D<float>& sourcePosition)
 {
-    DBG(juce::String(__FUNCTION__) << " " << sourceId << " " << sourcePosition.x << "," << sourcePosition.y << "," << sourcePosition.z);
-
     if (!m_networkConnection || !m_networkConnection->isConnected())
         return false;
     else
