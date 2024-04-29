@@ -35,6 +35,8 @@ AURAProtocolProtocolProcessor::AURAProtocolProtocolProcessor(const NodeId& paren
     SetActiveRemoteObjectsInterval(-1); // default value in ProtocolProcessorBase is 100 which we do not want to use, so invalidate it to overcome potential misunderstandings when reading code
 
     InitializeObjectValueCache();
+
+    m_networkConnection = std::make_unique<AURAConnection>();
 }
 
 /**
@@ -108,7 +110,21 @@ bool AURAProtocolProtocolProcessor::setStateXml(XmlElement* stateXml)
  */
 bool AURAProtocolProtocolProcessor::Start()
 {
-    SendListenerPositionToAURA();
+    if (m_networkConnection)
+    {
+        // assign lambdas for connection status tracking first
+        m_networkConnection->onConnectionEstablished = [=]() {};
+        m_networkConnection->onConnectionLost = [=]() {};
+
+        // then fire up connection
+        m_networkConnection->connect("127.0.0.1");
+
+        // assign the lambda for data processing callback AFTER internal handling is set up to not already get called before that is done
+        m_networkConnection->onDataReceived = [=](const juce::MemoryBlock& data) {
+            ignoreUnused(data);
+            return true;
+        };
+    }
 
     return NoProtocolProtocolProcessor::Start();
 }
@@ -118,6 +134,16 @@ bool AURAProtocolProtocolProcessor::Start()
  */
 bool AURAProtocolProtocolProcessor::Stop()
 {
+    if (m_networkConnection)
+    {
+        m_networkConnection->onDataReceived = std::function<bool(const juce::MemoryBlock & data)>();
+        m_networkConnection->onConnectionEstablished = std::function<void()>();
+        m_networkConnection->onConnectionLost = std::function<void()>();
+
+        if (m_networkConnection->isConnected())
+            m_networkConnection->disconnect();
+    }
+
     return NoProtocolProtocolProcessor::Stop();
 }
 
@@ -234,7 +260,7 @@ void AURAProtocolProtocolProcessor::SetValue(const RemoteObject& ro, const Remot
         break;
     case ROI_CoordinateMapping_SourcePosition:
         {
-            auto xyzVal = GetValueCache().GetTripleFloatValues(RemoteObject(ROI_CoordinateMapping_SourcePosition, RemoteObjectAddressing(1, 1)));
+            auto xyzVal = GetValueCache().GetTripleFloatValues(RemoteObject(ROI_CoordinateMapping_SourcePosition, RemoteObjectAddressing(sourceId, 1)));
             position = juce::Vector3D<float>(std::get<0>(xyzVal), std::get<1>(xyzVal), std::get<2>(xyzVal));
 
             SendSourcePositionToAURA(sourceId, RelativeToAbsolutePosition(position));
@@ -242,7 +268,7 @@ void AURAProtocolProtocolProcessor::SetValue(const RemoteObject& ro, const Remot
         break;
     case ROI_CoordinateMapping_SourcePosition_XY:
         {
-            auto xyVal = GetValueCache().GetDualFloatValues(RemoteObject(ROI_CoordinateMapping_SourcePosition_XY, RemoteObjectAddressing(1, 1)));
+            auto xyVal = GetValueCache().GetDualFloatValues(RemoteObject(ROI_CoordinateMapping_SourcePosition_XY, RemoteObjectAddressing(sourceId, 1)));
             position.x = std::get<0>(xyVal);
             position.y = std::get<1>(xyVal);
 
@@ -251,7 +277,7 @@ void AURAProtocolProtocolProcessor::SetValue(const RemoteObject& ro, const Remot
         break;
     case ROI_CoordinateMapping_SourcePosition_X:
         {
-            auto xVal = GetValueCache().GetFloatValue(RemoteObject(ROI_CoordinateMapping_SourcePosition_X, RemoteObjectAddressing(1, 1)));
+            auto xVal = GetValueCache().GetFloatValue(RemoteObject(ROI_CoordinateMapping_SourcePosition_X, RemoteObjectAddressing(sourceId, 1)));
             position.x = xVal;
 
             SendSourcePositionToAURA(sourceId, RelativeToAbsolutePosition(position));
@@ -259,7 +285,7 @@ void AURAProtocolProtocolProcessor::SetValue(const RemoteObject& ro, const Remot
         break;
     case ROI_CoordinateMapping_SourcePosition_Y:
         {
-            auto yVal = GetValueCache().GetFloatValue(RemoteObject(ROI_CoordinateMapping_SourcePosition_Y, RemoteObjectAddressing(1, 1)));
+            auto yVal = GetValueCache().GetFloatValue(RemoteObject(ROI_CoordinateMapping_SourcePosition_Y, RemoteObjectAddressing(sourceId, 1)));
             position.y = yVal;
 
             SendSourcePositionToAURA(sourceId, RelativeToAbsolutePosition(position));
@@ -282,12 +308,80 @@ juce::Vector3D<float> AURAProtocolProtocolProcessor::RelativeToAbsolutePosition(
 bool AURAProtocolProtocolProcessor::SendListenerPositionToAURA()
 {
     DBG(juce::String(__FUNCTION__) << " " << m_listenerPosition.x << "," << m_listenerPosition.y << "," << m_listenerPosition.z);
-    return true;
+
+    if (!m_networkConnection || !m_networkConnection->isConnected())
+        return false;
+    else
+    {
+        assert(sizeof(std::uint32_t) == sizeof(std::float_t));
+        std::uint32_t packetId = APT_ListenerPosition; // id 1
+        std::uint32_t xInt = *(std::uint32_t*)&m_listenerPosition.x;
+        std::uint32_t yInt = *(std::uint32_t*)&m_listenerPosition.y;
+        std::uint32_t zInt = *(std::uint32_t*)&m_listenerPosition.z;
+
+        auto data = std::vector<std::uint8_t>
+            ({
+                static_cast<std::uint8_t>(packetId >> 24),
+                static_cast<std::uint8_t>(packetId >> 16),
+                static_cast<std::uint8_t>(packetId >> 8),
+                static_cast<std::uint8_t>(packetId),
+                static_cast<std::uint8_t>(xInt >> 24),
+                static_cast<std::uint8_t>(xInt >> 16),
+                static_cast<std::uint8_t>(xInt >> 8),
+                static_cast<std::uint8_t>(xInt),
+                static_cast<std::uint8_t>(yInt >> 24),
+                static_cast<std::uint8_t>(yInt >> 16),
+                static_cast<std::uint8_t>(yInt >> 8),
+                static_cast<std::uint8_t>(yInt),
+                static_cast<std::uint8_t>(zInt >> 24),
+                static_cast<std::uint8_t>(zInt >> 16),
+                static_cast<std::uint8_t>(zInt >> 8),
+                static_cast<std::uint8_t>(zInt),
+                });
+
+        return m_networkConnection->sendMessage(juce::MemoryBlock(static_cast<void*>(&data), data.size()));
+    }
 }
 
 bool AURAProtocolProtocolProcessor::SendSourcePositionToAURA(std::int32_t sourceId, const juce::Vector3D<float>& sourcePosition)
 {
     DBG(juce::String(__FUNCTION__) << " " << sourceId << " " << sourcePosition.x << "," << sourcePosition.y << "," << sourcePosition.z);
-    return true;
+
+    if (!m_networkConnection || !m_networkConnection->isConnected())
+        return false;
+    else
+    {
+        assert(sizeof(std::uint32_t) == sizeof(std::float_t));
+        std::uint32_t packetId = APT_ObjectPosition; // id 2
+        std::uint32_t xInt = *(std::uint32_t*)&sourcePosition.x;
+        std::uint32_t yInt = *(std::uint32_t*)&sourcePosition.y;
+        std::uint32_t zInt = *(std::uint32_t*)&sourcePosition.z;
+
+        auto data = std::vector<std::uint8_t>
+            ({
+                static_cast<std::uint8_t>(packetId >> 24),
+                static_cast<std::uint8_t>(packetId >> 16),
+                static_cast<std::uint8_t>(packetId >> 8),
+                static_cast<std::uint8_t>(packetId),
+                static_cast<std::uint8_t>(sourceId >> 24),
+                static_cast<std::uint8_t>(sourceId >> 16),
+                static_cast<std::uint8_t>(sourceId >> 8),
+                static_cast<std::uint8_t>(sourceId),
+                static_cast<std::uint8_t>(xInt >> 24),
+                static_cast<std::uint8_t>(xInt >> 16),
+                static_cast<std::uint8_t>(xInt >> 8),
+                static_cast<std::uint8_t>(xInt),
+                static_cast<std::uint8_t>(yInt >> 24),
+                static_cast<std::uint8_t>(yInt >> 16),
+                static_cast<std::uint8_t>(yInt >> 8),
+                static_cast<std::uint8_t>(yInt),
+                static_cast<std::uint8_t>(zInt >> 24),
+                static_cast<std::uint8_t>(zInt >> 16),
+                static_cast<std::uint8_t>(zInt >> 8),
+                static_cast<std::uint8_t>(zInt),
+                });
+
+        return m_networkConnection->sendMessage(juce::MemoryBlock(static_cast<void*>(&data), data.size()));
+    }
 }
 

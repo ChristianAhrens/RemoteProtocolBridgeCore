@@ -26,6 +26,14 @@
 class AURAProtocolProtocolProcessor : public NoProtocolProtocolProcessor
 {
 public:
+	enum AuraPacketType
+	{
+		APT_None = 0,
+		APT_ListenerPosition,
+		APT_ObjectPosition
+	};
+
+public:
 	AURAProtocolProtocolProcessor(const NodeId& parentNodeId);
 	virtual ~AURAProtocolProtocolProcessor() override;
 
@@ -39,6 +47,42 @@ public:
 
 protected:
 	//==============================================================================
+	class AURAConnection : public juce::InterprocessConnection
+	{
+	public:
+		AURAConnection() : juce::InterprocessConnection(false) {};
+		virtual ~AURAConnection() override { disconnect(); };
+
+		bool connect(const String& address) {
+			if (isConnected())
+				disconnect(); 
+			return connectToSocket(address, s_auraPort, 1000);
+		};
+
+		//==============================================================================
+		std::function<bool(const juce::MemoryBlock&)> onDataReceived;
+		std::function<void()> onConnectionEstablished;
+		std::function<void()> onConnectionLost;
+
+	protected:
+		void connectionMade() override {
+			if (onConnectionEstablished)
+				onConnectionEstablished();
+		};
+		void connectionLost() override {
+			if (onConnectionLost)
+				onConnectionLost();
+		};
+		void messageReceived(const juce::MemoryBlock& data) override {
+			if (onDataReceived)
+				onDataReceived(data);
+		};
+
+	private:
+		static constexpr int s_auraPort = 60123;
+	};
+	
+	//==============================================================================
 	void InitializeObjectValueCache() override;
 	void SetValue(const RemoteObject& ro, const RemoteObjectMessageData& valueData) override;
 
@@ -50,6 +94,8 @@ private:
 	juce::Vector3D<float> RelativeToAbsolutePosition(const juce::Vector3D<float>& relativePosition);
 	
 	//==============================================================================
+	std::unique_ptr<AURAConnection> m_networkConnection;
+
 	juce::Vector3D<float>	m_listenerPosition{ 5.0f, 5.0f, 0.0f };
 	juce::Rectangle<float>	m_area{ 10.0f, 10.0f };
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AURAProtocolProtocolProcessor)
