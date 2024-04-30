@@ -374,7 +374,7 @@ bool AURAProtocolProtocolProcessor::SendListenerPositionToAURA()
                 static_cast<std::uint8_t>(zInt),
                 });
 
-        return m_networkConnection->sendMessage(juce::MemoryBlock(static_cast<void*>(&data), data.size()));
+        return m_networkConnection->sendMessage(juce::MemoryBlock(static_cast<void*>(data.data()), data.size()));
     }
 }
 
@@ -418,7 +418,7 @@ bool AURAProtocolProtocolProcessor::SendSourcePositionToAURA(std::int32_t source
                 static_cast<std::uint8_t>(zInt),
                 });
 
-        return m_networkConnection->sendMessage(juce::MemoryBlock(static_cast<void*>(&data), data.size()));
+        return m_networkConnection->sendMessage(juce::MemoryBlock(static_cast<void*>(data.data()), data.size()));
     }
 }
 
