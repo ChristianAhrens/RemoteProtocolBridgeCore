@@ -63,14 +63,13 @@ protected:
 	void SetSpeakerPositionToCache(ChannelId channel, float x, float y, float z, float hor, float vrt, float rot);
 	void SetMappingSettingsToCache(ChannelId mapping, const juce::String& mappingName, float realp3[3], float realp2[3], float realp1[3], float realp4[3], float virtp1[3], float virtp3[3], int flip);
 	virtual void SetValue(const RemoteObject& ro, const RemoteObjectMessageData& valueData);
+	virtual void timerThreadCallback() override;
 
 	//==============================================================================
 	static constexpr int sc_chCnt{ 64 };
 
 private:
 	//==============================================================================
-	void timerThreadCallback() override;
-
 	int GetCallbackRate() { return m_callbackRate; };
 	int m_callbackRate{ 100 };
 	int GetCallbackCount() { return m_callbackCount; };

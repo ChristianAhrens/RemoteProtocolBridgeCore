@@ -61,7 +61,7 @@ protected:
 
 		bool connect(const juce::IPAddress& address, int port = s_auraPort, int timeoutMs = 1000) {
 			if (isConnected())
-				disconnect(); 
+				disconnect();
 			return connectToSocket(address.toString(), port, timeoutMs);
 		};
 
@@ -87,12 +87,15 @@ protected:
 				onDataReceived(data);
 		};
 	};
-	
+
 	//==============================================================================
 	void InitializeObjectValueCache() override;
 	void SetValue(const RemoteObject& ro, const RemoteObjectMessageData& valueData) override;
 
 private:
+	//==============================================================================
+	void timerThreadCallback() override{}; // override to eliminate NoProtocolProtocolProcessor animation stepping and keepalive sim
+
 	//==============================================================================
 	bool SendListenerPositionToAURA();
 	bool SendKnownSourcePositionsToAURA();

@@ -118,6 +118,7 @@ bool AURAProtocolProtocolProcessor::Start()
             DBG(info);
             std::cout << info << std::endl;
 
+            TriggerSendingObjectValueCache();
             SendListenerPositionToAURA();
             SendKnownSourcePositionsToAURA();
         };
@@ -145,7 +146,9 @@ bool AURAProtocolProtocolProcessor::Start()
         };
     }
 
-    return NoProtocolProtocolProcessor::Start();
+    m_IsRunning = true;
+
+    return true;
 }
 
 /**
@@ -171,6 +174,10 @@ void AURAProtocolProtocolProcessor::timerCallback()
     if (m_networkConnection->isConnected())
     {
         SendKeepaliveToAURA();
+        m_messageListener->OnProtocolMessageReceived(this, ROI_HeartbeatPong, 
+            RemoteObjectMessageData(), 
+            RemoteObjectMessageMetaInfo(RemoteObjectMessageMetaInfo::MessageCategory::MC_UnsolicitedMessage, -1));
+
     }
     else if (m_networkConnection->connect(m_ipAddress, m_port, 50))
         startTimer(5000); // connection established, switch to 5s keepalive
