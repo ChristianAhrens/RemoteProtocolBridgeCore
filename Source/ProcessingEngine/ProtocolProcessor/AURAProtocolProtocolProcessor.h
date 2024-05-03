@@ -30,7 +30,8 @@ public:
 	{
 		APT_None = 0,
 		APT_ListenerPosition,
-		APT_ObjectPosition
+		APT_ObjectPosition,
+		APT_Keepalive
 	};
 
 public:
@@ -96,6 +97,7 @@ private:
 	bool SendListenerPositionToAURA();
 	bool SendKnownSourcePositionsToAURA();
 	bool SendSourcePositionToAURA(std::int32_t sourceId, const juce::Vector3D<float>& sourcePosition);
+	bool SendKeepaliveToAURA();
 
 	juce::Vector3D<float> RelativeToAbsolutePosition(const juce::Vector3D<float>& relativePosition);
 	

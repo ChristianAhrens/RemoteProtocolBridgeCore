@@ -135,6 +135,8 @@ bool AURAProtocolProtocolProcessor::Start()
         std::cout << info << std::endl;
         if (!m_networkConnection->connect(m_ipAddress, m_port))
             startTimer(500); // start trying to establish connection
+        else
+            startTimer(5000); // connection established, switch to 5s keepalive
 
         // assign the lambda for data processing callback AFTER internal handling is set up to not already get called before that is done
         m_networkConnection->onDataReceived = [=](const juce::MemoryBlock& data) {
@@ -166,8 +168,12 @@ bool AURAProtocolProtocolProcessor::Stop()
 
 void AURAProtocolProtocolProcessor::timerCallback()
 {
-    if (m_networkConnection->connect(m_ipAddress, m_port, 50))
-        stopTimer(); // connection established, no need to retry
+    if (m_networkConnection->isConnected())
+    {
+        SendKeepaliveToAURA();
+    }
+    else if (m_networkConnection->connect(m_ipAddress, m_port, 50))
+        startTimer(5000); // connection established, switch to 5s keepalive
 }
 
 void AURAProtocolProtocolProcessor::SetIpAddress(const juce::IPAddress& ipAddress)
@@ -435,4 +441,29 @@ bool AURAProtocolProtocolProcessor::SendKnownSourcePositionsToAURA()
         }
     }
     return retVal;
+}
+
+bool AURAProtocolProtocolProcessor::SendKeepaliveToAURA()
+{
+    if (!m_networkConnection || !m_networkConnection->isConnected())
+        return false;
+    else
+    {
+        auto info = juce::String("keepalive > AURA").toStdString();
+        DBG(info);
+        std::cout << info << std::endl;
+
+        assert(sizeof(std::uint32_t) == sizeof(std::float_t));
+        std::uint32_t packetId = APT_Keepalive; // id 3
+
+        auto data = std::vector<std::uint8_t>
+            ({
+                static_cast<std::uint8_t>(packetId >> 24),
+                static_cast<std::uint8_t>(packetId >> 16),
+                static_cast<std::uint8_t>(packetId >> 8),
+                static_cast<std::uint8_t>(packetId),
+                });
+
+        return m_networkConnection->sendMessage(juce::MemoryBlock(static_cast<void*>(data.data()), data.size()));
+    }
 }
