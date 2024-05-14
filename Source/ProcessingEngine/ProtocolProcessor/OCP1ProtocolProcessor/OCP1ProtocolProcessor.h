@@ -106,6 +106,7 @@ private:
 
 	//==============================================================================
 	std::unique_ptr<NanoOcp1::NanoOcp1Base>					m_nanoOcp;
+    std::mutex                                              m_pendingHandlesMutex;
 	std::vector<std::uint32_t>								m_pendingSubscriptionHandles;
 	std::map<std::uint32_t, std::uint32_t>					m_pendingGetValueHandlesWithONo;
 	std::map<std::uint32_t, std::pair<std::uint32_t, int>>	m_pendingSetValueHandlesWithONo;

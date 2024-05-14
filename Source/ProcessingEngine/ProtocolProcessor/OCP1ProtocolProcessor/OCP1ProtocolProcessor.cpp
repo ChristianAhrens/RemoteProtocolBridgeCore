@@ -1120,6 +1120,8 @@ bool OCP1ProtocolProcessor::QueryObjectValue(const RemoteObjectIdentifier roi, c
 
 void OCP1ProtocolProcessor::AddPendingSubscriptionHandle(const std::uint32_t handle)
 {
+    std::lock_guard<std::mutex> l(m_pendingHandlesMutex); // NanoOcp callback on JUCE IPC thread, safety required!
+    
     //DBG(juce::String(__FUNCTION__)
     //    << " (handle:" << NanoOcp1::HandleToString(handle) << ")");
     m_pendingSubscriptionHandles.push_back(handle);
@@ -1127,6 +1129,8 @@ void OCP1ProtocolProcessor::AddPendingSubscriptionHandle(const std::uint32_t han
 
 bool OCP1ProtocolProcessor::PopPendingSubscriptionHandle(const std::uint32_t handle)
 {
+    std::lock_guard<std::mutex> l(m_pendingHandlesMutex); // NanoOcp callback on JUCE IPC thread, safety required!
+    
     auto it = std::find(m_pendingSubscriptionHandles.begin(), m_pendingSubscriptionHandles.end(), handle);
     if (it != m_pendingSubscriptionHandles.end())
     {
@@ -1139,11 +1143,15 @@ bool OCP1ProtocolProcessor::PopPendingSubscriptionHandle(const std::uint32_t han
 
 bool OCP1ProtocolProcessor::HasPendingSubscriptions()
 {
+    std::lock_guard<std::mutex> l(m_pendingHandlesMutex); // NanoOcp callback on JUCE IPC thread, safety required!
+    
     return !m_pendingSubscriptionHandles.empty();
 }
 
 void OCP1ProtocolProcessor::AddPendingGetValueHandle(const std::uint32_t handle, const std::uint32_t ONo)
 {
+    std::lock_guard<std::mutex> l(m_pendingHandlesMutex); // NanoOcp callback on JUCE IPC thread, safety required!
+    
     //DBG(juce::String(__FUNCTION__)
     //    << " (handle:" << NanoOcp1::HandleToString(handle)
     //    << ", targetONo:0x" << juce::String::toHexString(ONo) << ")");
@@ -1152,6 +1160,8 @@ void OCP1ProtocolProcessor::AddPendingGetValueHandle(const std::uint32_t handle,
 
 const std::uint32_t OCP1ProtocolProcessor::PopPendingGetValueHandle(const std::uint32_t handle)
 {
+    std::lock_guard<std::mutex> l(m_pendingHandlesMutex); // NanoOcp callback on JUCE IPC thread, safety required!
+    
     auto it = std::find_if(m_pendingGetValueHandlesWithONo.begin(), m_pendingGetValueHandlesWithONo.end(), [handle](const auto& val) { return val.first == handle; });
     if (it != m_pendingGetValueHandlesWithONo.end())
     {
@@ -1168,11 +1178,15 @@ const std::uint32_t OCP1ProtocolProcessor::PopPendingGetValueHandle(const std::u
 
 bool OCP1ProtocolProcessor::HasPendingGetValues()
 {
+    std::lock_guard<std::mutex> l(m_pendingHandlesMutex); // NanoOcp callback on JUCE IPC thread, safety required!
+    
     return m_pendingGetValueHandlesWithONo.empty();
 }
 
 void OCP1ProtocolProcessor::AddPendingSetValueHandle(const std::uint32_t handle, const std::uint32_t ONo, int externalId)
 {
+    std::lock_guard<std::mutex> l(m_pendingHandlesMutex); // NanoOcp callback on JUCE IPC thread, safety required!
+    
     //DBG(juce::String(__FUNCTION__)
     //    << " (handle:" << NanoOcp1::HandleToString(handle)
     //    << ", targetONo:0x" << juce::String::toHexString(ONo) << ")");
@@ -1181,6 +1195,8 @@ void OCP1ProtocolProcessor::AddPendingSetValueHandle(const std::uint32_t handle,
 
 const std::uint32_t OCP1ProtocolProcessor::PopPendingSetValueHandle(const std::uint32_t handle, int& externalId)
 {
+    std::lock_guard<std::mutex> l(m_pendingHandlesMutex); // NanoOcp callback on JUCE IPC thread, safety required!
+    
     auto it = std::find_if(m_pendingSetValueHandlesWithONo.begin(), m_pendingSetValueHandlesWithONo.end(), [handle](const auto& val) { return val.first == handle; });
     if (it != m_pendingSetValueHandlesWithONo.end())
     {
@@ -1198,12 +1214,16 @@ const std::uint32_t OCP1ProtocolProcessor::PopPendingSetValueHandle(const std::u
 
 bool OCP1ProtocolProcessor::HasPendingSetValues()
 {
+    std::lock_guard<std::mutex> l(m_pendingHandlesMutex); // NanoOcp callback on JUCE IPC thread, safety required!
+    
     return m_pendingGetValueHandlesWithONo.empty();
 }
 
 const std::optional<std::pair<std::uint32_t, int>> OCP1ProtocolProcessor::HasPendingSetValue(const std::uint32_t ONo)
 {
-    auto it = std::find_if(m_pendingSetValueHandlesWithONo.begin(), m_pendingSetValueHandlesWithONo.end(), [ONo](const auto& val) { return val.second.first == ONo; });  
+    std::lock_guard<std::mutex> l(m_pendingHandlesMutex); // NanoOcp callback on JUCE IPC thread, safety required!
+    
+    auto it = std::find_if(m_pendingSetValueHandlesWithONo.begin(), m_pendingSetValueHandlesWithONo.end(), [ONo](const auto& val) { return val.second.first == ONo; });
     if (it != m_pendingSetValueHandlesWithONo.end())
     {
         //auto ONo = it->second.first;
@@ -1218,6 +1238,8 @@ const std::optional<std::pair<std::uint32_t, int>> OCP1ProtocolProcessor::HasPen
 
 void OCP1ProtocolProcessor::ClearPendingHandles()
 {
+    std::lock_guard<std::mutex> l(m_pendingHandlesMutex); // NanoOcp callback on JUCE IPC thread, safety required!
+    
     m_pendingSubscriptionHandles.clear();
     m_pendingGetValueHandlesWithONo.clear();
     m_pendingSetValueHandlesWithONo.clear();
