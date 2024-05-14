@@ -128,7 +128,6 @@ bool RTTrPMProtocolProcessor::setStateXml(XmlElement* stateXml)
 					m_packetModuleTypesForPositioning.add(moduleType);
 				}
 			}
-			stateXmlUpdateSuccess = false;
 		}
 		else
 			stateXmlUpdateSuccess = false;
