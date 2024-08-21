@@ -20,6 +20,7 @@
 
 #include "../../ProcessingEngineConfig.h"
 
+#include <NanoOcp1.h>
 #include <Ocp1DS100ObjectDefinitions.h>
 
 
