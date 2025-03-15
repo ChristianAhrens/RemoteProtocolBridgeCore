@@ -115,6 +115,16 @@ private:
 	std::map<RemoteObjectIdentifier, std::map<std::pair<RecordId, ChannelId>, NanoOcp1::Ocp1CommandDefinition>>	m_ROIsToDefsMap;
 
 	//==============================================================================
+	// Hardcoded channel counts. These have been defined in NanoOcp until breaking
+	// changes to support d&b DS100 product variants were introduced. These hardcoded
+	// values are not fit to support product variants apart from 64x64 matrix sizes
+	// from DS100 FW version 2.6 on.
+	static constexpr std::uint16_t MaxInputChannelCount = 64;
+	static constexpr std::uint16_t MaxOutputChannelCount = 64;
+	static constexpr std::uint16_t MaxReverbZones = 4;
+	static constexpr std::uint16_t MaxFunctionGroups = 16;
+
+	//==============================================================================
 	// Helpers
 	
 	/**

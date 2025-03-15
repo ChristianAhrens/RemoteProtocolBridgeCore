@@ -645,7 +645,7 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
     m_ROIsToDefsMap[ROI_Scene_SceneComment][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_Scene_SceneComment();
 
     // definitions with channels: inputChannels (sound objects)
-    for (first = static_cast<std::int32_t>(1); first <= static_cast<std::int32_t>(NanoOcp1::DS100::MaxInputChannelCount); first++)
+    for (first = static_cast<std::int32_t>(1); first <= static_cast<std::int32_t>(MaxInputChannelCount); first++)
     {
         second = static_cast<std::int32_t>(INVALID_ADDRESS_VALUE);
         m_ROIsToDefsMap[ROI_Positioning_SpeakerPosition][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Speaker_Position(first);
@@ -670,7 +670,7 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
         }
 
         // definitions with channels and records: function groups
-        for (second = static_cast<std::int32_t>(1); second <= static_cast<std::int32_t>(NanoOcp1::DS100::MaxFunctionGroups); second++)
+        for (second = static_cast<std::int32_t>(1); second <= static_cast<std::int32_t>(MaxFunctionGroups); second++)
         {
             m_ROIsToDefsMap[ROI_SoundObjectRouting_Mute][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_SoundObjectRouting_Mute(second, first);
             m_ROIsToDefsMap[ROI_SoundObjectRouting_Gain][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_SoundObjectRouting_Gain(second, first);
@@ -678,7 +678,7 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
     }
 
     // definitions with channels: matrix outputs
-    for (first = static_cast<std::int32_t>(1); first <= static_cast<std::int32_t>(NanoOcp1::DS100::MaxOutputChannelCount); first++)
+    for (first = static_cast<std::int32_t>(1); first <= static_cast<std::int32_t>(MaxOutputChannelCount); first++)
     {
         second = static_cast<std::int32_t>(INVALID_ADDRESS_VALUE);
         m_ROIsToDefsMap[ROI_MatrixOutput_Mute][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Mute(first);
@@ -692,7 +692,7 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
         m_ROIsToDefsMap[ROI_MatrixOutput_LevelMeterPostMute][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_LevelMeterPostMute(first);
 
         // definitions with channels and records but second parameter for sound objects
-        for (second = static_cast<std::int32_t>(1); second <= static_cast<std::int32_t>(NanoOcp1::DS100::MaxInputChannelCount); second++)
+        for (second = static_cast<std::int32_t>(1); second <= static_cast<std::int32_t>(MaxInputChannelCount); second++)
         {
             m_ROIsToDefsMap[ROI_MatrixNode_Enable][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Enable(first, second);
             m_ROIsToDefsMap[ROI_MatrixNode_Gain][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Gain(first, second);
@@ -702,7 +702,7 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
     }
 
     // definitions with channels: function groups
-    for (first = static_cast<std::int32_t>(1); first <= static_cast<std::int32_t>(NanoOcp1::DS100::MaxFunctionGroups); first++)
+    for (first = static_cast<std::int32_t>(1); first <= static_cast<std::int32_t>(MaxFunctionGroups); first++)
     {
         second = static_cast<std::int32_t>(INVALID_ADDRESS_VALUE);
         m_ROIsToDefsMap[ROI_FunctionGroup_Name][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_Name(first);
@@ -711,7 +711,7 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
     }
 
     // definitions with channels: en-space zones
-    for (first = static_cast<std::int32_t>(1); first <= static_cast<std::int32_t>(NanoOcp1::DS100::MaxReverbZones); first++)
+    for (first = static_cast<std::int32_t>(1); first <= static_cast<std::int32_t>(MaxReverbZones); first++)
     {
         second = static_cast<std::int32_t>(INVALID_ADDRESS_VALUE);
         m_ROIsToDefsMap[ROI_ReverbInputProcessing_Mute][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_Mute(first);
@@ -720,7 +720,7 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
         m_ROIsToDefsMap[ROI_ReverbInputProcessing_LevelMeter][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_LevelMeter(first);
 
         // definitions with channels and records: en-space zones with zone as first parameter = channel and sound object as second parameter = record
-        for (second = static_cast<std::int32_t>(1); second <= static_cast<std::int32_t>(NanoOcp1::DS100::MaxInputChannelCount); second++)
+        for (second = static_cast<std::int32_t>(1); second <= static_cast<std::int32_t>(MaxInputChannelCount); second++)
         {
             m_ROIsToDefsMap[ROI_ReverbInput_Gain][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_ReverbInput_Gain(second, first);
         }
