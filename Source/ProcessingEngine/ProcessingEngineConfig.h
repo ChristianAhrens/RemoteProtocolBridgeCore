@@ -58,7 +58,9 @@ public:
 		PROTOCOLA,
 		PROTOCOLB,
 		IPADDRESS,
+		GUID,
 		CLIENTPORT,
+		DS100VARIANTS,
 		HOSTPORT,
 		POLLINGINTERVAL,
 		ACTIVEOBJECTS,
@@ -88,6 +90,11 @@ public:
 		OCP1CONNECTIONMODE,
 		VALUEACK,
 		DBPRDATA,
+		SELECTIONFOLLOWDISABLED,
+		AUTOFAILOVER,
+		ADMWIDTHIGNORED,
+		ADMGAINIGNORED,
+		ADMMUTEIGNORED
 	};
 	static String getTagName(TagID Id)
 	{
@@ -107,8 +114,12 @@ public:
 			return "ProtocolB";
 		case IPADDRESS:
 			return "IpAddress";
+		case GUID:
+			return "Guid";
 		case CLIENTPORT:
 			return "ClientPort";
+		case DS100VARIANTS:
+			return "DS100Variants";
 		case HOSTPORT:
 			return "HostPort";
 		case POLLINGINTERVAL:
@@ -167,6 +178,16 @@ public:
 			return "ValueAcknowledge";
 		case DBPRDATA:
 			return "dbprDataString";
+		case SELECTIONFOLLOWDISABLED:
+			return "SelectionFollowDisabled";
+		case AUTOFAILOVER:
+			return "AutoFailover";
+		case ADMWIDTHIGNORED:
+			return "ADMWidthIgnored";
+		case ADMGAINIGNORED:
+			return "ADMGainIgnored";
+		case ADMMUTEIGNORED:
+			return "ADMMuteIgnored";
 		default:
 			return "INVALID";
 		}
@@ -181,6 +202,7 @@ public:
 		USESACTIVEOBJ,
 		ADRESS,
 		PORT,
+		VARIANT,
 		INTERVAL,
 		ALLOWED,
 		AUTOSTART,
@@ -209,6 +231,8 @@ public:
 			return "Address";
 		case PORT:
 			return "Port";
+		case VARIANT:
+			return "Variant";
 		case INTERVAL:
 			return "Interval";
 		case ALLOWED:

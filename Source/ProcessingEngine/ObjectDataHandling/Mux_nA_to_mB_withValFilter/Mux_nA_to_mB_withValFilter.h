@@ -34,22 +34,20 @@ class ProcessingEngineNode;
 class Mux_nA_to_mB_withValFilter : public Forward_only_valueChanges
 {
 public:
-	Mux_nA_to_mB_withValFilter(ProcessingEngineNode* parentNode);
-	~Mux_nA_to_mB_withValFilter();
+    Mux_nA_to_mB_withValFilter(ProcessingEngineNode* parentNode);
+    ~Mux_nA_to_mB_withValFilter();
 
 	bool setStateXml(XmlElement* stateXml) override;
 
-	bool OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const RemoteObjectMessageMetaInfo& msgMeta) override;
-
-protected:
-	int GetProtoChCntA();
-	int GetProtoChCntB();
+    bool OnReceivedMessageFromProtocol(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData,
+                                       const RemoteObjectMessageMetaInfo& msgMeta) override;
 
 private:
-	std::pair<std::vector<ProtocolId>, ChannelId> GetTargetProtocolsAndSource(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData &msgData);
-	RemoteObjectAddressing GetMappedOriginAddressing(const ProtocolId PId, const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData);
+    std::pair<std::vector<ProtocolId>, ChannelId> GetTargetProtocolsAndSource(const ProtocolId PId, const RemoteObjectIdentifier roi,
+                                                                              const RemoteObjectMessageData& msgData);
+    RemoteObjectAddressing GetMappedOriginAddressing(const ProtocolId PId, const RemoteObjectIdentifier roi,
+                                                     const RemoteObjectMessageData& msgData);
 
-	int m_protoChCntA; /**< Channel count configuration value that is to be expected per protocol type A. */
-	int m_protoChCntB; /**< Channel count configuration value that is to be expected per protocol type B. */
-
+    int m_protoChCntA; /**< Channel count configuration value that is to be expected per protocol type A. */
+    int m_protoChCntB; /**< Channel count configuration value that is to be expected per protocol type B. */
 };

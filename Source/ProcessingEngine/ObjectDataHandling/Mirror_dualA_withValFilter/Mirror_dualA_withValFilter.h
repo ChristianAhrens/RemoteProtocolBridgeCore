@@ -49,14 +49,19 @@ public:
 	//==============================================================================
 	void UpdateOnlineState(ProtocolId id) override;
 
+	//==============================================================================
+	bool IsAutomaticFailoverActive();
+	void SetAutomaticFailoverActive(bool autoFailoverActive);
+
 private:
 	void SetProtoFailoverTime(double timeout);
 	double GetProtoFailoverTime();
 	
 	bool MirrorDataIfRequired(ProtocolId PId, RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData);
 
-	double		m_protoFailoverTime;	/**< . */
-	ProtocolId	m_currentMaster;		/**< Protocol Id of the protocol currently handled as master. */
-	ProtocolId	m_currentSlave;			/**< Protocol Id of the protocol currently handled as slave. */
+	ProtocolId	m_currentMaster;			/**< Protocol Id of the protocol currently handled as master. */
+	ProtocolId	m_currentSlave;				/**< Protocol Id of the protocol currently handled as slave. */
+	bool		m_automaticFailoverActive;	/**< Boolean flag to indicate if the automatic failover functionality should be enabled. */
+	double		m_protoFailoverTime;		/**< Failover time value in ms. Used to determine if current main is no longer responding and must be degraded to spare while slave is promoted to main. */
 
 };

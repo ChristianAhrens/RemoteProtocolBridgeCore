@@ -73,7 +73,7 @@ bool Reverse_B_to_A_only::OnReceivedMessageFromProtocol(const ProtocolId PId, co
 		sendSuccess = true;
 		for (auto const& protocolA : GetProtocolAIds())
 			if (msgMeta._ExternalId != protocolA || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
-				sendSuccess = parentNode->SendMessageTo(protocolA, roi, msgData) && sendSuccess;
+				sendSuccess = parentNode->SendMessageTo(protocolA, roi, msgData, static_cast<int> (PId)) && sendSuccess;
 	}
 
 	return sendSuccess;

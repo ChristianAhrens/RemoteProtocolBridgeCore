@@ -47,9 +47,9 @@ class ProcessingEngine;
  * Class ProcessingEngineNode is a class to hold a processing element handled by engine class.
  */
 class ProcessingEngineNode :	public ProtocolProcessorBase::Listener,
-								public ProcessingEngineConfig::XmlConfigurableElement,
-								private Thread,
-								private MessageListener
+                                public ProcessingEngineConfig::XmlConfigurableElement,
+                                private juce::Thread,
+                                private juce::MessageListener
 {
 public:
 	/**
@@ -327,6 +327,7 @@ private:
 	//==============================================================================
 	bool															m_restartOnXmlChange{ true }; /**< Decide if the Node shall Stop and Start when setting the XML */
 
+    juce::CriticalSection                                           m_dataHandlingLock; /**< Safety measure to ensure datahandling object integrity - processing thread ::run and ::setStateXml might race against each other. */
 	std::unique_ptr<ObjectDataHandling_Abstract>					m_dataHandling;		/**< The object data handling object (to be initialized with instance of derived class). */
 
 	NodeId															m_nodeId;			/**< The id of the bridging node object. */

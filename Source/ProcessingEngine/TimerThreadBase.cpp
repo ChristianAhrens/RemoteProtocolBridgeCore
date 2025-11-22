@@ -17,6 +17,7 @@
  */
 
 #include "TimerThreadBase.h"
+#include <RemoteProtocolBridgeCommon.h>
 
 // **************************************************************************************
 //    class TimerThreadBase
@@ -40,8 +41,10 @@ TimerThreadBase::~TimerThreadBase()
  * Helper method to start the internal timer thread.
  * This checks, if the thread is already running and if yes, stops it first.
  * @param callbackInterval  The interval at which the new thread shall call the given callbackfunction.
+ * @param initialCallbackOffset The initial delay before the callback is called the first time
+ * @param threadPriority  The priority with which the thread should start
  */
-void TimerThreadBase::startTimerThread(int callbackInterval, int initialCallbackOffset)
+void TimerThreadBase::startTimerThread(int callbackInterval, int initialCallbackOffset, Priority threadPriority)
 {
     if (isThreadRunning())
         stopTimerThread();
@@ -49,8 +52,9 @@ void TimerThreadBase::startTimerThread(int callbackInterval, int initialCallback
     m_callbackInterval = callbackInterval;
     m_initialCallbackOffset = initialCallbackOffset;
 
-    startThread();
+    startThread(threadPriority);
 }
+
 
 /**
  * Helper method to stop the internal timer thread.

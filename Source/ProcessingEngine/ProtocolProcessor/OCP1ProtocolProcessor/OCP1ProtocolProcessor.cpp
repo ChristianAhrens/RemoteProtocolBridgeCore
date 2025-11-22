@@ -24,6 +24,7 @@
 #include <Ocp1DS100ObjectDefinitions.h>
 
 
+
 // **************************************************************************************
 //    class OCP1ProtocolProcessor
 // **************************************************************************************
@@ -57,10 +58,17 @@ bool OCP1ProtocolProcessor::Start()
     {
         // assign lambdas for connection status tracking first
         m_nanoOcp->onConnectionEstablished = [=]() {
-            startTimerThread(GetActiveRemoteObjectsInterval(), 100);
+            // reset guid, revision and model
+            m_guid = "";
+            m_internalOcaRevision = -1;
+            m_connectedDs100Model = DM_INVALID;
+
+            startTimerThread(GetActiveRemoteObjectsInterval(), 100, GlobalThreadPriority);
             m_IsRunning = true;
-            CreateObjectSubscriptions();
-            QueryObjectValues();
+            bool success = QueryObjectValue(ROI_Fixed_GUID, RemoteObjectAddressing());
+            if (!success)
+                return; // close connection?
+            // subscription are now set up in "OnReceivedGuid"
         };
         m_nanoOcp->onConnectionLost = [=]() {
             stopTimerThread();
@@ -68,6 +76,10 @@ bool OCP1ProtocolProcessor::Start()
             DeleteObjectSubscriptions();
             ClearPendingHandles();
             GetValueCache().Clear();
+            // reset guid, revision and model
+            m_guid = "";
+            m_internalOcaRevision = -1;
+            m_connectedDs100Model = DM_INVALID;
         };
 
         // then fire up nanoocp
@@ -119,14 +131,35 @@ bool OCP1ProtocolProcessor::setStateXml(XmlElement* stateXml)
         return false;
     else
     {
+        // retrieve ip, port, connectionMode
         auto ocp1ConnectionModeXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::OCP1CONNECTIONMODE));
         if (ocp1ConnectionModeXmlElement)
         {
+            juce::String ipAddr = GetIpAddress();
             auto modeString = ocp1ConnectionModeXmlElement->getAllSubText();
+            std::int32_t port;
             if (modeString == "server")
-                m_nanoOcp = std::make_unique<NanoOcp1::NanoOcp1Server>(GetIpAddress(), GetClientPort(), false); // do not use async msg queue for ocp1 msg forwarding to not interlink RPBC processing with UI but keep it in separte bridging thread ecosystem
+                port = GetHostPort();
             else if (modeString == "client")
-                m_nanoOcp = std::make_unique<NanoOcp1::NanoOcp1Client>(GetIpAddress(), GetClientPort(), false); // do not use async msg queue for ocp1 msg forwarding to not interlink RPBC processing with UI but keep it in separte bridging thread ecosystem
+                port = GetClientPort();
+            else
+            {
+                DBG(__FUNCTION__ << " only server or client as mode is supported");
+                return false;
+            }
+            // check if m_nanoOcp was already initialised and IP, Port and modeString did not change
+            if ( m_nanoOcp
+                && m_nanoOcp->getAddress() == ipAddr
+                && m_nanoOcp->getPort() == port
+                && m_ocp1Mode == modeString )
+                return true;
+            else
+                m_ocp1Mode = modeString;
+            
+            if (modeString == "server")
+                m_nanoOcp = std::make_unique<NanoOcp1::NanoOcp1Server>(GetIpAddress(), GetHostPort(), false, GlobalThreadPriority); // do not use async msg queue for ocp1 msg forwarding to not interlink RPBC processing with UI but keep it in separte bridging thread ecosystem
+            else if (modeString == "client")
+                m_nanoOcp = std::make_unique<NanoOcp1::NanoOcp1Client>(GetIpAddress(), GetClientPort(), false, GlobalThreadPriority); // do not use async msg queue for ocp1 msg forwarding to not interlink RPBC processing with UI but keep it in separte bridging thread ecosystem
             else
                 return false;
 
@@ -612,14 +645,23 @@ bool OCP1ProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier
         break;
     }
 
-    // Set the value to the cache (use the msgDataToSet if it contains data)
+    // Send SetValue command
+    try {
+        if (!m_nanoOcp->sendData(NanoOcp1::Ocp1CommandResponseRequired(objDef->SetValueCommand(objValue), handle).GetMemoryBlock()))
+            return false;
+    }
+    catch (const std::exception &e) {
+        DBG("Exception when sending OCA data in " << __FUNCTION__ << " " << e.what());
+        jassertfalse;
+        return false;
+    }
+
+     // Set the value to the cache (use the msgDataToSet if it contains data)
     GetValueCache().SetValue(targetObj, msgDataToSet.isDataEmpty() ? msgData : msgDataToSet);
 
-    // Send SetValue command
-    bool success = m_nanoOcp->sendData( NanoOcp1::Ocp1CommandResponseRequired(objDef->SetValueCommand(objValue), handle).GetMemoryBlock());
     AddPendingSetValueHandle(handle, objDef->m_targetOno, externalId);
     //DBG(juce::String(__FUNCTION__) + " " + ProcessingEngineConfig::GetObjectTagName(roi) + "(handle: " + NanoOcp1::HandleToString(handle) + ")");
-    return success;
+    return true;
 }
 
 /**
@@ -631,6 +673,7 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
     auto second = static_cast<std::int32_t>(INVALID_ADDRESS_VALUE);
 
     // definitions without channel and record
+    m_ROIsToDefsMap[ROI_Fixed_GUID][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_Fixed_GUID();
     m_ROIsToDefsMap[ROI_Settings_DeviceName][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_Settings_DeviceName();
     m_ROIsToDefsMap[ROI_Status_StatusText][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_Status_StatusText();
     m_ROIsToDefsMap[ROI_Status_AudioNetworkSampleStatus][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_Status_AudioNetworkSampleStatus();
@@ -645,10 +688,9 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
     m_ROIsToDefsMap[ROI_Scene_SceneComment][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_Scene_SceneComment();
 
     // definitions with channels: inputChannels (sound objects)
-    for (first = static_cast<std::int32_t>(1); first <= static_cast<std::int32_t>(MaxInputChannelCount); first++)
+    for (first = static_cast<std::int32_t>(1); first <= static_cast<std::int32_t>(MAX_INPUTS_CHANNELS); first++)
     {
-        second = static_cast<std::int32_t>(INVALID_ADDRESS_VALUE);
-        m_ROIsToDefsMap[ROI_Positioning_SpeakerPosition][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Speaker_Position(first);
+        second = static_cast<std::int32_t>(INVALID_ADDRESS_VALUE);        
         m_ROIsToDefsMap[ROI_Positioning_SourcePosition][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Position(first);
         m_ROIsToDefsMap[ROI_Positioning_SourceSpread][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Spread(first);
         m_ROIsToDefsMap[ROI_Positioning_SourceDelayMode][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(first);
@@ -670,17 +712,27 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
         }
 
         // definitions with channels and records: function groups
-        for (second = static_cast<std::int32_t>(1); second <= static_cast<std::int32_t>(MaxFunctionGroups); second++)
+        for (second = static_cast<std::int32_t>(1); second <= static_cast<std::int32_t>(MAX_FUNCTION_GROUPS); second++)
         {
             m_ROIsToDefsMap[ROI_SoundObjectRouting_Mute][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_SoundObjectRouting_Mute(second, first);
             m_ROIsToDefsMap[ROI_SoundObjectRouting_Gain][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_SoundObjectRouting_Gain(second, first);
         }
+
+        // definitions with channels and records but second parameter for output channels
+        for (second = static_cast<std::int32_t>(1); second <= static_cast<std::int32_t>(MAX_OUTPUT_CHANNELS); second++)
+        {
+            m_ROIsToDefsMap[ROI_MatrixNode_Enable][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Enable(first, second);
+            m_ROIsToDefsMap[ROI_MatrixNode_Gain][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Gain(first, second);
+            m_ROIsToDefsMap[ROI_MatrixNode_Delay][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Delay(first, second);
+            m_ROIsToDefsMap[ROI_MatrixNode_DelayEnable][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_DelayEnable(first, second);
+        }
     }
 
     // definitions with channels: matrix outputs
-    for (first = static_cast<std::int32_t>(1); first <= static_cast<std::int32_t>(MaxOutputChannelCount); first++)
+    for (first = static_cast<std::int32_t>(1); first <= static_cast<std::int32_t>(MAX_OUTPUT_CHANNELS); first++)
     {
         second = static_cast<std::int32_t>(INVALID_ADDRESS_VALUE);
+        m_ROIsToDefsMap[ROI_Positioning_SpeakerPosition][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Speaker_Position(first);
         m_ROIsToDefsMap[ROI_MatrixOutput_Mute][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Mute(first);
         m_ROIsToDefsMap[ROI_MatrixOutput_Gain][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Gain(first);
         m_ROIsToDefsMap[ROI_MatrixOutput_Delay][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_Delay(first);
@@ -690,19 +742,10 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
         m_ROIsToDefsMap[ROI_MatrixOutput_ChannelName][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_ChannelName(first);
         m_ROIsToDefsMap[ROI_MatrixOutput_LevelMeterPreMute][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_LevelMeterPreMute(first);
         m_ROIsToDefsMap[ROI_MatrixOutput_LevelMeterPostMute][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixOutput_LevelMeterPostMute(first);
-
-        // definitions with channels and records but second parameter for sound objects
-        for (second = static_cast<std::int32_t>(1); second <= static_cast<std::int32_t>(MaxInputChannelCount); second++)
-        {
-            m_ROIsToDefsMap[ROI_MatrixNode_Enable][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Enable(first, second);
-            m_ROIsToDefsMap[ROI_MatrixNode_Gain][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Gain(first, second);
-            m_ROIsToDefsMap[ROI_MatrixNode_Delay][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_Delay(first, second);
-            m_ROIsToDefsMap[ROI_MatrixNode_DelayEnable][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_MatrixNode_DelayEnable(first, second);
-        }
     }
 
     // definitions with channels: function groups
-    for (first = static_cast<std::int32_t>(1); first <= static_cast<std::int32_t>(MaxFunctionGroups); first++)
+    for (first = static_cast<std::int32_t>(1); first <= static_cast<std::int32_t>(MAX_FUNCTION_GROUPS); first++)
     {
         second = static_cast<std::int32_t>(INVALID_ADDRESS_VALUE);
         m_ROIsToDefsMap[ROI_FunctionGroup_Name][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_Name(first);
@@ -711,7 +754,7 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
     }
 
     // definitions with channels: en-space zones
-    for (first = static_cast<std::int32_t>(1); first <= static_cast<std::int32_t>(MaxReverbZones); first++)
+    for (first = static_cast<std::int32_t>(1); first <= static_cast<std::int32_t>(MAX_REVERB_ZONES); first++)
     {
         second = static_cast<std::int32_t>(INVALID_ADDRESS_VALUE);
         m_ROIsToDefsMap[ROI_ReverbInputProcessing_Mute][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_Mute(first);
@@ -720,7 +763,7 @@ void OCP1ProtocolProcessor::CreateKnownONosMap()
         m_ROIsToDefsMap[ROI_ReverbInputProcessing_LevelMeter][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_ReverbInputProcessing_LevelMeter(first);
 
         // definitions with channels and records: en-space zones with zone as first parameter = channel and sound object as second parameter = record
-        for (second = static_cast<std::int32_t>(1); second <= static_cast<std::int32_t>(MaxInputChannelCount); second++)
+        for (second = static_cast<std::int32_t>(1); second <= static_cast<std::int32_t>(MAX_INPUTS_CHANNELS); second++)
         {
             m_ROIsToDefsMap[ROI_ReverbInput_Gain][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_ReverbInput_Gain(second, first);
         }
@@ -749,7 +792,9 @@ void OCP1ProtocolProcessor::timerThreadCallback()
     if (m_IsRunning)
     {
         if (!SendRemoteObjectMessage(ROI_HeartbeatPing, RemoteObjectMessageData()))
+        {
             DBG(juce::String(__FUNCTION__) + " sending Ocp1 heartbeat failed.");
+        }
     }
 }
 
@@ -874,6 +919,8 @@ std::optional<std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>> OCP1ProtocolProc
 
     switch (roi)
     {
+    case ROI_Fixed_GUID:
+        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_Fixed_GUID());
     case ROI_Settings_DeviceName:
         return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_Settings_DeviceName());
     case ROI_Status_StatusText:
@@ -930,7 +977,10 @@ std::optional<std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>> OCP1ProtocolProc
     case ROI_Positioning_SourceDelayMode:
         return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_DelayMode(first));
     case ROI_Positioning_SpeakerPosition:
-        return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Speaker_Position(first));
+        if(m_internalOcaRevision >= 1) // newer oca revision needs newer oca object definition
+            return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Speaker_Position(first));
+        else
+            return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Speaker_Position(first));
     case ROI_FunctionGroup_Name:
         return std::unique_ptr<NanoOcp1::Ocp1CommandDefinition>(new NanoOcp1::DS100::dbOcaObjectDef_FunctionGroup_Name(first));
     case ROI_FunctionGroup_Delay:
@@ -1297,6 +1347,14 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
 
     switch (roi)
     {
+    case ROI_Fixed_GUID:
+        {
+            bool ok = false;
+            newStringValue = NanoOcp1::DataToString(msgObj->GetParameterData(), &ok);
+            if(ok)
+                OnReceivedGuid(newStringValue);
+        }
+        break;
     case ROI_CoordinateMapping_SourcePosition:
         {
             bool ok = false;
@@ -1326,7 +1384,7 @@ bool OCP1ProtocolProcessor::UpdateObjectValue(const RemoteObjectIdentifier roi, 
     case ROI_Positioning_SpeakerPosition:
         {
             bool ok = false;
-            auto pos = NanoOcp1::Variant(msgObj->GetParameterData()).ToPositionAndRotation(&ok);
+            auto pos = NanoOcp1::Variant(msgObj->GetParameterData()).ToAimingAndPosition(&ok);
             if (!ok)
                 return false;
             newFloatValue[0] = pos.at(3); // RPBC expects position values first
@@ -1740,14 +1798,99 @@ bool OCP1ProtocolProcessor::ParsePositionAndRotationMessagePayload(const RemoteO
     if (nullptr == objDef)
         return false;
 
-    auto parameterData = NanoOcp1::DataFromPositionAndRotation(
-        reinterpret_cast<float*>(msgData._payload)[0],
-        reinterpret_cast<float*>(msgData._payload)[1],
-        reinterpret_cast<float*>(msgData._payload)[2],
+    auto parameterData = NanoOcp1::DataFromAimingAndPosition(
         reinterpret_cast<float*>(msgData._payload)[3],
         reinterpret_cast<float*>(msgData._payload)[4],
-        reinterpret_cast<float*>(msgData._payload)[5]);
+        reinterpret_cast<float*>(msgData._payload)[5],
+        reinterpret_cast<float*>(msgData._payload)[0],
+        reinterpret_cast<float*>(msgData._payload)[1],
+        reinterpret_cast<float*>(msgData._payload)[2]);
     value = NanoOcp1::Variant(parameterData);
+    return true;
+}
+
+void OCP1ProtocolProcessor::OnReceivedGuid(const juce::String newGuid)
+{
+    if (newGuid == m_guid) // on new connection guid is reset so when receiving a guid again the connection/subscriptions should already be established
+        return;
+
+    if (SetOcaRevisionAndDeviceModel(newGuid)) // validate guid and determines revision and device model
+        m_guid = newGuid;
+    else
+        return; // close connection ?
+
+    auto first = static_cast<std::int32_t>(INVALID_ADDRESS_VALUE); // only first parameter is needed
+    auto second = static_cast<std::int32_t>(INVALID_ADDRESS_VALUE); // only first parameter is needed
+    
+    if(m_internalOcaRevision >= 1) // update internal map with the right definitions
+    {
+        for (first = static_cast<std::int32_t>(1); first <= static_cast<std::int32_t>(MAX_OUTPUT_CHANNELS); first++)
+        {
+            m_ROIsToDefsMap[ROI_Positioning_SpeakerPosition][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Speaker_Position(first);
+        }
+    }
+    else
+    {
+        for (first = static_cast<std::int32_t>(1); first <= static_cast<std::int32_t>(MAX_OUTPUT_CHANNELS); first++)
+        {
+            m_ROIsToDefsMap[ROI_Positioning_SpeakerPosition][std::make_pair(first, second)] = NanoOcp1::DS100::dbOcaObjectDef_Positioning_Source_Speaker_Position(first);
+        }
+    }
+    // after guid and device is known create subscriptions
+    CreateObjectSubscriptions();
+    QueryObjectValues();
+}
+
+bool OCP1ProtocolProcessor::SetOcaRevisionAndDeviceModel(const juce::String& guid)
+{
+    if (guid.length() != 8) // d&b guids as string are 8 characters
+        return false;
+    if(!guid.startsWith("DB00")) // identify d&b device
+        return false;
+
+    int deviceBytes = 2;
+    Ds100Model ds100Model; // last two characters decide the model
+    if (guid.getLastCharacters(deviceBytes) == "D0") // DS100
+        ds100Model = DM_DS100;
+    else if (guid.getLastCharacters(deviceBytes) == "D1") // DS100D
+        ds100Model = DM_DS100D;
+    else if (guid.getLastCharacters(deviceBytes) == "D2") // DS100M
+        ds100Model = DM_DS100M;
+    else
+        return false;
+
+    int versionBytesIndexStart = 4; // in the Guid the version is after "DB00" and has two bytes/characters
+    auto versionChars = guid.substring(versionBytesIndexStart, versionBytesIndexStart+2); // will get two characters
+    int internalOcaRevision;
+    switch (ds100Model)
+    {
+    case DM_DS100:
+    {
+        if (versionChars >= "0C") // DS100 added scalability with FW version "0C"
+            internalOcaRevision = 1;
+        else
+            internalOcaRevision = 0;
+    }
+    break;
+    case DM_DS100D:
+    {
+        internalOcaRevision = 1; // this was implemented pre-release of DS100D and assuming there will be no FW-version without scalability
+    }
+    break;
+    case DM_DS100M:
+    {
+        if (versionChars >= "02") // DS100M added scalability with FW version "02"
+            internalOcaRevision = 1;
+        else
+            internalOcaRevision = 0;
+    }
+    break;
+    default:
+        return false;
+
+    }
+    m_connectedDs100Model = ds100Model;
+    m_internalOcaRevision = internalOcaRevision;
     return true;
 }
 

@@ -168,7 +168,6 @@ void MIDIProtocolProcessor::processMidiMessage(const juce::MidiMessage& midiMess
 			// map the incoming value to the correct remote object range. this varies between the different objects.
 			switch (newObjectId)
 			{
-			case ROI_MatrixInput_Select:
 			case ROI_RemoteProtocolBridge_SoundObjectSelect:
 				{
 					// buffer current note number to be able to compare against incoming value

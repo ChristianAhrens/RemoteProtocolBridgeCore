@@ -59,14 +59,12 @@ public:
 	bool Stop() override;
 
 	bool SendRemoteObjectMessage(const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const int externalId = -1) override;
-
 	bool SendAddressedMessage(const String& addressString, const RemoteObjectMessageData& msgData);
 
+	bool IsIpAddressMatchingConfig(const String& senderIPAddress);
 	static juce::String GetRemoteObjectString(const RemoteObjectIdentifier roi);
-
 	virtual void oscBundleReceived(const OSCBundle &bundle, const String& senderIPAddress, const int& senderPort) override;
 	virtual void oscMessageReceived(const OSCMessage &message, const String& senderIPAddress, const int& senderPort) override;
-
 	bool IsSenderConnected();
 
 protected:

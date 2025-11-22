@@ -15,26 +15,21 @@
 #include <JuceHeader.h>
 
 /**
- * Class YmhOSCProtocolProcessor is a derived class for special Yamaha RIVAGES OSC protocol interaction.
+ * Class YmhOSCProtocolProcessor is a derived class for special Yamaha OSC protocol interaction.
  */
 class YmhOSCProtocolProcessor : public OSCProtocolProcessor
 {
 public:
-	YmhOSCProtocolProcessor(const NodeId& parentNodeId, int listenerPortNumber);
-	virtual ~YmhOSCProtocolProcessor() override;
+    YmhOSCProtocolProcessor(const NodeId& parentNodeId, int listenerPortNumber);
+    virtual ~YmhOSCProtocolProcessor() override;
 
-	bool setStateXml(XmlElement* stateXml) override;
+    void oscMessageReceived(const OSCMessage& message, const String& senderIPAddress, const int& senderPort) override;
 
-	bool SendRemoteObjectMessage(const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const int externalId = -1) override;
+    bool SendRemoteObjectMessage(const RemoteObjectIdentifier roi, const RemoteObjectMessageData& msgData, const int externalId) override;
 
-	static String GetRemoteObjectDomainString();
-	static String GetRemoteObjectParameterTypeString(RemoteObjectIdentifier roi);
+    RemoteObjectAddressing ParsePositionXObjectAddress(const OSCMessage& message);
 
-	virtual void oscMessageReceived(const OSCMessage &message, const String& senderIPAddress, const int& senderPort) override;
+    static juce::String GetYmhRemoteObjectString(const RemoteObjectIdentifier roi);
 
-private:
-	void createRangeMappedFloatMessageData(const OSCMessage& messageInput, RemoteObjectMessageData& newMessageData, float mappingRangeMin, float mappingRangeMax);
-
-	MappingAreaId	m_mappingAreaId{ MAI_Invalid };	/**< The DS100 mapping area to be used when converting incoming coords into relative messages. If this is MAI_Invalid, absolute messages will be generated. */
-
+    std::vector<ChannelId> GetActiveChannels();
 };

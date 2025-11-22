@@ -70,7 +70,7 @@ bool Forward_A_to_B_only::OnReceivedMessageFromProtocol(const ProtocolId PId, co
 		sendSuccess = true;
 		for (auto const& protocolB : GetProtocolBIds())
 			if (msgMeta._ExternalId != protocolB || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
-				sendSuccess = parentNode->SendMessageTo(protocolB, roi, msgData) && sendSuccess;
+				sendSuccess = parentNode->SendMessageTo(protocolB, roi, msgData, static_cast<int> (PId)) && sendSuccess;
 	}
 	else if (std::find(GetProtocolBIds().begin(), GetProtocolBIds().end(), PId) != GetProtocolBIds().end())
 	{

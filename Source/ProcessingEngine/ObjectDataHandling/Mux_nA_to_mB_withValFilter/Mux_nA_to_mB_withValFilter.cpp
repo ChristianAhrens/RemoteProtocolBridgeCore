@@ -126,7 +126,7 @@ bool Mux_nA_to_mB_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
 					auto isTargetProtocolTypeA = (std::find(GetProtocolAIds().begin(), GetProtocolAIds().end(), targetPId) != GetProtocolAIds().end());
 					auto isAcknowledgingProtocol = isTargetProtocolTypeA ? IsTypeAAcknowledging() : IsTypeBAcknowledging();
 
-					auto sendSuccess = parentNode->SendMessageTo(targetPId, roi, modMsgData);
+					auto sendSuccess = parentNode->SendMessageTo(targetPId, roi, modMsgData, static_cast<int> (PId));
 					// If the value was sent successfully, save it to cache (to make it the 'last known' from this protocol).
 					// In case the protocol is expected to acknowledge the value, we make an exception, since acknowledge values are
 					// used to update bridged protocols that have not yet received that latest value. E.g. DS100 ack values that are a
@@ -193,24 +193,29 @@ std::pair<std::vector<ProtocolId>, ChannelId> Mux_nA_to_mB_withValFilter::GetTar
 			return std::make_pair(GetProtocolAIds(), msgData._addrVal._first);
 
 		auto protocolBIndex = PIdBIter - GetProtocolBIds().begin();
-		auto absChNr = static_cast<int>(protocolBIndex * (m_protoChCntB != INVALID_ADDRESS_VALUE ? m_protoChCntB : 0)) + msgData._addrVal._first;
-		auto chForA = 0;
-		auto protocolAIndex = 0;
+		int absChNr = static_cast<int>(protocolBIndex * (m_protoChCntB != INVALID_ADDRESS_VALUE ? m_protoChCntB : 0)) + msgData._addrVal._first;
+		int protocolAIndex = absChNr > m_protoChCntA ? 1 : 0; // when we exceed the number of channels of DS100A we take the second DS100 (index 1)
+        
+        int chForA = 0;
 		if (m_protoChCntA > 0)
 		{
-			chForA = static_cast<std::int32_t>(absChNr % m_protoChCntA);
-			if (chForA == 0)
-				chForA = m_protoChCntA;
-			auto protocolANr = static_cast<int>(((absChNr - 1) / m_protoChCntA) + 1.0f);
-			protocolAIndex = protocolANr - 1;
+			// m_ProtoChCntA is basically the number of channels of DS100A. 
+			// subtract the channelnumber of DS100A to get the channel index of DS100B
+			if (absChNr > m_protoChCntA) 
+				chForA = static_cast<std::int32_t>(absChNr - m_protoChCntA); 
+			else
+				chForA = static_cast<std::int32_t>(absChNr);
 		}
-		if (chForA == 0)
-			chForA = static_cast<std::int32_t>(absChNr);
+		if (chForA <= 0) // invalid channel should return no protocol id
+        {
+            jassertfalse;
+            return std::make_pair(std::vector<ProtocolId>(), chForA);
+        }
 
 		if (m_protoChCntA == INVALID_ADDRESS_VALUE)
 			// return all typeA protocols
 			return std::make_pair(GetProtocolAIds(), chForA);
-		else if (GetProtocolAIds().size() >= protocolAIndex + 1)
+		else if (GetProtocolAIds().size() > protocolAIndex)
 			// return the single typeA protocol the message from typeB can be demultiplexed to, combined with the determined channel for the typeA protocol
 			return std::make_pair(std::vector<ProtocolId>{ GetProtocolAIds()[protocolAIndex] }, chForA);
 		else

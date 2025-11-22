@@ -81,7 +81,7 @@ bool OSCProtocolProcessor::Start()
 	jassert(successR);
 
 	// start the send timer thread
-	startTimerThread(GetActiveRemoteObjectsInterval(), 100);
+    startTimerThread(GetActiveRemoteObjectsInterval(), 100, GlobalThreadPriority);
 
 	m_IsRunning = (successS && successR);
 
@@ -125,6 +125,15 @@ bool OSCProtocolProcessor::setStateXml(XmlElement *stateXml)
 		auto dataSendingDisabledXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::DATASENDINGDISABLED));
 		if (dataSendingDisabledXmlElement)
 			m_dataSendindDisabled = 1 == dataSendingDisabledXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE));
+
+		auto selectionFollowDisableXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::SELECTIONFOLLOWDISABLED));
+		if (selectionFollowDisableXmlElement)
+			if (1 == selectionFollowDisableXmlElement->getIntAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::STATE)))
+				SetRemoteObjectIdsDisabled({ ROI_RemoteProtocolBridge_SoundObjectSelect, ROI_RemoteProtocolBridge_MatrixInputSelect,
+					ROI_RemoteProtocolBridge_MatrixOutputSelect, ROI_RemoteProtocolBridge_UIElementIndexSelect, ROI_RemoteProtocolBridge_SoundObjectGroupSelect,
+					ROI_RemoteProtocolBridge_MatrixInputGroupSelect, ROI_RemoteProtocolBridge_MatrixOutputGroupSelect, });
+			else
+				SetRemoteObjectIdsDisabled({});
 
         if (GetIpAddress().empty())
             m_autodetectClientConnection = true;
@@ -180,6 +189,9 @@ bool OSCProtocolProcessor::SendRemoteObjectMessage(const RemoteObjectIdentifier 
 
 	String addressString = GetRemoteObjectString(roi);
 	if (addressString.isEmpty())
+		return false;
+
+	if (IsRemoteObjectIdDisabled(roi))
 		return false;
 
 	if (msgData._addrVal._second != INVALID_ADDRESS_VALUE)
@@ -339,31 +351,10 @@ void OSCProtocolProcessor::oscBundleReceived(const OSCBundle &bundle, const Stri
 void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const String& senderIPAddress, const int& senderPort)
 {
 	ignoreUnused(senderPort);
-
-    // If the protocolprocessor is configured for autodection of client connection,
-    // do some special handling regarding potentially changed connection parameters first
-    if (m_autodetectClientConnection)
-    {
-        if (senderIPAddress != String(GetIpAddress()))
-        {
-            ScopedLock l(m_connectionParamsLock);
-			SetIpAddress(senderIPAddress.toStdString());
-            m_clientConnectionParamsChanged = true;
-        }
-    }
-    
-	if (senderIPAddress != String(GetIpAddress()))
-	{
-#ifdef LOG_IGNORED_OSC_MESSAGES
-		DBG("NId" + String(m_parentNodeId)
-			+ " PId" + String(m_protocolProcessorId) + ": ignore unexpected OSC message from " 
-			+ senderIPAddress + " (" + m_ipAddress + " expected)");
-#endif
+	if (!IsIpAddressMatchingConfig(senderIPAddress))
 		return;
-	}
 
 	RemoteObjectMessageData newMsgData;
-
 	String addressString = message.getAddressPattern().toString();
 	// Check if the incoming message is a response to a sent "ping" heartbeat.
 	if (addressString.startsWith(GetRemoteObjectString(ROI_HeartbeatPong)) && m_messageListener)
@@ -379,7 +370,7 @@ void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const S
 		RecordId recordId = INVALID_ADDRESS_VALUE;
 
 		// Determine which parameter was changed depending on the incoming message's address pattern.
-		for (int roi = ROI_Settings_DeviceName; roi < ROI_BridgingMAX; roi++)
+		for (int roi = ROI_Settings_DeviceName; roi < ROI_InvalidMAX; roi++)
 		{
 			if (addressString.containsWholeWord(GetRemoteObjectString(static_cast<RemoteObjectIdentifier>(roi))))
 			{
@@ -387,6 +378,10 @@ void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const S
 				break;
 			}
 		}
+
+		// If the entire remote object identifier is disabled, return without further processing
+		if (IsRemoteObjectIdDisabled(newObjectId))
+			return;
 
 		if (ProcessingEngineConfig::IsChannelAddressingObject(newObjectId))
 		{
@@ -427,6 +422,32 @@ void OSCProtocolProcessor::oscMessageReceived(const OSCMessage &message, const S
 	}
 }
 
+bool OSCProtocolProcessor::IsIpAddressMatchingConfig(const String& senderIPAddress)
+{
+	// If the protocolprocessor is configured for autodection of client connection,
+	// do some special handling regarding potentially changed connection parameters first
+	if (m_autodetectClientConnection)
+	{
+		if (senderIPAddress != String(GetIpAddress()))
+		{
+			ScopedLock l(m_connectionParamsLock);
+			SetIpAddress(senderIPAddress.toStdString());
+			m_clientConnectionParamsChanged = true;
+		}
+	}
+
+	if (senderIPAddress != String(GetIpAddress()))
+	{
+#ifdef LOG_IGNORED_OSC_MESSAGES
+		DBG("NId" + String(m_parentNodeId)
+			+ " PId" + String(m_protocolProcessorId) + ": ignore unexpected OSC message from "
+			+ senderIPAddress + " (" + m_ipAddress + " expected)");
+#endif
+		return false;
+	}
+	return true;
+}
+
 /**
  * static method to get OSC object specific ObjectName string
  *
@@ -451,8 +472,6 @@ String OSCProtocolProcessor::GetRemoteObjectString(const RemoteObjectIdentifier 
 		return "/dbaudio1/status/statustext";
 	case ROI_Status_AudioNetworkSampleStatus:
 		return "/dbaudio1/status/audionetworksamplestatus";
-	case ROI_MatrixInput_Select:
-		return "/dbaudio1/matrixinput/select";
 	case ROI_MatrixInput_Mute:
 		return "/dbaudio1/matrixinput/mute";
 	case ROI_MatrixInput_Gain:
@@ -557,6 +576,10 @@ String OSCProtocolProcessor::GetRemoteObjectString(const RemoteObjectIdentifier 
 		return "/dbaudio1/scene/scenecomment";
 	case ROI_RemoteProtocolBridge_SoundObjectSelect:
 		return "/RemoteProtocolBridge/SoundObjectSelect";
+	case ROI_RemoteProtocolBridge_MatrixInputSelect:
+		return "/RemoteProtocolBridge/MatrixInputSelect";
+	case ROI_RemoteProtocolBridge_MatrixOutputSelect:
+		return "/RemoteProtocolBridge/MatrixOutputSelect";
 	case ROI_RemoteProtocolBridge_UIElementIndexSelect:
 		return "/RemoteProtocolBridge/UIElementIndexSelect";
 	case ROI_RemoteProtocolBridge_GetAllKnownValues:
@@ -649,7 +672,6 @@ bool OSCProtocolProcessor::createMessageData(const OSCMessage& messageInput, con
 	{
 		case ROI_Status_AudioNetworkSampleStatus:
 		case ROI_Error_GnrlErr:
-		case ROI_MatrixInput_Select:
 		case ROI_MatrixInput_Mute:
 		case ROI_MatrixInput_DelayEnable:
 		case ROI_MatrixInput_EqEnable:
@@ -666,6 +688,8 @@ bool OSCProtocolProcessor::createMessageData(const OSCMessage& messageInput, con
 		case ROI_ReverbInputProcessing_EqEnable:
 		case ROI_Scene_Recall:
 		case ROI_RemoteProtocolBridge_SoundObjectSelect:
+		case ROI_RemoteProtocolBridge_MatrixInputSelect:
+		case ROI_RemoteProtocolBridge_MatrixOutputSelect:
 		case ROI_RemoteProtocolBridge_UIElementIndexSelect:
 		case ROI_RemoteProtocolBridge_SoundObjectGroupSelect:
 		case ROI_RemoteProtocolBridge_MatrixInputGroupSelect:

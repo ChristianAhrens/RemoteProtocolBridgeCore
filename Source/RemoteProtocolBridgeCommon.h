@@ -59,21 +59,42 @@ typedef std::int32_t	RecordId;
 #define INVALID_EXTID -1
 #define ASYNC_EXTID -2
 
+
+/*
+* Max numbers defines
+*/
+constexpr auto MAX_INPUTS_CHANNELS = 128;
+constexpr auto MAX_OUTPUT_CHANNELS = 64;
+constexpr auto MAX_FUNCTION_GROUPS = 32;
+constexpr auto MAX_REVERB_ZONES = 4;
+
+/*
+* Known DS100 models
+*/
+enum Ds100Model
+{
+	DM_INVALID = 0,
+	DM_DS100,
+	DM_DS100D,
+	DM_DS100M,
+	DM_MAX
+};
+
 /**
  * Known Protocol Processor Types
  */
 enum ProtocolType
 {
-	PT_Invalid = 0,			/**< Invalid protocol type value. */
-	PT_OCP1Protocol,		/**< OCA protocol type value. */
-	PT_OSCProtocol,			/**< OSC protocol type value. */
-	PT_MidiProtocol,		/**< MIDI protocol type value. */
-	PT_RTTrPMProtocol,		/**< Blacktrax RTTrPMotion protocol type value. */
-	PT_YamahaOSCProtocol,	/**< Yamaha OSC protocol type value. */
-	PT_ADMOSCProtocol,		/**< ADM OSC protocol type value. */
-	PT_RemapOSCProtocol,	/**< Freely remapable OSC protocol type value. */
-	PT_NoProtocol,			/**< Protocol processor implementation that acts as dummy, replying to all msgs sent with a reply and has some fixed object values that can be dummy-'polled'. */
-	PT_UserMAX				/**< Value to mark enum max; For iteration purpose. */
+	PT_Invalid = 0,				/**< Invalid protocol type value. */
+	PT_OCP1Protocol,			/**< OCA protocol type value. */
+	PT_OSCProtocol,				/**< OSC protocol type value. */
+	PT_MidiProtocol,			/**< MIDI protocol type value. */
+	PT_RTTrPMProtocol,			/**< Blacktrax RTTrPMotion protocol type value. */
+	PT_YamahaOSCProtocol,		/**< Yamaha OSC protocol type value. */
+	PT_ADMOSCProtocol,			/**< ADM OSC protocol type value. */
+	PT_RemapOSCProtocol,		/**< Freely remapable OSC protocol type value. */
+	PT_NoProtocol,				/**< Protocol processor implementation that acts as dummy, replying to all msgs sent with a reply and has some fixed object values that can be dummy-'polled'. */
+	PT_UserMAX					/**< Value to mark enum max; For iteration purpose. */
 };
 
 /**
@@ -127,12 +148,12 @@ enum RemoteObjectIdentifier
 	ROI_Invalid,					/**< Invalid remote object id. This is not the first
 									   * value to allow iteration over enum starting 
 									   * here (e.g. to not show the user the internal-only ping/pong). */
+	ROI_Fixed_GUID,
 	ROI_Settings_DeviceName,
 	ROI_Status_StatusText,
 	ROI_Status_AudioNetworkSampleStatus,
 	ROI_Error_GnrlErr,
 	ROI_Error_ErrorText,
-	ROI_MatrixInput_Select,
 	ROI_MatrixInput_Mute,
 	ROI_MatrixInput_Gain,
 	ROI_MatrixInput_Delay,
@@ -197,6 +218,8 @@ enum RemoteObjectIdentifier
 	ROI_BridgingMAX,							/**< Value to mark max enum iteration scope. ROIs greater than this can/will not be bridged.*/
 	ROI_Device_Clear,
 	ROI_RemoteProtocolBridge_SoundObjectSelect,
+	ROI_RemoteProtocolBridge_MatrixInputSelect,
+	ROI_RemoteProtocolBridge_MatrixOutputSelect,
 	ROI_RemoteProtocolBridge_UIElementIndexSelect,
 	ROI_RemoteProtocolBridge_GetAllKnownValues,
 	ROI_RemoteProtocolBridge_SoundObjectGroupSelect,
@@ -810,3 +833,8 @@ enum MappingAreaId
 	MAI_Third,			/**> third of four valid mapping areas. */
 	MAI_Fourth,			/**> last of four valid mapping areas. */
 };
+
+/**
+ * Global Priority for threading
+ */
+constexpr juce::Thread::Priority GlobalThreadPriority = juce::Thread::Priority::high;

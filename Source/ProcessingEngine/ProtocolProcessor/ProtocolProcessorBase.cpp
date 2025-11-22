@@ -134,9 +134,12 @@ bool ProtocolProcessorBase::setStateXml(XmlElement* stateXml)
 			return false;
 
 		// special handling for heartbeats - this shall always be activated if active object usage is set to true
-		m_activeRemoteObjects.push_back(RemoteObject(ROI_HeartbeatPing, RemoteObjectAddressing()));
-		if (!isTimerThreadRunning() && m_activeRemoteObjectsInterval > 0)
-			startTimerThread(m_activeRemoteObjectsInterval);
+        {
+            juce::ScopedLock l(m_activeRemoteObjectsLock);
+            m_activeRemoteObjects.push_back(RemoteObject(ROI_HeartbeatPing, RemoteObjectAddressing()));
+        }
+        if (!isTimerThreadRunning() && m_activeRemoteObjectsInterval > 0)
+            startTimerThread(m_activeRemoteObjectsInterval, 0, GlobalThreadPriority);
 	}
 
 	auto mutedObjsXmlElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::MUTEDOBJECTS));
@@ -180,7 +183,7 @@ void ProtocolProcessorBase::SetRemoteObjectsActive(XmlElement* activeObjsXmlElem
 		// This is important, since stopping the thread later on depends on that the timer thread 
 		// callback method can run freely to be able to gracefully terminate,
 		// which cannot happen when the lock is held here until the end of the method!
-		ScopedLock l(m_activeRemoteObjectsLock);
+		juce::ScopedLock l(m_activeRemoteObjectsLock);
 		ProcessingEngineConfig::ReadActiveObjects(activeObjsXmlElement, m_activeRemoteObjects);
 	}
 
@@ -189,7 +192,7 @@ void ProtocolProcessorBase::SetRemoteObjectsActive(XmlElement* activeObjsXmlElem
 	{
 		if (GetActiveRemoteObjects().size() > 0 && m_activeRemoteObjectsInterval > 0)
 		{
-			startTimerThread(m_activeRemoteObjectsInterval);
+            startTimerThread(m_activeRemoteObjectsInterval, 0, GlobalThreadPriority);
 		}
 		else
 		{
@@ -258,7 +261,7 @@ void ProtocolProcessorBase::timerThreadCallback()
 {
 	RemoteObjectMessageData msgData;
 
-	ScopedLock l(m_activeRemoteObjectsLock);
+	juce::ScopedLock l(m_activeRemoteObjectsLock);
 	for (auto const& obj : m_activeRemoteObjects)
 	{
 		msgData._addrVal = obj._Addr;
@@ -386,7 +389,39 @@ bool ProtocolProcessorBase::MapMessageDataToTargetRangeAndType(const RemoteObjec
  * Getter for the internal list of remote objects to actively handle.
  * @return		The requested reference to internal list.
  */
-const std::vector<RemoteObject>& ProtocolProcessorBase::GetActiveRemoteObjects()
+const std::vector<RemoteObject> ProtocolProcessorBase::GetActiveRemoteObjects()
 {
+    juce::ScopedLock l(m_activeRemoteObjectsLock);
 	return m_activeRemoteObjects;
+}
+
+/**
+ * Getter for the disabled state of a given remote object identifier
+ * @param	roi	The identifier to check
+ * @return	True if the identifier is set to disabled, false if not
+ */
+bool ProtocolProcessorBase::IsRemoteObjectIdDisabled(const RemoteObjectIdentifier& roi)
+{
+	if (std::find(m_disabledRemoteObjectIds.begin(), m_disabledRemoteObjectIds.end(), roi) == m_disabledRemoteObjectIds.end())
+		return false;
+	else
+		return true;
+}
+
+/**
+ * Getter for the current list of disabled remote object identifiers set to disabled
+ * @return	The requested list of identifiers
+ */
+const std::vector<RemoteObjectIdentifier>& ProtocolProcessorBase::GetDisabledRemoteObjectIds()
+{
+	return m_disabledRemoteObjectIds;
+}
+
+/**
+ * Setter for the current list of disabled remote object identifiers. This replaces any existin list!
+ * @param rois	The identifiers to set as new list of disabled ones.
+ */
+void ProtocolProcessorBase::SetRemoteObjectIdsDisabled(const std::vector<RemoteObjectIdentifier>& rois)
+{
+	m_disabledRemoteObjectIds = rois;
 }

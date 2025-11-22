@@ -66,10 +66,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 ProcessingEngineNode::ProcessingEngineNode()
 	: Thread("ProcessingEngingNode_Thread"),
+		m_restartOnXmlChange(true),
 		m_dataHandling(nullptr),
 		m_nodeId(0),
-		m_nodeRunning(false),
-		m_restartOnXmlChange(true)
+		m_nodeRunning(false)
 {
 
 }
@@ -163,7 +163,7 @@ Thread::ThreadID ProcessingEngineNode::GetNodeThreadId()
 bool ProcessingEngineNode::Start()
 {
 	// start our thread loop
-	startThread();
+    startThread(GlobalThreadPriority);
 
 	// Startup protocols
 	bool successfullyStartedA = m_typeAProtocols.size() > 0;
@@ -186,7 +186,7 @@ bool ProcessingEngineNode::Start()
 	}
 
 	// if one of the protocol processors did not start successfully,
-	// enshure the other is not running without purpose
+	// ensure the other is not running without purpose
 	m_nodeRunning = successfullyStartedA && successfullyStartedB && m_threadRunning.wait(1);
 	if (!m_nodeRunning)
 		Stop();
@@ -277,6 +277,9 @@ bool ProcessingEngineNode::setStateXml(XmlElement* stateXml)
 	auto objectHandlingStateXml = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::OBJECTHANDLING));
 	if (objectHandlingStateXml)
 	{
+        // everything from here on accesses current values that require being secured against race conditions
+        juce::ScopedLock l(m_dataHandlingLock);
+        
 		auto &ohmName = objectHandlingStateXml->getStringAttribute(ProcessingEngineConfig::getAttributeName(ProcessingEngineConfig::AttributeID::MODE));
 		m_dataHandling = std::unique_ptr<ObjectDataHandling_Abstract>(CreateObjectDataHandling(ProcessingEngineConfig::ObjectHandlingModeFromString(ohmName)));
 		if (m_dataHandling)
@@ -570,6 +573,9 @@ void ProcessingEngineNode::run()
 			{
 				postMessage(new NodeCallbackMessage(protocolMessage));
 			}
+            
+            // everything from here on accesses current values that require being secured against race conditions
+            juce::ScopedLock l(m_dataHandlingLock);
 
 			// perform internal bridging forwarding of message - synchronous
 			auto isBridgingObject = (protocolMessage._Id < ROI_BridgingMAX);

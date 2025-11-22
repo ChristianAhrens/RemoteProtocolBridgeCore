@@ -42,6 +42,8 @@ Forward_only_valueChanges::Forward_only_valueChanges(ProcessingEngineNode* paren
  */
 Forward_only_valueChanges::~Forward_only_valueChanges()
 {
+    // wait for any ongoing handling of value cache before deleting!
+    juce::ScopedLock l(m_currentValuesLock);
 }
 
 /**
@@ -114,7 +116,7 @@ bool Forward_only_valueChanges::OnReceivedMessageFromProtocol(const ProtocolId P
 				// sending is only done when the value about to be sent is differing from the last known value from the protocol in question
 				if (IsChangedDataValue(protocolB, roi, msgData._addrVal, msgData, false))
 				{
-					auto sendSuccess = parentNode->SendMessageTo(protocolB, roi, msgData);
+					auto sendSuccess = parentNode->SendMessageTo(protocolB, roi, msgData, static_cast<int> (PId));
 					// If the value was sent successfully, save it to cache (to make it the 'last known' from this protocol).
 					// In case the protocol is expected to acknowledge the value, we make an exception, since acknowledge values are
 					// used to update bridged protocols that have not yet received that latest value. E.g. DS100 ack values that are a
@@ -139,7 +141,7 @@ bool Forward_only_valueChanges::OnReceivedMessageFromProtocol(const ProtocolId P
 				// sending is only done when the value about to be sent is differing from the last known value from the protocol in question
 				if (IsChangedDataValue(protocolA, roi, msgData._addrVal, msgData, false))
 				{
-					auto sendSuccess = parentNode->SendMessageTo(protocolA, roi, msgData);
+					auto sendSuccess = parentNode->SendMessageTo(protocolA, roi, msgData, static_cast<int> (PId));
 					// If the value was sent successfully, save it to cache (to make it the 'last known' from this protocol).
 					// In case the protocol is expected to acknowledge the value, we make an exception, since acknowledge values are
 					// used to update bridged protocols that have not yet received that latest value. E.g. DS100 ack values that are a
@@ -179,6 +181,8 @@ bool Forward_only_valueChanges::IsChangedDataValue(const ProtocolId PId, const R
 		return true;
 
 	auto isChangedDataValue = false;
+    
+    juce::ScopedLock l(m_currentValuesLock);
     
     // verify the protocol in question has a set of cached values
 	if (1 != m_currentValues.count(PId))
@@ -276,6 +280,8 @@ void Forward_only_valueChanges::SetCurrentValue(const ProtocolId PId, const Remo
 {
 	if (IsKeepaliveObject(roi))
 		return;
+    
+    juce::ScopedLock l(m_currentValuesLock);
 
 	// Depending on what protocol received the value, use the corresponding value cache for the protocol type
 	auto& currentValues = m_currentValues[PId];
@@ -336,6 +342,8 @@ bool Forward_only_valueChanges::SendValueCacheToProtocol(const ProtocolId PId)
 	const ProcessingEngineNode* parentNode = ObjectDataHandling_Abstract::GetParentNode();
 	if (!parentNode)
 		return false;
+    
+    juce::ScopedLock l(m_currentValuesLock);
 
 	// verify the protocol in question has a set of cached values
 	if (1 != m_currentValues.count(PId))

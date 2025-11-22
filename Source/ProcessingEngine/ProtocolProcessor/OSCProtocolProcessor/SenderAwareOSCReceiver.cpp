@@ -35,6 +35,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SenderAwareOSCReceiver.h"
 
 #include <climits>
+#include <RemoteProtocolBridgeCommon.h>
 
 
 namespace SenderAwareOSC
@@ -362,7 +363,7 @@ namespace SenderAwareOSC
 			if (!socket->bindToPort(portNumber))
 				return false;
 
-			startThread();
+            startThread(GlobalThreadPriority);
 			return true;
 		}
 
@@ -378,7 +379,7 @@ namespace SenderAwareOSC
 				return false;
 
 			socket.setNonOwned(&newSocket);
-			startThread();
+            startThread(GlobalThreadPriority);
 			return true;
 		}
 

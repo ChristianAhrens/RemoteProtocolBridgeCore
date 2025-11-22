@@ -30,7 +30,7 @@ public:
 	TimerThreadBase();
 	virtual ~TimerThreadBase();
 
-	void startTimerThread(int callbackInterval, int initialCallbackOffset = 0);
+    void startTimerThread(int callbackInterval, int initialCallbackOffset = 0, Priority threadPriority = Priority::normal);
 	void stopTimerThread();
 	bool isTimerThreadRunning();
 

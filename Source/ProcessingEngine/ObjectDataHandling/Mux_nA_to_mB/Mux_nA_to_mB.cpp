@@ -111,27 +111,38 @@ bool Mux_nA_to_mB::OnReceivedMessageFromProtocol(const ProtocolId PId, const Rem
 
             modMsgData._addrVal._first = chForB;
 			if (GetProtocolBIds().size() >= protocolBIndex + 1)
-				if (msgMeta._ExternalId != GetProtocolBIds()[protocolBIndex] || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
-					return parentNode->SendMessageTo(GetProtocolBIds()[protocolBIndex], roi, modMsgData);
-				else
-					return true;
+            {
+                if (msgMeta._ExternalId != GetProtocolBIds()[protocolBIndex] || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
+                    return parentNode->SendMessageTo(GetProtocolBIds()[protocolBIndex], roi, modMsgData, static_cast<int> (PId));
+                else
+                    return true;
+            }
 		}
 		else if (PIdBIter != GetProtocolBIds().end())
 		{
 			jassert(msgData._addrVal._first <= m_protoChCntB);
 			auto protocolBIndex = PIdBIter - GetProtocolBIds().begin();
-			auto absChNr = static_cast<int>(protocolBIndex * m_protoChCntB) + msgData._addrVal._first;
-			auto protocolAIndex = absChNr / (m_protoChCntA + 1);
-			auto chForA = static_cast<std::int32_t>(absChNr % m_protoChCntA);
-			if (chForA == 0)
-				chForA = static_cast<std::int32_t>(m_protoChCntA);
+            auto absChNr = static_cast<int>(protocolBIndex * (m_protoChCntB != INVALID_ADDRESS_VALUE ? m_protoChCntB : 0)) + msgData._addrVal._first;
+            
+            auto protocolAIndex = absChNr > m_protoChCntA ? 1 : 0; // when we exceed the number of channels of DS100A we take the second DS100 (index 1)
+            
+            // if absChNr exceeds number of channels of the first DS100 (m_protoChCntA) subtract that count to get the channel number on the second DS100
+            int32_t chForA = static_cast<std::int32_t>(absChNr > m_protoChCntA ? absChNr - m_protoChCntA : absChNr);
+            
+            if (chForA <= 0) // invalid channel, must not be 0 or below
+            {
+                jassertfalse;
+                return false;
+            }
 
             modMsgData._addrVal._first = chForA;
-			if (GetProtocolAIds().size() >= protocolAIndex + 1)
-				if (msgMeta._ExternalId != GetProtocolAIds()[protocolAIndex] || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
-					return parentNode->SendMessageTo(GetProtocolAIds()[protocolAIndex], roi, modMsgData);
-				else
-					return true;
+			if (GetProtocolAIds().size() > protocolAIndex)
+            {
+                if (msgMeta._ExternalId != GetProtocolAIds()[protocolAIndex] || msgMeta._Category != RemoteObjectMessageMetaInfo::MC_SetMessageAcknowledgement)
+                    return parentNode->SendMessageTo(GetProtocolAIds()[protocolAIndex], roi, modMsgData, static_cast<int> (PId));
+                else
+                    return true;
+            }
 		}
 	}
 

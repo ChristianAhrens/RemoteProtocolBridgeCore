@@ -34,13 +34,13 @@ class ObjectDataHandling_Abstract : public ProcessingEngineConfig::XmlConfigurab
 	public Timer
 {
 public:
-	class StateListener : private MessageListener
+	class StateListener : private juce::MessageListener
 	{
 	public:
 		/**
 		 * Implementation of a protocol state message to use with JUCE's message queue.
 		 */
-		struct StateCallbackMessage : public Message
+		struct StateCallbackMessage : public juce::Message
 		{
 			/**
 			 * Constructor with default initialization.

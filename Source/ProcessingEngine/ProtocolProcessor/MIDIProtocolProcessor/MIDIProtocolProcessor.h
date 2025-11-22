@@ -86,8 +86,7 @@ private:
 
 	int											m_currentSelectedChannel{ INVALID_ADDRESS_VALUE };
 
-	const std::vector<RemoteObjectIdentifier>	m_supportedRemoteObjects{ 
-		ROI_MatrixInput_Select,
+	const std::vector<RemoteObjectIdentifier>	m_supportedRemoteObjects{
 		ROI_RemoteProtocolBridge_SoundObjectSelect,
 		ROI_RemoteProtocolBridge_SoundObjectGroupSelect,
 		ROI_CoordinateMapping_SourcePosition_X, 

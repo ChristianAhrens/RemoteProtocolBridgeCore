@@ -19,6 +19,7 @@
 #include "RTTrPMReceiver.h"
 
 #include "Modules/RTTrPMHeader.h"
+#include <RemoteProtocolBridgeCommon.h>
 
 
 /**
@@ -222,7 +223,7 @@ bool RTTrPMReceiver::BeginWaitingForSocket(const int portNumber, const String &b
 
 	if(m_socket->bindToPort(portNumber, bindAddress))
 	{
-		startThread();
+        startThread(GlobalThreadPriority);
 		return true;
 	}
 

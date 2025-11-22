@@ -57,6 +57,7 @@ protected:
 	
 private:
 	std::map<ProtocolId, std::map<RemoteObjectIdentifier, std::map<RemoteObjectAddressing, RemoteObjectMessageData>>>	m_currentValues;	/**< Hash of current value data known per protocol of ProcessingNode to use to compare to incoming data regarding value changes. */
+    juce::CriticalSection m_currentValuesLock;
 	bool m_typeAIsAcknowledging{ false };																									/**< Bool indicator that defines if the protocols in role A are expected to reply with acknowledge value message on any sent value update. */
 	bool m_typeBIsAcknowledging{ false };																									/**< Bool indicator that defines if the protocols in role B are expected to reply with acknowledge value message on any sent value update. */
 	float m_precision;																														/**< Value precision to use for processing. */

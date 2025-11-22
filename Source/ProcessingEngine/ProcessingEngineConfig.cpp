@@ -130,7 +130,7 @@ bool ProcessingEngineConfig::isValid()
 			if (protocolASectionElement)
 			{
                 ValidateUniqueId(protocolASectionElement->getIntAttribute(getAttributeName(AttributeID::ID)));
-                
+       
 				XmlElement* ipAddrSectionElement = protocolASectionElement->getChildByName(getTagName(TagID::IPADDRESS));
 				if (!ipAddrSectionElement)
 					return false;
@@ -656,6 +656,8 @@ String ProcessingEngineConfig::GetObjectTagName(RemoteObjectIdentifier roi)
 		return "PING";
 	case ROI_HeartbeatPong:
 		return "PONG";
+	case ROI_Fixed_GUID:
+		return "Guid";
 	case ROI_Settings_DeviceName:
 		return "DeviceName";
 	case ROI_Error_GnrlErr:
@@ -666,8 +668,6 @@ String ProcessingEngineConfig::GetObjectTagName(RemoteObjectIdentifier roi)
 		return "StatusText";
 	case ROI_Status_AudioNetworkSampleStatus:
 		return "AudioNetworkSampleStatus";
-	case ROI_MatrixInput_Select:
-		return "MatrixInputSelect";
 	case ROI_MatrixInput_Mute:
 		return "MatrixInputMute";
 	case ROI_MatrixInput_Gain:
@@ -772,6 +772,10 @@ String ProcessingEngineConfig::GetObjectTagName(RemoteObjectIdentifier roi)
 		return "SceneSceneComment";
 	case ROI_RemoteProtocolBridge_SoundObjectSelect:
 		return "RPBSoundObjectSelect";
+	case ROI_RemoteProtocolBridge_MatrixInputSelect:
+		return "RPBMatrixInputSelect";
+	case ROI_RemoteProtocolBridge_MatrixOutputSelect:
+		return "RPBMatrixInputSelect";
 	case ROI_RemoteProtocolBridge_UIElementIndexSelect:
 		return "RPBUIElementSelect";
 	case ROI_RemoteProtocolBridge_GetAllKnownValues:
@@ -825,6 +829,8 @@ String ProcessingEngineConfig::GetObjectDescription(const RemoteObjectIdentifier
 		return "PING";
 	case ROI_HeartbeatPong:
 		return "PONG";
+	case ROI_Fixed_GUID:
+		return "Fixed Guid";
 	case ROI_Settings_DeviceName:
 		return "Device Name";
 	case ROI_Error_GnrlErr:
@@ -835,8 +841,6 @@ String ProcessingEngineConfig::GetObjectDescription(const RemoteObjectIdentifier
 		return "Status Text";
 	case ROI_Status_AudioNetworkSampleStatus:
 		return "Status AudioNetworkSampleStatus";
-	case ROI_MatrixInput_Select:
-		return "Matrix Input Select";
 	case ROI_MatrixInput_Mute:
 		return "Matrix Input Mute";
 	case ROI_MatrixInput_Gain:
@@ -941,6 +945,10 @@ String ProcessingEngineConfig::GetObjectDescription(const RemoteObjectIdentifier
 		return "Scene SceneComment";
 	case ROI_RemoteProtocolBridge_SoundObjectSelect:
 		return "RPB Sound Object Select";
+	case ROI_RemoteProtocolBridge_MatrixInputSelect:
+		return "RPB Matrix Input Select";
+	case ROI_RemoteProtocolBridge_MatrixOutputSelect:
+		return "RPB Matrix Output Select";
 	case ROI_RemoteProtocolBridge_UIElementIndexSelect:
 		return "RPB UI Element Select";
 	case ROI_RemoteProtocolBridge_GetAllKnownValues:
@@ -994,6 +1002,8 @@ String ProcessingEngineConfig::GetObjectShortDescription(const RemoteObjectIdent
 		return "PING";
 	case ROI_HeartbeatPong:
 		return "PONG";
+	case ROI_Fixed_GUID:
+		return "Guid";
 	case ROI_Settings_DeviceName:
 		return "Dev. Name";
 	case ROI_Status_StatusText:
@@ -1004,8 +1014,6 @@ String ProcessingEngineConfig::GetObjectShortDescription(const RemoteObjectIdent
 		return "Gnrl Err";
 	case ROI_Error_ErrorText:
 		return "Err Txt";
-	case ROI_MatrixInput_Select:
-		return "Mtrx In Sel";
 	case ROI_MatrixInput_Mute:
 		return "Mtrx In Mute";
 	case ROI_MatrixInput_Gain:
@@ -1110,6 +1118,10 @@ String ProcessingEngineConfig::GetObjectShortDescription(const RemoteObjectIdent
 		return "Scn Comment";
 	case ROI_RemoteProtocolBridge_SoundObjectSelect:
 		return "RPB Obj. Sel.";
+	case ROI_RemoteProtocolBridge_MatrixInputSelect:
+		return "RPB Mtrx In Sel";
+	case ROI_RemoteProtocolBridge_MatrixOutputSelect:
+		return "RPB Mtrx Out Sel";
 	case ROI_RemoteProtocolBridge_UIElementIndexSelect:
 		return "RPB UI Elm. Sel.";
 	case ROI_RemoteProtocolBridge_GetAllKnownValues:
@@ -1159,7 +1171,6 @@ bool ProcessingEngineConfig::IsChannelAddressingObject(const RemoteObjectIdentif
 {
 	switch (roi)
 	{
-	case ROI_MatrixInput_Select:
 	case ROI_MatrixInput_Mute:
 	case ROI_MatrixInput_Gain:
 	case ROI_MatrixInput_Delay:
@@ -1202,6 +1213,8 @@ bool ProcessingEngineConfig::IsChannelAddressingObject(const RemoteObjectIdentif
 	case ROI_CoordinateMapping_SourcePosition_Y:
 	case ROI_CoordinateMapping_SourcePosition:
 	case ROI_RemoteProtocolBridge_SoundObjectSelect:
+	case ROI_RemoteProtocolBridge_MatrixInputSelect:
+	case ROI_RemoteProtocolBridge_MatrixOutputSelect:
 	case ROI_RemoteProtocolBridge_SoundObjectGroupSelect:
 	case ROI_RemoteProtocolBridge_MatrixInputGroupSelect:
 	case ROI_RemoteProtocolBridge_MatrixOutputGroupSelect:

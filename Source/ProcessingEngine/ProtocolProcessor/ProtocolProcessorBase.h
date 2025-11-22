@@ -110,7 +110,12 @@ public:
 
 protected:
 	//==============================================================================
-	const std::vector<RemoteObject>& GetActiveRemoteObjects();
+	bool IsRemoteObjectIdDisabled(const RemoteObjectIdentifier& roi);
+	const std::vector<RemoteObjectIdentifier>& GetDisabledRemoteObjectIds();
+	void SetRemoteObjectIdsDisabled(const std::vector<RemoteObjectIdentifier>& roi);
+
+	//==============================================================================
+	const std::vector<RemoteObject> GetActiveRemoteObjects();
 
 	//==============================================================================
 	Listener				*m_messageListener;				/**< The parent node object. Needed for e.g. triggering receive notifications. */
@@ -123,10 +128,12 @@ protected:
 private:
 	virtual void timerThreadCallback() override;
 
+	std::vector<RemoteObjectIdentifier>	m_disabledRemoteObjectIds;	/**< List of remote objects identifiers to not be handled. */
+
 	std::vector<RemoteObject>	m_mutedRemoteObjects;			/**< List of remote objects to be muted. */
 	std::vector<RemoteObject>	m_activeRemoteObjects;			/**< List of remote objects to be activly handled. */
 	int							m_activeRemoteObjectsInterval;	/**< Interval at which data is polled/requested from protocol peer. */
-	CriticalSection				m_activeRemoteObjectsLock;
+    juce::CriticalSection		m_activeRemoteObjectsLock;
 
 	RemoteObjectValueCache		m_valueCache;
 

@@ -38,7 +38,7 @@ Mirror_dualA_withValFilter::Mirror_dualA_withValFilter(ProcessingEngineNode* par
 	m_currentMaster = static_cast<ProtocolId>(INVALID_ADDRESS_VALUE);
 	m_currentSlave = static_cast<ProtocolId>(INVALID_ADDRESS_VALUE);
 	
-	SetProtoFailoverTime(2000.0f);
+	m_automaticFailoverActive = true;
 }
 
 /**
@@ -85,7 +85,19 @@ bool Mirror_dualA_withValFilter::setStateXml(XmlElement* stateXml)
 
 	auto protoFailoverTimeElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::FAILOVERTIME));
 	if (protoFailoverTimeElement)
+	{
+
 		SetProtoFailoverTime(protoFailoverTimeElement->getAllSubText().getDoubleValue());
+		// check that failovertime is not set below MIRROR_MODE_FAILOVER_TIME = 2000.f
+		// hardcoded for not having to include ProtocolBridgingWrapper.h
+		jassert(GetProtoFailoverTime() >= 2000.f);
+	}
+	else
+		return false;
+
+	auto protoAutoFailoverElement = stateXml->getChildByName(ProcessingEngineConfig::getTagName(ProcessingEngineConfig::TagID::AUTOFAILOVER));
+	if (protoAutoFailoverElement)
+		SetAutomaticFailoverActive(protoAutoFailoverElement->getAllSubText().getIntValue() == 1);
 	else
 		return false;
 
@@ -146,7 +158,7 @@ bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
 						// sending is only done when the value about to be sent is differing from the last known value from the protocol in question
 						if (IsChangedDataValue(protocolBId, roi, msgData._addrVal, msgData, false))
 						{
-							auto sendSuccess = parentNode->SendMessageTo(protocolBId, roi, msgData);
+							auto sendSuccess = parentNode->SendMessageTo(protocolBId, roi, msgData, static_cast<int> (receiverProtocolId));
 							// If the value was sent successfully, save it to cache (to make it the 'last known' from this protocol).
 							// In case the protocol is expected to acknowledge the value, we make an exception, since acknowledge values are
 							// used to update bridged protocols that have not yet received that latest value. E.g. DS100 ack values that are a
@@ -168,7 +180,7 @@ bool Mirror_dualA_withValFilter::OnReceivedMessageFromProtocol(const ProtocolId 
 			// sending is only done when the value about to be sent is differing from the last known value from the protocol in question
 			if (IsChangedDataValue(m_currentMaster, roi, msgData._addrVal, msgData, false))
 			{
-				auto sendSuccess = parentNode->SendMessageTo(m_currentMaster, roi, msgData);
+				auto sendSuccess = parentNode->SendMessageTo(m_currentMaster, roi, msgData, static_cast<int> (receiverProtocolId));
 				// If the value was sent successfully, save it to cache (to make it the 'last known' from this protocol).
 				// In case the protocol is expected to acknowledge the value, we make an exception, since acknowledge values are
 				// used to update bridged protocols that have not yet received that latest value. E.g. DS100 ack values that are a
@@ -200,15 +212,19 @@ void Mirror_dualA_withValFilter::UpdateOnlineState(ProtocolId id)
 {
 	ObjectDataHandling_Abstract::UpdateOnlineState(id);
 
-	// swap master and slave if the master has failed to react in the configured failover time
-	if (id == m_currentSlave && GetLastProtocolReactionTSMap().count(m_currentMaster) > 0)
+	if (IsAutomaticFailoverActive())
 	{
-		auto masterStaleTime = Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(m_currentMaster);
-		if (masterStaleTime > GetProtoFailoverTime())
+		// swap master and slave if the master has failed to react in the configured failover time
+		if (id == m_currentSlave && GetLastProtocolReactionTSMap().count(m_currentMaster) > 0)
 		{
-			SetChangedProtocolState(m_currentMaster, OHS_Protocol_Slave);
-			SetChangedProtocolState(m_currentSlave, OHS_Protocol_Master);
-			std::swap(m_currentMaster, m_currentSlave);
+			auto masterStaleTime = Time::getMillisecondCounterHiRes() - GetLastProtocolReactionTSMap().at(m_currentMaster);
+			if (masterStaleTime > GetProtoFailoverTime())
+			{
+				DBG(juce::String(__FUNCTION__) + " -> failover engaged");
+				SetChangedProtocolState(m_currentMaster, OHS_Protocol_Slave);
+				SetChangedProtocolState(m_currentSlave, OHS_Protocol_Master);
+				std::swap(m_currentMaster, m_currentSlave);
+			}
 		}
 	}
 }
@@ -272,4 +288,23 @@ void Mirror_dualA_withValFilter::SetProtoFailoverTime(double timeout)
 double Mirror_dualA_withValFilter::GetProtoFailoverTime()
 {
 	return m_protoFailoverTime;
+}
+
+/**
+ * Getter for the boolean failover-active member.
+ * @return	True if auto failover is active, false if not.
+ */
+bool Mirror_dualA_withValFilter::IsAutomaticFailoverActive()
+{
+	return m_automaticFailoverActive;
+}
+
+/**
+ * Setter for the boolean failover-active member.
+ * @param	autoFailoverActive	True if automatic failover should be on, false for off.
+ */
+void Mirror_dualA_withValFilter::SetAutomaticFailoverActive(bool autoFailoverActive)
+{
+	DBG(juce::String(__FUNCTION__) + (autoFailoverActive ? " -> active" : " -> inactive"));
+	m_automaticFailoverActive = autoFailoverActive;
 }
